@@ -1,5 +1,6 @@
 """Dataset abstractions and split utilities."""
 
+from .analysis import summarize_dataset
 from .dataset import SignLanguageDataset, SignSample, build_synthetic_dataset
 from .dataloader import build_dataloader
 from .preprocessing import pad_or_truncate_sequence, sequence_to_tensor, temporal_augmentation
@@ -14,4 +15,5 @@ __all__ = [
     "pad_or_truncate_sequence",
     "sequence_to_tensor",
     "temporal_augmentation",
+    "summarize_dataset",
 ]

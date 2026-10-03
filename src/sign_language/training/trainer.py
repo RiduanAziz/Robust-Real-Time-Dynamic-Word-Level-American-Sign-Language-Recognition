@@ -3,9 +3,69 @@ from __future__ import annotations
 from collections.abc import Iterable
 
 import torch
+import torch.nn.functional as F
 from torch import nn
 from torch.optim import AdamW
 from torch.utils.data import DataLoader
+
+
+def _ensure_tensor(value: torch.Tensor | list[int] | list[float]) -> torch.Tensor:
+    tensor = torch.as_tensor(value)
+    return tensor.detach()
+
+
+def compute_classification_metrics(
+    logits: torch.Tensor,
+    targets: torch.Tensor,
+    eps: float = 1e-8,
+) -> dict[str, float | int]:
+    """Compute accuracy, macro-F1, and cross-entropy loss for classification logits."""
+    logits = torch.as_tensor(logits, dtype=torch.float32)
+    targets = torch.as_tensor(targets, dtype=torch.long)
+
+    if logits.ndim == 1:
+        logits = logits.unsqueeze(0)
+    if targets.ndim == 0:
+        targets = targets.unsqueeze(0)
+
+    if logits.shape[0] != targets.shape[0]:
+        raise ValueError("logits and targets must have the same number of rows.")
+
+    probabilities = logits.softmax(dim=-1)
+    predictions = probabilities.argmax(dim=-1)
+    accuracy = (predictions == targets).float().mean().item()
+    loss = F.cross_entropy(logits, targets).item()
+
+    num_classes = logits.shape[-1]
+    true_positive = torch.zeros(num_classes, dtype=torch.float32)
+    false_positive = torch.zeros(num_classes, dtype=torch.float32)
+    false_negative = torch.zeros(num_classes, dtype=torch.float32)
+
+    for class_index in range(num_classes):
+        class_targets = targets == class_index
+        class_preds = predictions == class_index
+        true_positive[class_index] = torch.logical_and(class_targets, class_preds).sum().float()
+        false_positive[class_index] = torch.logical_and(~class_targets, class_preds).sum().float()
+        false_negative[class_index] = torch.logical_and(class_targets, ~class_preds).sum().float()
+
+    precision = true_positive / (true_positive + false_positive + eps)
+    recall = true_positive / (true_positive + false_negative + eps)
+    f1 = 2 * precision * recall / (precision + recall + eps)
+    macro_f1 = f1.mean().item()
+
+    return {
+        "accuracy": float(accuracy),
+        "macro_f1": float(macro_f1),
+        "loss": float(loss),
+        "num_samples": int(targets.shape[0]),
+    }
+
+
+def evaluate_model(logits: torch.Tensor, targets: torch.Tensor) -> dict[str, float | int]:
+    """Lightweight wrapper for evaluating model outputs against ground-truth labels."""
+    metrics = compute_classification_metrics(logits, targets)
+    metrics["accuracy"] = float(metrics["accuracy"])
+    return metrics
 
 
 def train_model(
