@@ -1,7 +1,15 @@
 from __future__ import annotations
 
-from src.data.manifest import build_manifest, generate_dataset_report, validate_signer_independent_split
-from src.data.splitting import split_manifest_by_signer
+import pytest
+
+from sign_language.data import (
+    build_manifest,
+    generate_dataset_report,
+    split_manifest_by_signer,
+    validate_signer_assignments,
+    validate_signer_independent_split,
+)
+from src.data.manifest import build_manifest as legacy_build_manifest
 
 
 def test_manifest_and_split_integrity() -> None:
@@ -80,3 +88,9 @@ def test_manifest_and_split_integrity() -> None:
     )
 
     assert validate_signer_independent_split(train_manifest, val_manifest, test_manifest)
+    assert legacy_build_manifest is build_manifest
+
+
+def test_overlapping_signer_assignments_fail() -> None:
+    with pytest.raises(ValueError, match="Signer overlap"):
+        validate_signer_assignments({"S001", "S002", "S003"}, {"S001"}, {"S001"}, {"S003"})

@@ -1,10 +1,11 @@
 dataset:
+  root: data
   labels:
     - HELLO
     - THANKS
     - PLEASE
-    - YES
-    - NO
+    - "YES"
+    - "NO"
   signers:
     - S001
     - S002
@@ -28,3 +29,4 @@ dataset:
     - S020
   samples_per_class: 6
   sequence_length: 16
+  feature_representation: hands

@@ -1,8 +1,101 @@
 from __future__ import annotations
 
-from collections import defaultdict
+import json
+import random
+from dataclasses import replace
+from pathlib import Path
 
 from .dataset import SignSample
+from .manifest import DatasetManifestEntry
+
+
+def validate_signer_assignments(
+    all_signers: set[str],
+    train_signers: set[str],
+    val_signers: set[str],
+    test_signers: set[str],
+) -> None:
+    overlaps = {
+        "train_validation": train_signers & val_signers,
+        "train_test": train_signers & test_signers,
+        "validation_test": val_signers & test_signers,
+    }
+    overlapping = {name: sorted(signers) for name, signers in overlaps.items() if signers}
+    if overlapping:
+        raise ValueError(f"Signer overlap detected: {overlapping}")
+
+    assigned = train_signers | val_signers | test_signers
+    missing = sorted(all_signers - assigned)
+    unknown = sorted(assigned - all_signers)
+    if missing:
+        raise ValueError(f"Signers {missing} were not assigned to any split")
+    if unknown:
+        raise ValueError(f"Unknown signers assigned to a split: {unknown}")
+    if not train_signers or not val_signers or not test_signers:
+        raise ValueError("Train, validation, and test splits must all contain signers")
+
+
+def split_manifest_by_signer(
+    manifest: list[DatasetManifestEntry],
+    train_signers: set[str] | list[str] | None = None,
+    val_signers: set[str] | list[str] | None = None,
+    test_signers: set[str] | list[str] | None = None,
+    seed: int = 42,
+) -> tuple[list[DatasetManifestEntry], list[DatasetManifestEntry], list[DatasetManifestEntry]]:
+    entries = list(manifest)
+    if not entries:
+        return [], [], []
+
+    all_signers = sorted({item.signer_id for item in entries})
+    train_signers = list(train_signers) if train_signers is not None else []
+    val_signers = list(val_signers) if val_signers is not None else []
+    test_signers = list(test_signers) if test_signers is not None else []
+
+    if not train_signers and not val_signers and not test_signers:
+        if len(all_signers) < 3:
+            raise ValueError("At least three unique signers are required for a train/val/test split")
+        shuffled_signers = all_signers[:]
+        random.Random(seed).shuffle(shuffled_signers)
+        train_count = max(1, int(len(shuffled_signers) * 0.7))
+        val_count = max(1, int(len(shuffled_signers) * 0.15))
+        if train_count + val_count >= len(shuffled_signers):
+            train_count = len(shuffled_signers) - 2
+            val_count = 1
+        train_signers = shuffled_signers[:train_count]
+        val_signers = shuffled_signers[train_count : train_count + val_count]
+        test_signers = shuffled_signers[train_count + val_count :]
+
+    train_signer_set = set(train_signers)
+    val_signer_set = set(val_signers)
+    test_signer_set = set(test_signers)
+    validate_signer_assignments(
+        set(all_signers), train_signer_set, val_signer_set, test_signer_set
+    )
+
+    train = [replace(item, split="train") for item in entries if item.signer_id in train_signer_set]
+    val = [replace(item, split="validation") for item in entries if item.signer_id in val_signer_set]
+    test = [replace(item, split="test") for item in entries if item.signer_id in test_signer_set]
+
+    return train, val, test
+
+
+def write_manifest_splits(
+    train: list[DatasetManifestEntry],
+    validation: list[DatasetManifestEntry],
+    test: list[DatasetManifestEntry],
+    output_dir: str | Path,
+) -> dict[str, Path]:
+    output_root = Path(output_dir)
+    output_root.mkdir(parents=True, exist_ok=True)
+    outputs = {
+        "train": output_root / "train_manifest.json",
+        "validation": output_root / "validation_manifest.json",
+        "test": output_root / "test_manifest.json",
+    }
+    for name, entries in (("train", train), ("validation", validation), ("test", test)):
+        with outputs[name].open("w", encoding="utf-8") as handle:
+            json.dump([entry.__dict__ for entry in entries], handle, indent=2)
+    return outputs
 
 
 def signer_aware_split(
@@ -17,8 +110,6 @@ def signer_aware_split(
     if train_signers is None and val_signers is None and test_signers is None:
         train_count = max(1, int(len(all_signers) * 0.7))
         val_count = max(1, int(len(all_signers) * 0.15))
-        test_count = len(all_signers) - train_count - val_count
-
         train_signers = set(all_signers[:train_count])
         val_signers = set(all_signers[train_count : train_count + val_count])
         test_signers = set(all_signers[train_count + val_count :])

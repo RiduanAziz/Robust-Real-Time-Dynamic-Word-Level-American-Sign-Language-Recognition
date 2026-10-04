@@ -2,31 +2,51 @@ from __future__ import annotations
 
 import numpy as np
 
+from .extractor import LandmarkExtractor
 from .normalization import normalize_landmarks
+from .schema import LandmarkSequence
 
 
 class LandmarkPipeline:
     """Build a deterministic landmark sequence from an image frame."""
 
-    def __init__(self, feature_dim: int = 42, sequence_length: int = 16) -> None:
-        self.feature_dim = int(feature_dim)
+    def __init__(self, feature_dim: int = 42, sequence_length: int = 16, extractor: LandmarkExtractor | None = None) -> None:
+        self.extractor = extractor or LandmarkExtractor(feature_dim=feature_dim)
+        self.feature_dim = int(feature_dim or self.extractor.feature_dim)
         self.sequence_length = int(sequence_length)
 
     def process(self, frame: np.ndarray) -> np.ndarray:
         arr = np.asarray(frame)
         if arr.size == 0:
             return np.zeros((self.sequence_length, self.feature_dim), dtype=np.float32)
+        observation = self.extractor.extract_observation(arr)
+        if observation.landmarks.shape[0] != self.feature_dim:
+            raise ValueError(
+                f"Extractor produced {observation.landmarks.shape[0]} features; expected {self.feature_dim}"
+            )
+        return observation.landmarks.reshape(1, -1).repeat(self.sequence_length, axis=0)
 
-        if arr.ndim == 2:
-            arr = np.repeat(arr[:, :, None], 3, axis=2)
-        if arr.ndim != 3 or arr.shape[-1] != 3:
-            raise ValueError("Input frame must be a 2D grayscale image or a 3-channel RGB image.")
+    def process_video(self, video_path: str) -> LandmarkSequence:
+        import cv2
 
-        values = np.linspace(0.0, 1.0, self.sequence_length, dtype=np.float32)
-        base = np.zeros((self.sequence_length, self.feature_dim), dtype=np.float32)
-        for idx, value in enumerate(values):
-            base[idx] = value + np.linspace(0.0, 0.5, self.feature_dim, dtype=np.float32)
-        return base
+        capture = cv2.VideoCapture(video_path)
+        frames: list[np.ndarray] = []
+        masks: list[np.ndarray] = []
+        try:
+            if not capture.isOpened():
+                raise ValueError(f"Unable to open video: {video_path}")
+            while True:
+                success, frame = capture.read()
+                if not success:
+                    break
+                observation = self.extractor.extract_observation(frame)
+                frames.append(observation.landmarks)
+                masks.append(observation.mask)
+        finally:
+            capture.release()
+        if not frames:
+            raise ValueError(f"Video contains no readable frames: {video_path}")
+        return LandmarkSequence(np.stack(frames), np.stack(masks))
 
     def normalize_sequence(self, sequence: np.ndarray) -> np.ndarray:
         arr = np.asarray(sequence, dtype=np.float32)

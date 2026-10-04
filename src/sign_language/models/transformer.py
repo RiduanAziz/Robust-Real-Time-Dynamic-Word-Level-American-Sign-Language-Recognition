@@ -35,13 +35,23 @@ class TemporalTransformerClassifier(nn.Module):
         self.dropout = nn.Dropout(dropout)
         self.classifier = nn.Linear(embedding_dim, num_classes)
 
-    def forward(self, x: torch.Tensor) -> torch.Tensor:
+    def forward(
+        self,
+        x: torch.Tensor,
+        lengths: torch.Tensor | None = None,
+        mask: torch.Tensor | None = None,
+    ) -> torch.Tensor:
         if x.dim() == 2:
             x = x.unsqueeze(1)
         x = self.input_proj(x)
         seq_len = x.size(1)
         x = x + self.positional_embedding[:, :seq_len, :]
         x = self.dropout(x)
-        x = self.encoder(x)
-        pooled = x.mean(dim=1)
+        padding_mask = ~mask.bool() if mask is not None else None
+        x = self.encoder(x, src_key_padding_mask=padding_mask)
+        if mask is None:
+            pooled = x.mean(dim=1)
+        else:
+            weights = mask.to(dtype=x.dtype).unsqueeze(-1)
+            pooled = (x * weights).sum(dim=1) / weights.sum(dim=1).clamp_min(1.0)
         return self.classifier(pooled)

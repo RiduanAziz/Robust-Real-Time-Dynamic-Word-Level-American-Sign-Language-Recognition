@@ -3,4 +3,4 @@
 from .config.settings import Settings, get_settings
 from .robustness import NoiseScenario, evaluate_robustness
 
-__all__ = ["Settings", "get_settings", "NoiseScenario", "evaluate_robustness"]
+__all__ = ["NoiseScenario", "Settings", "evaluate_robustness", "get_settings"]

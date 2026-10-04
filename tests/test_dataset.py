@@ -1,6 +1,10 @@
 from __future__ import annotations
 
-from sign_language.data import SignLanguageDataset, SignSample, build_synthetic_dataset, signer_aware_split
+from sign_language.data import (
+    SignLanguageDataset,
+    build_synthetic_dataset,
+    signer_aware_split,
+)
 
 
 def test_dataset_shapes_and_splits() -> None:
@@ -17,8 +21,8 @@ def test_dataset_shapes_and_splits() -> None:
     assert len(train) > 0
     assert len(val) > 0
     assert len(test) > 0
-    assert set(sample.signer_id for sample in train).isdisjoint(set(sample.signer_id for sample in val))
-    assert set(sample.signer_id for sample in train).isdisjoint(set(sample.signer_id for sample in test))
+    assert {sample.signer_id for sample in train}.isdisjoint({sample.signer_id for sample in val})
+    assert {sample.signer_id for sample in train}.isdisjoint({sample.signer_id for sample in test})
 
     dataset = SignLanguageDataset(samples)
     item = dataset[0]

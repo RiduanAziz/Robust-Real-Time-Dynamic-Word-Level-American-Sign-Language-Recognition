@@ -11,8 +11,9 @@ model:
   name: temporal_transformer
   input_dim: 42
   hidden_dim: 128
-  num_classes: 5
-  sequence_length: 16
-data:
-  sequence_length: 16
-  num_classes: 5
+checkpoint_dir: checkpoints
+results_dir: results
+evaluation:
+  validation_split: validation
+  test_split: test
+  primary_metric: macro_f1

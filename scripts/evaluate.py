@@ -1,19 +1,21 @@
 from __future__ import annotations
 
-from pathlib import Path
+import argparse
 
 import torch
 from sklearn.metrics import accuracy_score
 
-from sign_language.data import SignLanguageDataset, build_synthetic_dataset
-from sign_language.models import MLPClassifier
+from sign_language.config import load_experiment_config
+from sign_language.models import build_model
 
 
 def main() -> None:
-    samples = build_synthetic_dataset(samples_per_class=2, sequence_length=16, feature_dim=42)
-    dataset = SignLanguageDataset(samples)
-    model = MLPClassifier(input_dim=42, seq_len=16, num_classes=len({sample.label for sample in samples}))
-    logits = model(torch.randn(2, 16, 42))
+    parser = argparse.ArgumentParser(description="Run the evaluation smoke path.")
+    parser.add_argument("--config", type=str, default="configs/base.yaml")
+    args = parser.parse_args()
+    config = load_experiment_config(args.config)
+    model = build_model(config)
+    logits = model(torch.randn(2, config.model.sequence_length, config.model.input_dim))
     preds = logits.argmax(dim=1).tolist()
     labels = [0, 1]
     print(f"accuracy={accuracy_score(labels, preds[:2]):.4f}")

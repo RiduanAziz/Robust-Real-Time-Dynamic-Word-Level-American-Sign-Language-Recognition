@@ -1,7 +1,5 @@
 from __future__ import annotations
 
-from collections.abc import Iterable
-
 import torch
 import torch.nn.functional as F
 from torch import nn
@@ -75,6 +73,7 @@ def train_model(
     epochs: int = 3,
     learning_rate: float = 1e-3,
     weight_decay: float = 1e-4,
+    gradient_clip: float | None = None,
 ) -> list[float]:
     """Train a classification model with a simple AdamW loop."""
     model.to(device)
@@ -89,9 +88,16 @@ def train_model(
             inputs = batch["landmarks"].to(device)
             targets = batch["label"].to(device)
             optimizer.zero_grad()
-            logits = model(inputs)
+            model_kwargs = {}
+            if "lengths" in batch:
+                model_kwargs["lengths"] = batch["lengths"].to(device)
+            if "mask" in batch:
+                model_kwargs["mask"] = batch["mask"].to(device)
+            logits = model(inputs, **model_kwargs)
             loss = criterion(logits, targets)
             loss.backward()
+            if gradient_clip is not None:
+                torch.nn.utils.clip_grad_norm_(model.parameters(), gradient_clip)
             optimizer.step()
             total_loss += loss.item()
         history.append(total_loss / max(1, len(train_loader)))

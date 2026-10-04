@@ -10,6 +10,6 @@ __all__ = [
     "DatasetManifestEntry",
     "build_manifest",
     "generate_dataset_report",
-    "validate_signer_independent_split",
     "split_manifest_by_signer",
+    "validate_signer_independent_split",
 ]
