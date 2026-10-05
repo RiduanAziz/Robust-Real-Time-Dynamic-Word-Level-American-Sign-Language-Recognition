@@ -67,7 +67,7 @@ def _rows_from_json_metadata(payload: Any) -> list[dict[str, str]]:
                 if not isinstance(instance, Mapping):
                     continue
                 video_id = str(instance.get("video_id") or instance.get("id") or "").strip()
-                signer_id = str(instance.get("signer_id") or "").strip()
+                signer_id = str(instance.get("signer_id") or "unknown").strip()
                 row = {
                     "sample_id": video_id,
                     "signer_id": signer_id,
@@ -87,7 +87,7 @@ def _rows_from_json_metadata(payload: Any) -> list[dict[str, str]]:
                 if not isinstance(instance, Mapping):
                     continue
                 video_id = str(instance.get("video_id") or instance.get("id") or "").strip()
-                signer_id = str(instance.get("signer_id") or "").strip()
+                signer_id = str(instance.get("signer_id") or "unknown").strip()
                 row = {
                     "sample_id": video_id,
                     "signer_id": signer_id,

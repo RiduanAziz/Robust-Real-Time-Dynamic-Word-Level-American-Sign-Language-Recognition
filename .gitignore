@@ -218,7 +218,7 @@ __marimo__/
 .streamlit/secrets.toml
 
 
-# Datasets
+# Datasets - raw videos
 data/raw/
 data/videos/
 data/*.mp4
@@ -226,19 +226,47 @@ data/*.avi
 data/*.mov
 data/*.mkv
 
-# Generated datasets/features
+# Generated datasets/features/landmarks
 data/processed/
 data/landmarks/
 data/features/
+data/frames/
+
+# Large metadata files (keep manifests trackable)
+data/WLASL_v0.3.json
+data/nslt_*.json
+data/missing.txt
 
 # Training outputs
 runs/
 outputs/
 checkpoints/
 artifacts/
+mlruns/
 
-# Model files
+# Model files and checkpoints
 *.pt
 *.pth
 *.ckpt
 *.onnx
+*.task
+*.tflite
+
+# Results artifacts (keep lightweight summaries)
+results/baseline/
+results/proposed/
+results/robustness/
+results/ablations/
+results/figures/
+results/checkpoints/
+
+# Experiment logs
+wandb/
+lightning_logs/
+tensorboard_logs/
+
+# Large numpy/pickle caches
+*.npy
+*.npz
+*.pkl
+*.pickle

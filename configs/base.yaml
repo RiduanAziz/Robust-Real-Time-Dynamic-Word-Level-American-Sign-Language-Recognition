@@ -9,7 +9,7 @@ training:
   gradient_clip: 1.0
 model:
   name: temporal_transformer
-  input_dim: 42
+  input_dim: 4977
   hidden_dim: 128
 checkpoint_dir: checkpoints
 results_dir: results

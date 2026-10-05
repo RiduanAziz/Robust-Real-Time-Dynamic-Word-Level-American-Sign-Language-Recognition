@@ -12,7 +12,7 @@ class SignSample:
     sample_id: str
     label: str
     signer_id: str
-    landmarks: np.ndarray
+    landmarks: np.ndarray | str | Path
     session_id: str | None = None
     metadata: dict[str, Any] = field(default_factory=dict)
 
@@ -34,7 +34,13 @@ class SignLanguageDataset(Dataset):
 
     def __getitem__(self, index: int) -> dict[str, Any]:
         sample = self.samples[index]
-        landmarks = np.asarray(sample.landmarks, dtype=np.float32)
+        
+        if isinstance(sample.landmarks, (str, Path)):
+            loaded = np.load(str(sample.landmarks))
+            landmarks = loaded["landmarks"].astype(np.float32)
+        else:
+            landmarks = np.asarray(sample.landmarks, dtype=np.float32)
+            
         label_index = self.label_to_index[sample.label]
         return {
             "sample_id": sample.sample_id,
@@ -44,6 +50,43 @@ class SignLanguageDataset(Dataset):
             "landmarks": landmarks,
             "metadata": sample.metadata,
         }
+
+def build_dataset_from_manifest(
+    manifest_path: str | Path,
+    landmarks_dir: str | Path,
+    allowed_classes: list[str] | None = None,
+) -> list[SignSample]:
+    import json
+    from pathlib import Path
+    
+    with open(manifest_path, "r", encoding="utf-8") as f:
+        manifest = json.load(f)
+        
+    landmarks_root = Path(landmarks_dir)
+    samples = []
+    
+    for entry in manifest:
+        if allowed_classes and entry["class_name"] not in allowed_classes:
+            continue
+            
+        npz_path = landmarks_root / f"{entry['sample_id']}.npz"
+        if not npz_path.exists():
+            continue
+            
+        samples.append(
+            SignSample(
+                sample_id=entry["sample_id"],
+                label=entry["class_name"],
+                signer_id=entry["signer_id"],
+                landmarks=npz_path,
+                metadata={
+                    "num_frames": entry["num_frames"],
+                    "fps": entry["fps"],
+                    "split": entry.get("split"),
+                }
+            )
+        )
+    return samples
 
 
 def build_synthetic_dataset(
