@@ -29,8 +29,22 @@ class GRUClassifier(nn.Module):
         direction = 2 if bidirectional else 1
         self.classifier = nn.Linear(hidden_dim * direction, num_classes)
 
-    def forward(self, x: torch.Tensor) -> torch.Tensor:
-        outputs, _ = self.gru(x)
-        last_hidden = outputs[:, -1, :]
+    def forward(
+        self,
+        x: torch.Tensor,
+        lengths: torch.Tensor | None = None,
+        mask: torch.Tensor | None = None,
+    ) -> torch.Tensor:
+        if lengths is None and mask is not None:
+            lengths = mask.long().sum(dim=1)
+        if lengths is not None:
+            lengths = lengths.clamp(min=1, max=x.shape[1]).cpu()
+            packed = nn.utils.rnn.pack_padded_sequence(x, lengths, batch_first=True, enforce_sorted=False)
+            _, hidden = self.gru(packed)
+            direction = 2 if self.gru.bidirectional else 1
+            last_hidden = hidden[-direction:].transpose(0, 1).reshape(x.shape[0], -1)
+        else:
+            outputs, _ = self.gru(x)
+            last_hidden = outputs[:, -1, :]
         last_hidden = self.dropout(last_hidden)
         return self.classifier(last_hidden)

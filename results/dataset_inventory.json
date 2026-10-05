@@ -1,0 +1,82 @@
+{
+  "dataset_name": "WLASL v0.3",
+  "dataset_type": "word-level American Sign Language video dataset",
+  "local_dataset_root": "data",
+  "metadata_files": [
+    "data/WLASL_v0.3.json",
+    "data/nslt_100.json",
+    "data/nslt_300.json",
+    "data/nslt_1000.json",
+    "data/nslt_2000.json"
+  ],
+  "raw_video_dir": "data/raw",
+  "total_local_mp4_files": 11980,
+  "metadata_gloss_count": 2000,
+  "metadata_instance_count": 21083,
+  "split_counts": {
+    "train": 14289,
+    "val": 3916,
+    "test": 2878
+  },
+  "signer_count": 119,
+  "signers_by_split": {
+    "train": 117,
+    "val": 109,
+    "test": 105
+  },
+  "split_overlap_signers": {
+    "train_val": 108,
+    "train_test": 104,
+    "val_test": 98
+  },
+  "fps_values_observed_in_metadata": [25],
+  "class_names_preview": [
+    "book",
+    "drink",
+    "computer",
+    "before",
+    "chair",
+    "go",
+    "clothes",
+    "who",
+    "candy",
+    "cousin",
+    "deaf",
+    "fine",
+    "help",
+    "no",
+    "thin",
+    "walk",
+    "year",
+    "yes",
+    "all",
+    "black"
+  ],
+  "sampled_stream_summary": {
+    "sampled_videos": 200,
+    "common_resolutions": {
+      "320x240": 33,
+      "640x480": 34,
+      "288x192": 50,
+      "720x400": 34,
+      "1920x1080": 38,
+      "1280x720": 3
+    },
+    "duration_seconds": {
+      "min": 1.0,
+      "max": 6.037188,
+      "avg": 2.60125
+    },
+    "fps_range": {
+      "min": 23.976023976023978,
+      "max": 50.0,
+      "avg": 28.970745754245755
+    }
+  },
+  "missing_or_unmatched": {
+    "metadata_ids_missing_from_local_raw": 9103,
+    "local_raw_files_missing_from_metadata": 0,
+    "notes": "The local raw directory contains 11,980 MP4 clips, but the WLASL metadata includes 21,083 instances; therefore the local data represents only a subset of the full WLASL inventory."
+  },
+  "status": "actual local dataset discovered; manifest generation and signer-independent split construction remain incomplete"
+}

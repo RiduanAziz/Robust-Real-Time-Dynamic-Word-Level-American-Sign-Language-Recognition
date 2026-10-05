@@ -216,3 +216,29 @@ __marimo__/
 
 # Streamlit
 .streamlit/secrets.toml
+
+
+# Datasets
+data/raw/
+data/videos/
+data/*.mp4
+data/*.avi
+data/*.mov
+data/*.mkv
+
+# Generated datasets/features
+data/processed/
+data/landmarks/
+data/features/
+
+# Training outputs
+runs/
+outputs/
+checkpoints/
+artifacts/
+
+# Model files
+*.pt
+*.pth
+*.ckpt
+*.onnx

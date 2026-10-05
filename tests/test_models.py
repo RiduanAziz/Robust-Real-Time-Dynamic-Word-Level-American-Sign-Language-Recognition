@@ -2,7 +2,12 @@ from __future__ import annotations
 
 import torch
 
-from sign_language.models import GRUClassifier, LSTMClassifier, MLPClassifier, TemporalTransformerClassifier
+from sign_language.models import (
+    GRUClassifier,
+    LSTMClassifier,
+    MLPClassifier,
+    TemporalTransformerClassifier,
+)
 
 
 def test_model_forward_passes() -> None:

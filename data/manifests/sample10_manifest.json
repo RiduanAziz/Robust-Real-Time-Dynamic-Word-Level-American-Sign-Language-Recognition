@@ -1,0 +1,13 @@
+[
+  {
+    "sample_id": "69241",
+    "signer_id": "118",
+    "class_id": 0,
+    "class_name": "book",
+    "video_path": "69241.mp4",
+    "num_frames": 75,
+    "fps": 29.97002997002997,
+    "duration": 2.5025,
+    "split": "train"
+  }
+]

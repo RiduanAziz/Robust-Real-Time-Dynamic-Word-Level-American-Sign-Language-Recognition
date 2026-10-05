@@ -23,6 +23,22 @@ def pad_or_truncate_sequence(
     return np.concatenate([arr, padding], axis=0)
 
 
+def pad_or_truncate_with_mask(
+    sequence: np.ndarray,
+    target_length: int,
+    pad_value: float = 0.0,
+) -> tuple[np.ndarray, np.ndarray, int]:
+    """Pad or truncate a sequence and return its valid-frame mask and length."""
+    arr = np.asarray(sequence, dtype=np.float32)
+    if arr.ndim == 1:
+        arr = arr.reshape(1, -1)
+    valid_length = min(arr.shape[0], target_length)
+    padded = pad_or_truncate_sequence(arr, target_length, pad_value=pad_value)
+    mask = np.zeros(target_length, dtype=bool)
+    mask[:valid_length] = True
+    return padded, mask, valid_length
+
+
 def sequence_to_tensor(
     sample: Any,
     target_length: int,

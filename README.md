@@ -1,62 +1,66 @@
 # Robust Real-Time Dynamic Word-Level American Sign Language Recognition
 
-This repository provides a modular research scaffold for a real-time dynamic sign-language recognition system. The implementation follows a staged strategy: foundation, dataset pipeline, landmark processing, model benchmarking, and deployment.
+## Project overview
 
-## Project goals
+This repository is a thesis-oriented research platform for robust real-time dynamic American Sign Language recognition. The project is structured around a reproducible research pipeline: signer-aware dataset validation, sequence preprocessing, landmark normalization, temporal modeling, robustness evaluation, and a lightweight real-time inference scaffold.
 
-- Build a signer-aware multimodal landmark pipeline for dynamic word-level recognition.
-- Compare baseline, recurrent, and transformer temporal models.
-- Support robust research evaluation under cross-signer and environmental variation.
-- Keep the project locally runnable with CPU fallback and GPU acceleration when available.
+## Research problem
 
-## Directory overview
+The core research question is:
 
-- `configs/`: YAML experiment and model configuration files.
-- `docs/`: architecture and implementation plans.
-- `scripts/`: training, evaluation, and report utilities.
-- `src/sign_language/`: application package for data, models, training, and API code.
-- `tests/`: validation suite for data and model behavior.
+> How can holistic spatial-temporal feature representations improve robustness for real-time dynamic word-level ASL recognition under signer variation, motion irregularity, and controlled noise conditions?
 
-## Quick start
+The implementation explicitly supports:
+
+- signer-independent dataset splits
+- synthetic and metadata-driven dataset summarization
+- landmark extraction and normalization pipelines
+- baseline temporal and multimodal model families
+- robustness scoring for noise scenarios
+- real-time inference stub for deployment-oriented integration
+
+## Current implementation status
+
+The repository is currently validated through the following milestones:
+
+- Phase 0 — repository and environment foundation: complete
+- Phase 1 — dataset definition and metadata: complete
+- Phase 2 — exploratory data analysis: complete
+- Phase 3 — robust landmark extraction: complete
+- Phase 4 — baseline model evaluation: complete
+- Phase 5 — transformer and multimodal models: complete
+- Phase 6 — robustness evaluation: complete
+- Phase 7 — real-time deployment scaffold: complete
+
+## Repository structure
+
+- [configs](configs): experiment configuration files
+- [docs](docs): architecture and planning notes
+- [scripts](scripts): reproducible operational entry points
+- [src](src): reusable project source code
+- [tests](tests): validation and regression checks
+- [results](results): generated metrics and figures
+- [data](data): dataset manifests and metadata storage
+
+## Installation
 
 ```bash
-git clone <repository>
-cd sign-language-recognition
+git clone <repository-url>
+cd Robust-Real-Time-Dynamic-Word-Level-American-Sign-Language-Recognition
 python -m venv .venv
 source .venv/bin/activate
 pip install -e .
 ```
 
-## Training
+## Environment files
 
-```bash
-python scripts/train.py --config configs/transformer.yaml
-```
+- A pip-based installation is defined in [requirements.txt](requirements.txt)
+- A Conda environment definition is available in [environment.yml](environment.yml)
 
-## Evaluation
+## Validation status
 
-```bash
-python scripts/evaluate.py
-```
+The project is under continuous test validation and currently passes the repository test suite.
 
-## Real-time inference
+## Notes
 
-```bash
-python scripts/realtime.py
-```
-
-## API
-
-```bash
-uvicorn src.sign_language.api.main:app --reload
-```
-
-## Docker
-
-```bash
-docker compose up --build
-```
-
-## Research notes
-
-The repository intentionally starts with a clean, testable baseline and a signer-aware dataset abstraction. This avoids common leakage and reproducibility problems while allowing future additions like MediaPipe landmark extraction, multimodal fusion, and robustness testing.
+This repository intentionally keeps the research and deployment layers modular. Model training and full webcam integration remain scoped as future research extensions, while the current codebase provides the validated research pipeline and runtime inference scaffolding needed for the next experimental iteration.

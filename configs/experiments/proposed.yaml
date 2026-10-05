@@ -1,0 +1,7 @@
+model:
+  name: lstm
+  hidden_dim: 128
+  bidirectional: true
+  dropout: 0.2
+training:
+  epochs: 20

@@ -18,7 +18,12 @@ class MLPClassifier(nn.Module):
             nn.Linear(hidden_dim, num_classes),
         )
 
-    def forward(self, x: torch.Tensor) -> torch.Tensor:
+    def forward(
+        self,
+        x: torch.Tensor,
+        lengths: torch.Tensor | None = None,
+        mask: torch.Tensor | None = None,
+    ) -> torch.Tensor:
         if x.dim() == 2:
             x = x.unsqueeze(1).expand(-1, self.seq_len, -1)
         return self.net(x)
