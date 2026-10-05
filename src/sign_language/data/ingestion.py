@@ -1,7 +1,10 @@
 from __future__ import annotations
 
 import csv
+<<<<<<< HEAD
 import json
+=======
+>>>>>>> a17401fdbdf9b5cbe0015cc0edd2694dc2ff5332
 from collections import Counter
 from collections.abc import Iterable, Mapping
 from dataclasses import dataclass
@@ -56,6 +59,7 @@ def discover_video_paths(raw_dir: str | Path) -> list[Path]:
     return sorted(path for path in root.rglob("*") if path.is_file() and path.suffix.lower() in VIDEO_EXTENSIONS)
 
 
+<<<<<<< HEAD
 def _rows_from_json_metadata(payload: Any) -> list[dict[str, str]]:
     rows: list[dict[str, str]] = []
     if isinstance(payload, list):
@@ -123,6 +127,19 @@ def read_metadata(path: str | Path) -> list[dict[str, str]]:
         if not row.get("class_id"):
             row["class_id"] = str(class_ids.get(row.get("class_name", ""), -1))
     return normalized
+=======
+def read_metadata(path: str | Path) -> list[dict[str, str]]:
+    metadata_path = Path(path)
+    with metadata_path.open("r", encoding="utf-8", newline="") as handle:
+        rows = list(csv.DictReader(handle))
+    if not rows:
+        raise DatasetValidationError(f"Metadata file contains no records: {metadata_path}")
+    columns = set(rows[0].keys())
+    missing_columns = sorted(REQUIRED_METADATA_COLUMNS.difference(columns))
+    if missing_columns:
+        raise DatasetValidationError(f"Metadata is missing required columns: {missing_columns}")
+    return [{str(key): str(value or "").strip() for key, value in row.items()} for row in rows]
+>>>>>>> a17401fdbdf9b5cbe0015cc0edd2694dc2ff5332
 
 
 def _video_stats(path: Path) -> tuple[int, float, float]:
@@ -175,6 +192,7 @@ def build_video_manifest(
     raw_dir: str | Path,
     metadata_path: str | Path,
     output_path: str | Path | None = None,
+<<<<<<< HEAD
     *,
     max_samples: int | None = None,
     allow_missing: bool = False,
@@ -185,6 +203,11 @@ def build_video_manifest(
         if max_samples <= 0:
             raise ValueError("max_samples must be positive when provided")
         rows = rows[:max_samples]
+=======
+) -> tuple[list[DatasetManifestEntry], DatasetValidationReport]:
+    raw_root = Path(raw_dir).resolve()
+    rows = read_metadata(metadata_path)
+>>>>>>> a17401fdbdf9b5cbe0015cc0edd2694dc2ff5332
     preliminary = validate_metadata_rows(rows)
     missing_files: list[str] = []
     corrupt_files: list[str] = []
@@ -216,7 +239,10 @@ def build_video_manifest(
                 "num_frames": num_frames,
                 "fps": fps,
                 "duration": duration,
+<<<<<<< HEAD
                 "split": row.get("split") or None,
+=======
+>>>>>>> a17401fdbdf9b5cbe0015cc0edd2694dc2ff5332
             }
         )
 
@@ -234,7 +260,11 @@ def build_video_manifest(
         class_distribution=preliminary.class_distribution,
         signer_distribution=preliminary.signer_distribution,
     )
+<<<<<<< HEAD
     if not report.is_valid and not allow_missing:
+=======
+    if not report.is_valid:
+>>>>>>> a17401fdbdf9b5cbe0015cc0edd2694dc2ff5332
         raise DatasetValidationError(report)
 
     manifest = build_manifest(entries)

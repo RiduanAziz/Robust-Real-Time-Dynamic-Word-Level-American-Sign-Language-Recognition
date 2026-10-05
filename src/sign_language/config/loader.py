@@ -6,17 +6,27 @@ from typing import Any
 
 import yaml
 
+<<<<<<< HEAD
 DEFAULT_DATASET_LABELS = ["HELLO", "THANKS", "PLEASE", "YES", "NO"]
 DEFAULT_SEQUENCE_LENGTH = 16
 
+=======
+>>>>>>> a17401fdbdf9b5cbe0015cc0edd2694dc2ff5332
 
 @dataclass
 class DatasetConfig:
     root: str = "data"
+<<<<<<< HEAD
     labels: list[str] = field(default_factory=lambda: list(DEFAULT_DATASET_LABELS))
     signers: list[str] = field(default_factory=list)
     samples_per_class: int = 6
     sequence_length: int = DEFAULT_SEQUENCE_LENGTH
+=======
+    labels: list[str] = field(default_factory=list)
+    signers: list[str] = field(default_factory=list)
+    samples_per_class: int = 6
+    sequence_length: int = 16
+>>>>>>> a17401fdbdf9b5cbe0015cc0edd2694dc2ff5332
     feature_representation: str = "hands"
 
 
@@ -97,6 +107,7 @@ def _build_config(data: dict[str, Any]) -> ExperimentConfig:
     training_data = dict(data.get("training", {}))
     evaluation_data = dict(data.get("evaluation", {}))
 
+<<<<<<< HEAD
     dataset_labels = dataset_data.get("labels")
     if dataset_labels is None:
         dataset_data["labels"] = list(DEFAULT_DATASET_LABELS)
@@ -110,6 +121,11 @@ def _build_config(data: dict[str, Any]) -> ExperimentConfig:
     if dataset_data.get("sequence_length") is None:
         dataset_data["sequence_length"] = DEFAULT_SEQUENCE_LENGTH
     if "sequence_length" not in model_data:
+=======
+    if dataset_data.get("labels") and "num_classes" not in model_data:
+        model_data["num_classes"] = len(dataset_data["labels"])
+    if "sequence_length" in dataset_data and "sequence_length" not in model_data:
+>>>>>>> a17401fdbdf9b5cbe0015cc0edd2694dc2ff5332
         model_data["sequence_length"] = dataset_data["sequence_length"]
     if "sequence_length" in model_data and "max_sequence_length" not in model_data:
         model_data["max_sequence_length"] = model_data["sequence_length"]
@@ -136,10 +152,15 @@ def _validate_config(config: ExperimentConfig) -> None:
         raise ValueError("model.input_dim and model.num_classes must be positive")
     if config.dataset.labels and len(config.dataset.labels) != config.model.num_classes:
         raise ValueError("dataset.labels and model.num_classes must agree")
+<<<<<<< HEAD
     if config.dataset.sequence_length is not None and config.dataset.sequence_length <= 0:
         raise ValueError("dataset.sequence_length must be positive when provided")
     if config.model.sequence_length <= 0:
         raise ValueError("model.sequence_length must be positive")
+=======
+    if config.dataset.sequence_length <= 0 or config.model.sequence_length <= 0:
+        raise ValueError("sequence lengths must be positive")
+>>>>>>> a17401fdbdf9b5cbe0015cc0edd2694dc2ff5332
     if config.training.epochs <= 0 or config.training.batch_size <= 0:
         raise ValueError("training.epochs and training.batch_size must be positive")
     if config.training.learning_rate <= 0 or config.training.weight_decay < 0:

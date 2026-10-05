@@ -1,6 +1,7 @@
 dataset:
   root: data
   labels:
+<<<<<<< HEAD
   - book
   - drink
   - computer
@@ -105,3 +106,34 @@ dataset:
   samples_per_class: null
   sequence_length: 64
   feature_representation: holistic
+=======
+    - HELLO
+    - THANKS
+    - PLEASE
+    - "YES"
+    - "NO"
+  signers:
+    - S001
+    - S002
+    - S003
+    - S004
+    - S005
+    - S006
+    - S007
+    - S008
+    - S009
+    - S010
+    - S011
+    - S012
+    - S013
+    - S014
+    - S015
+    - S016
+    - S017
+    - S018
+    - S019
+    - S020
+  samples_per_class: 6
+  sequence_length: 16
+  feature_representation: hands
+>>>>>>> a17401fdbdf9b5cbe0015cc0edd2694dc2ff5332
