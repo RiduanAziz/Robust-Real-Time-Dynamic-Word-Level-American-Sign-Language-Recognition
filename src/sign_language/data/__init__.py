@@ -2,7 +2,7 @@
 
 from .analysis import summarize_dataset
 from .dataloader import build_dataloader, collate_sequences
-from .dataset import SignLanguageDataset, SignSample, build_synthetic_dataset
+from .dataset import SignLanguageDataset, SignSample, build_dataset_from_manifest, build_synthetic_dataset
 from .ingestion import (
     DatasetValidationError,
     DatasetValidationReport,
@@ -38,6 +38,7 @@ __all__ = [
     "SignLanguageDataset",
     "SignSample",
     "build_dataloader",
+    "build_dataset_from_manifest",
     "build_manifest",
     "build_synthetic_dataset",
     "build_video_manifest",

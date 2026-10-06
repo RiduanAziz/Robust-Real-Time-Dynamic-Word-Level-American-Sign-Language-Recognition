@@ -27,7 +27,7 @@ def model_info() -> dict[str, str]:
 def predict(request: PredictionRequest) -> dict[str, int | float | list[float]]:
     sequence = np.asarray(request.sequence, dtype=np.float32)
     payload = create_prediction_payload(sequence)
-    predictor = RealTimePredictor(num_classes=5)
+    predictor = RealTimePredictor()
     logits = predictor.predict(sequence)
     predicted_class = int(np.argmax(logits))
     return {

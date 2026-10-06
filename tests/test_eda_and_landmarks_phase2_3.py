@@ -45,6 +45,6 @@ def test_landmark_pipeline_extracts_and_normalizes_sequence() -> None:
     assert result.shape == (16, 42)
     assert np.isfinite(result).all()
 
-    normalized = pipeline.normalize_sequence(result)
+    normalized = pipeline.normalize_sequence(result, include_dynamics=False)
     assert np.isfinite(normalized).all()
     assert normalized.shape == result.shape

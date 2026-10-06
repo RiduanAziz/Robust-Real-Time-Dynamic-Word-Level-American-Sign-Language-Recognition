@@ -16,7 +16,6 @@ def create_prediction_payload(sequence: np.ndarray) -> dict[str, int | float | s
 
 
 class RealTimePredictor:
-<<<<<<< HEAD
     """Predictor that runs the trained PyTorch model for real-time inference."""
 
     def __init__(self, model_path: str | Path | None = None, config_path: str | Path | None = None) -> None:
@@ -42,25 +41,12 @@ class RealTimePredictor:
 
     def predict(self, sequence: np.ndarray) -> np.ndarray:
         import torch
-=======
-    """Minimal runtime predictor for real-time inference scaffolding."""
-
-    def __init__(self, num_classes: int = 5) -> None:
-        self.num_classes = int(num_classes)
-
-    def predict(self, sequence: np.ndarray) -> np.ndarray:
->>>>>>> a17401fdbdf9b5cbe0015cc0edd2694dc2ff5332
         arr = np.asarray(sequence, dtype=np.float32)
         if arr.ndim != 2:
             raise ValueError("Prediction sequence must be a 2D array of shape [time_steps, features].")
 
-<<<<<<< HEAD
         with torch.no_grad():
             # Add batch dimension
             x = torch.tensor(arr, dtype=torch.float32).unsqueeze(0)
             logits = self.model(x)
             return logits.squeeze(0).numpy()
-=======
-        logits = np.linspace(0.0, 1.0, self.num_classes, dtype=np.float32)
-        return logits
->>>>>>> a17401fdbdf9b5cbe0015cc0edd2694dc2ff5332
