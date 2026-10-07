@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import argparse
 import json
+from pathlib import Path
 
 from torch.utils.data import DataLoader
 
@@ -16,43 +17,6 @@ import torch
 import numpy as np
 
 
-def collate_fn(batch):
-    # Padding sequences to max length in the batch
-    max_len = max(item["landmarks"].shape[0] for item in batch)
-    
-    # But wait, we should pad to max_sequence_length from config if provided,
-    # or just pad batch locally.
-    padded_landmarks = []
-    masks = []
-    labels = []
-    lengths = []
-    
-    for item in batch:
-        seq = item["landmarks"]
-        length = seq.shape[0]
-        feature_dim = seq.shape[1]
-        
-        pad_len = max_len - length
-        if pad_len > 0:
-            padded_seq = np.pad(seq, ((0, pad_len), (0, 0)), mode="constant")
-            mask = np.pad(np.ones(length, dtype=np.float32), (0, pad_len), mode="constant")
-        else:
-            padded_seq = seq
-            mask = np.ones(length, dtype=np.float32)
-            
-        padded_landmarks.append(padded_seq)
-        masks.append(mask)
-        labels.append(item["label"])
-        lengths.append(length)
-        
-    return {
-        "landmarks": torch.tensor(np.stack(padded_landmarks), dtype=torch.float32),
-        "mask": torch.tensor(np.stack(masks), dtype=torch.float32),
-        "label": torch.tensor(labels, dtype=torch.long),
-        "lengths": torch.tensor(lengths, dtype=torch.long),
-    }
-
-
 def main() -> None:
     parser = argparse.ArgumentParser(description="Train a sign-language recognition model.")
     parser.add_argument("--config", type=str, default="configs/base.yaml")
@@ -60,6 +24,7 @@ def main() -> None:
     parser.add_argument("--landmarks-dir", type=str, default="data/landmarks")
     parser.add_argument("--dry-run", action="store_true", help="Print the resolved config without training.")
     args = parser.parse_args()
+    
     config = load_experiment_config(args.config)
     if args.dry_run:
         print(json.dumps(config.to_dict(), indent=2))
@@ -74,14 +39,10 @@ def main() -> None:
     )
     dataset = SignLanguageDataset(samples, label_to_index={l: i for i, l in enumerate(config.dataset.labels)})
     
-    # We must normalize the sequence data using the pipeline
-    # Wait, the dataset yields raw sequences. Let's create a collate that normalizes.
-    
     raw_feature_dim = config.model.input_dim // 3
     pipeline = LandmarkPipeline(feature_dim=raw_feature_dim, sequence_length=config.dataset.sequence_length)
     
     def collate_with_norm(batch):
-        # We can just apply the pipeline normalize on the fly
         normalized_landmarks = []
         labels = []
         for item in batch:
@@ -136,6 +97,18 @@ def main() -> None:
     val_metrics = evaluate_model(torch.cat(all_logits), torch.cat(all_targets))
     print("Validation Metrics:")
     print(json.dumps(val_metrics, indent=2))
+    
+    # Save the metrics
+    metrics_out = {
+        "loss_history": loss_history,
+        "validation_metrics": val_metrics
+    }
+    
+    Path(config.results_dir).mkdir(parents=True, exist_ok=True)
+    with open(f"{config.results_dir}/training_metrics.json", "w") as f:
+        json.dump(metrics_out, f, indent=2)
+        
+    print(f"Metrics saved to {config.results_dir}/training_metrics.json")
     
     # Save the model
     torch.save(model.state_dict(), f"models/{config.model.name}.pt")
