@@ -111,6 +111,7 @@ def main() -> None:
     print(f"Metrics saved to {config.results_dir}/training_metrics.json")
     
     # Save the model
+    Path("models").mkdir(parents=True, exist_ok=True)
     torch.save(model.state_dict(), f"models/{config.model.name}.pt")
 
 if __name__ == '__main__':
