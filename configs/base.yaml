@@ -2,7 +2,7 @@ seed: 42
 project_name: sign-language-recognition
 log_level: INFO
 training:
-  epochs: 10
+  epochs: 100
   batch_size: 32
   learning_rate: 0.001
   weight_decay: 0.0001
