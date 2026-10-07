@@ -12,14 +12,14 @@ from sign_language.landmarks.pipeline import LandmarkPipeline
 def main() -> None:
     parser = argparse.ArgumentParser(description="Real-time sign language recognition.")
     parser.add_argument("--video-source", default="0", help="Camera index or path to video")
-    parser.add_argument("--model-path", help="Path to trained PyTorch model (.pt)")
+    parser.add_argument("--model-path", default="models/temporal_transformer_trained.pt", help="Path to trained PyTorch model (.pt)")
     parser.add_argument("--config", default="configs/base.yaml", help="Path to config")
     parser.add_argument("--model-asset-path", default="models/mediapipe/holistic_landmarker.task")
     args = parser.parse_args()
 
     predictor = RealTimePredictor(model_path=args.model_path, config_path=args.config)
     extractor = LandmarkExtractor(model_asset_path=args.model_asset_path, representation="holistic")
-    pipeline = LandmarkPipeline(feature_dim=predictor.config.model.input_dim, 
+    pipeline = LandmarkPipeline(feature_dim=predictor.config.model.input_dim // 3, 
                                 sequence_length=predictor.config.dataset.sequence_length, 
                                 extractor=extractor)
 
@@ -64,3 +64,6 @@ def main() -> None:
             
     cap.release()
     cv2.destroyAllWindows()
+
+if __name__ == "__main__":
+    main()
