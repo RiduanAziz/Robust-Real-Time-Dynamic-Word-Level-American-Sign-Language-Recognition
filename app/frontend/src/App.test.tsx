@@ -1,47 +1,54 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import React from 'react';
 import { render, screen, fireEvent } from '@testing-library/react';
+import React from 'react';
+import { Header } from './components/Header';
 import { LiveRecognitionPanel } from './components/LiveRecognitionPanel';
+import { HandQualityCoach } from './components/HandQualityCoach';
+import { PostureInspector } from './components/PostureInspector';
+import { GestureReplay } from './components/GestureReplay';
+import { RobustnessLab } from './components/RobustnessLab';
+import { PracticeMode } from './components/PracticeMode';
 import { TranscriptWorkspace } from './components/TranscriptWorkspace';
 import { SpeechWorkspace } from './components/SpeechWorkspace';
 import { SettingsModal } from './components/SettingsModal';
-import { Header } from './components/Header';
-import { CommittedToken, LivePrediction, WordCandidate, AppSettings } from './types';
+import {
+  CommittedToken,
+  LivePrediction,
+  WordCandidate,
+  AppSettings,
+  LandmarkPoint,
+  ReplayFrame,
+} from './types';
 
-describe('SignFlow Component Suite', () => {
+describe('SignFlow Frontend Suite', () => {
   beforeEach(() => {
-    class MockUtterance {
+    vi.clearAllMocks();
+    (window as any).SpeechSynthesisUtterance = class {
       text: string;
-      rate = 1;
-      pitch = 1;
+      rate: number = 1.0;
+      pitch: number = 1.0;
       voice: any = null;
-      onstart: any = null;
-      onend: any = null;
-      onerror: any = null;
       constructor(text: string) {
         this.text = text;
       }
-    }
-    (globalThis as any).SpeechSynthesisUtterance = MockUtterance;
-    (window as any).SpeechSynthesisUtterance = MockUtterance;
-
-    // Mock Web Speech API for jsdom
-    Object.defineProperty(window, 'speechSynthesis', {
-      writable: true,
-      value: {
-        speak: vi.fn(),
-        cancel: vi.fn(),
-        pause: vi.fn(),
-        resume: vi.fn(),
-        getVoices: vi.fn(() => [
-          { name: 'Alex', lang: 'en-US' } as SpeechSynthesisVoice,
-        ]),
-        onvoiceschanged: null,
-      },
-    });
+    };
+    window.speechSynthesis = {
+      speak: vi.fn(),
+      cancel: vi.fn(),
+      pause: vi.fn(),
+      resume: vi.fn(),
+      getVoices: vi.fn().mockReturnValue([]),
+      onvoiceschanged: null,
+      paused: false,
+      pending: false,
+      speaking: false,
+      addEventListener: vi.fn(),
+      removeEventListener: vi.fn(),
+      dispatchEvent: vi.fn(),
+    } as any;
   });
 
-  it('renders Header with correct status badges', () => {
+  it('renders Header with service statuses and modes', () => {
     render(
       <Header
         health={{
@@ -60,13 +67,13 @@ describe('SignFlow Component Suite', () => {
           architecture: 'TemporalTransformer',
           status: 'ready',
           checkpoint_path: 'models/temporal_transformer_trained.pt',
-          num_classes: 2000,
+          num_classes: 100,
           input_dim: 4977,
           sequence_length: 64,
           device: 'cpu',
           feature_representation: 'holistic',
-          class_names_sample: ['hello', 'help'],
-          total_classes: 2000,
+          class_names_sample: ['book', 'drink'],
+          total_classes: 100,
           error: null,
         }}
         wsConnected={true}
@@ -88,7 +95,7 @@ describe('SignFlow Component Suite', () => {
     const handleReject = vi.fn();
 
     const candidate: WordCandidate = {
-      word: 'HELP',
+      word: 'DRINK',
       confidence: 0.88,
       stability_count: 5,
       target_count: 5,
@@ -96,12 +103,12 @@ describe('SignFlow Component Suite', () => {
     };
 
     const prediction: LivePrediction = {
-      predicted_label: 'HELP',
+      predicted_label: 'DRINK',
       confidence: 0.88,
       meets_threshold: true,
       top_k: [
-        { class_index: 0, label: 'HELP', confidence: 0.88 },
-        { class_index: 1, label: 'PLEASE', confidence: 0.08 },
+        { class_index: 1, label: 'DRINK', confidence: 0.88 },
+        { class_index: 0, label: 'BOOK', confidence: 0.08 },
       ],
       latency_ms: 18.5,
       state: 'CANDIDATE',
@@ -112,23 +119,138 @@ describe('SignFlow Component Suite', () => {
         prediction={prediction}
         candidate={candidate}
         mode="guided"
+        stateCode="STATE_D_CANDIDATE"
         onConfirmWord={handleConfirm}
         onRejectCandidate={handleReject}
         confidenceThreshold={0.4}
       />
     );
 
-    const helpElements = screen.getAllByText(/HELP/i);
-    expect(helpElements.length).toBeGreaterThan(0);
+    const drinkElements = screen.getAllByText(/DRINK/i);
+    expect(drinkElements.length).toBeGreaterThan(0);
     expect(screen.getAllByText('88%').length).toBeGreaterThan(0);
 
     const confirmBtn = screen.getByRole('button', { name: /confirm word/i });
     fireEvent.click(confirmBtn);
     expect(handleConfirm).toHaveBeenCalledTimes(1);
 
-    const rejectBtn = screen.getByRole('button', { name: /reject \/ clear/i });
+    const rejectBtn = screen.getByRole('button', { name: /reject \/ reset/i });
     fireEvent.click(rejectBtn);
     expect(handleReject).toHaveBeenCalledTimes(1);
+  });
+
+  it('renders HandQualityCoach with real measurement scores and guidance', () => {
+    render(
+      <HandQualityCoach
+        quality={{
+          score: 85,
+          level: 'Good',
+          feedback: ['Hand position and lighting are good.'],
+          num_hands: 1,
+          hand_size: 0.12,
+          brightness: 120.0,
+          blur_score: 80.0,
+          stability: 0.95,
+          buffer_completeness: 1.0,
+        }}
+        handsDetected={true}
+        stateCode="STATE_D_CANDIDATE"
+      />
+    );
+
+    expect(screen.getByText('Hand Quality Coach')).toBeDefined();
+    expect(screen.getByText('Good')).toBeDefined();
+    expect(screen.getByText('85 / 100')).toBeDefined();
+    expect(screen.getByText(/Hand position and lighting are good/i)).toBeDefined();
+  });
+
+  it('renders PostureInspector with geometric finger joint states', () => {
+    const dummyLandmarks: LandmarkPoint[] = Array.from({ length: 21 }, (_, i) => ({
+      x: 0.5 + i * 0.01,
+      y: 0.5 + i * 0.01,
+      z: 0.0,
+      valid: true,
+    }));
+
+    render(
+      <PostureInspector
+        leftLandmarks={dummyLandmarks}
+        rightLandmarks={dummyLandmarks}
+        currentWord="DRINK"
+      />
+    );
+
+    expect(screen.getByText('Finger & Posture Inspector')).toBeDefined();
+    expect(screen.getByText(/21 \/ 21 Landmarks/i)).toBeDefined();
+    expect(screen.getByText('DRINK')).toBeDefined();
+    expect(screen.getByText(/Thumb/i)).toBeDefined();
+    expect(screen.getByText(/Index Finger/i)).toBeDefined();
+  });
+
+  it('renders GestureReplay with timeline controls', () => {
+    const dummyPoints: LandmarkPoint[] = Array.from({ length: 21 }, () => ({
+      x: 0.5,
+      y: 0.5,
+      z: 0.0,
+      valid: true,
+    }));
+
+    const dummyFrames: ReplayFrame[] = Array.from({ length: 10 }, (_, i) => ({
+      frame_idx: i,
+      timestamp_ms: 1000 + i * 33,
+      left_landmarks: dummyPoints,
+      right_landmarks: dummyPoints,
+      left_box: null,
+      right_box: null,
+      hands_detected: true,
+      valid_points: 42,
+      state_code: 'STATE_D_CANDIDATE',
+      candidate: 'DRINK',
+      confidence: 0.9,
+    }));
+
+    render(
+      <GestureReplay
+        frames={dummyFrames}
+        onClose={vi.fn()}
+        candidateWord="DRINK"
+        confidence={0.9}
+      />
+    );
+
+    expect(screen.getByText('Gesture Replay & Visual Timeline')).toBeDefined();
+    expect(screen.getByText('Frame 1 / 10')).toBeDefined();
+    expect(screen.getByText(/Candidate: DRINK/i)).toBeDefined();
+  });
+
+  it('renders RobustnessLab thesis diagnostic assistant', () => {
+    render(
+      <RobustnessLab
+        validPoints={553}
+        totalPoints={553}
+        stability={0.9}
+        bufferCompleteness={1.0}
+        confidence={0.85}
+        latencyMs={15}
+      />
+    );
+
+    expect(screen.getByText('Robustness Lab')).toBeDefined();
+    expect(screen.getByText(/Thesis Research Diagnostic Assistant/i)).toBeDefined();
+    expect(screen.getByText(/Run Controlled Perturbation Test/i)).toBeDefined();
+  });
+
+  it('renders PracticeMode with target gloss and evaluate action', () => {
+    render(
+      <PracticeMode
+        currentPrediction="DRINK"
+        confidence={0.85}
+        qualityScore={90}
+      />
+    );
+
+    expect(screen.getByText('Guided Practice Mode')).toBeDefined();
+    expect(screen.getByText('Evaluate Practice Sign')).toBeDefined();
   });
 
   it('renders TranscriptWorkspace with tokens, undo, and removal', () => {

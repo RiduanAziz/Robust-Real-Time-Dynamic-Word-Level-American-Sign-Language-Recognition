@@ -5,51 +5,57 @@ import {
   X,
   Clock,
   Layers,
-  ChevronRight,
   TrendingUp,
   AlertCircle,
+  CheckCircle2,
+  ShieldAlert,
   HelpCircle,
-  CheckCircle2
 } from 'lucide-react';
-import { LivePrediction, WordCandidate, RecognitionMode } from '../types';
+import { LivePrediction, WordCandidate, RecognitionMode, RecognitionStateCode } from '../types';
 
 interface LiveRecognitionPanelProps {
   prediction: LivePrediction | null;
   candidate: WordCandidate | null;
   mode: RecognitionMode;
+  stateCode: RecognitionStateCode;
   onConfirmWord: () => void;
   onRejectCandidate: () => void;
   confidenceThreshold: number;
+  lastCommittedWord?: string | null;
 }
 
 export const LiveRecognitionPanel: React.FC<LiveRecognitionPanelProps> = ({
   prediction,
   candidate,
   mode,
+  stateCode,
   onConfirmWord,
   onRejectCandidate,
   confidenceThreshold,
+  lastCommittedWord,
 }) => {
   const activeWord = candidate?.word || (prediction?.meets_threshold ? prediction.predicted_label : null);
   const confidence = candidate?.confidence ?? prediction?.confidence ?? 0;
   const confidencePct = Math.round(confidence * 100);
-  const meetsThreshold = confidence >= confidenceThreshold;
 
-  // Determine state label & style
-  const currentState = prediction?.state || (activeWord ? 'CANDIDATE' : 'WAITING');
-
-  const stateColors: Record<string, { bg: string; text: string; dot: string }> = {
-    WAITING: { bg: 'bg-slate-100', text: 'text-slate-600', dot: 'bg-slate-400' },
-    CAPTURING: { bg: 'bg-indigo-50', text: 'text-indigo-700', dot: 'bg-indigo-500 animate-pulse' },
-    CANDIDATE: { bg: 'bg-amber-50', text: 'text-amber-700', dot: 'bg-amber-500' },
-    COMMITTED: { bg: 'bg-emerald-50', text: 'text-emerald-700', dot: 'bg-emerald-500' },
+  const stateConfigs: Record<
+    RecognitionStateCode,
+    { label: string; bg: string; text: string; dot: string }
+  > = {
+    STATE_A_INACTIVE: { label: 'Camera Off', bg: 'bg-slate-100', text: 'text-slate-600', dot: 'bg-slate-400' },
+    STATE_B_NO_HAND: { label: 'No Hand', bg: 'bg-slate-100', text: 'text-slate-600', dot: 'bg-slate-400' },
+    STATE_C_COLLECTING: { label: 'Collecting Sign', bg: 'bg-teal-50', text: 'text-teal-700', dot: 'bg-teal-500 animate-pulse' },
+    STATE_D_CANDIDATE: { label: 'Candidate Active', bg: 'bg-indigo-50', text: 'text-indigo-700', dot: 'bg-indigo-500' },
+    STATE_E_COMMITTED: { label: 'Word Confirmed', bg: 'bg-emerald-50', text: 'text-emerald-700', dot: 'bg-emerald-500' },
+    STATE_F_UNCERTAIN: { label: 'Sign Uncertain', bg: 'bg-amber-50', text: 'text-amber-700', dot: 'bg-amber-500' },
+    STATE_G_MODEL_UNAVAILABLE: { label: 'Model Unavailable', bg: 'bg-rose-50', text: 'text-rose-700', dot: 'bg-rose-500' },
   };
 
-  const stateStyle = stateColors[currentState] || stateColors.WAITING;
+  const currentCfg = stateConfigs[stateCode] || stateConfigs.STATE_B_NO_HAND;
 
   return (
     <div className="bg-white rounded-2xl border border-slate-200/80 shadow-xs p-4 sm:p-5 flex flex-col justify-between space-y-4">
-      {/* Header with Boundary State */}
+      {/* Header with Recognition State */}
       <div className="flex items-center justify-between">
         <div className="flex items-center space-x-2">
           <Sparkles className="w-5 h-5 text-indigo-600" />
@@ -58,28 +64,53 @@ export const LiveRecognitionPanel: React.FC<LiveRecognitionPanelProps> = ({
 
         {/* State Badge */}
         <div
-          className={`flex items-center space-x-1.5 px-2.5 py-1 rounded-full text-xs font-semibold ${stateStyle.bg} ${stateStyle.text}`}
+          className={`flex items-center space-x-1.5 px-2.5 py-1 rounded-full text-xs font-semibold ${currentCfg.bg} ${currentCfg.text}`}
         >
-          <span className={`w-2 h-2 rounded-full ${stateStyle.dot}`} />
-          <span>{currentState}</span>
+          <span className={`w-2 h-2 rounded-full ${currentCfg.dot}`} />
+          <span>{currentCfg.label}</span>
         </div>
       </div>
 
-      {/* Main Candidate Card */}
-      <div className="bg-gradient-to-b from-slate-50 to-white rounded-xl border border-slate-200/90 p-5 flex flex-col items-center justify-center text-center space-y-3 relative overflow-hidden shadow-xs min-h-[170px]">
-        {activeWord ? (
+      {/* Main Status & Candidate Card */}
+      <div className="bg-gradient-to-b from-slate-50 to-white rounded-xl border border-slate-200/90 p-5 flex flex-col items-center justify-center text-center space-y-3 relative overflow-hidden shadow-xs min-h-[175px]">
+        {/* State G: Model Unavailable */}
+        {stateCode === 'STATE_G_MODEL_UNAVAILABLE' ? (
+          <div className="flex flex-col items-center justify-center text-rose-700 space-y-2 py-2">
+            <ShieldAlert className="w-9 h-9 text-rose-500" />
+            <p className="font-bold text-sm">Recognition Model Unavailable</p>
+            <p className="text-xs text-rose-600 max-w-xs">
+              Trained PyTorch checkpoint was not found. Recognition is disabled. Please verify
+              checkpoint path.
+            </p>
+          </div>
+        ) : stateCode === 'STATE_F_UNCERTAIN' ? (
+          /* State F: Uncertain Sign */
+          <div className="flex flex-col items-center justify-center text-amber-700 space-y-2 py-2">
+            <AlertCircle className="w-9 h-9 text-amber-500" />
+            <p className="font-bold text-sm">Sign Uncertain</p>
+            <p className="text-xs text-amber-600 max-w-xs">
+              Hand visibility or motion sequence did not exceed the required confidence threshold.
+              Improve hand lighting or repeat the gesture.
+            </p>
+          </div>
+        ) : activeWord ? (
+          /* State D or E: Candidate or Confirmed */
           <>
-            <div className="text-xs uppercase font-mono tracking-widest text-slate-400">
-              Provisional Candidate
+            <div className="text-[11px] uppercase font-mono tracking-widest text-slate-400">
+              {stateCode === 'STATE_E_COMMITTED' ? 'RECOGNIZED SIGN' : 'PROVISIONAL CANDIDATE'}
             </div>
-            <div className="text-3xl sm:text-4xl font-extrabold tracking-tight text-slate-900 capitalize">
+            <div
+              className={`text-3xl sm:text-4xl font-extrabold tracking-tight capitalize ${
+                stateCode === 'STATE_E_COMMITTED' ? 'text-emerald-700' : 'text-slate-900'
+              }`}
+            >
               {activeWord}
             </div>
 
-            {/* Confidence & Stability Meter */}
+            {/* Confidence & Stability Bar */}
             <div className="w-full max-w-xs space-y-1.5 pt-1">
               <div className="flex justify-between items-center text-xs font-medium">
-                <span className="text-slate-500">Confidence</span>
+                <span className="text-slate-500">Measured Confidence</span>
                 <span
                   className={
                     confidencePct >= 70
@@ -93,7 +124,6 @@ export const LiveRecognitionPanel: React.FC<LiveRecognitionPanelProps> = ({
                 </span>
               </div>
 
-              {/* Progress bar */}
               <div className="w-full h-2 bg-slate-200 rounded-full overflow-hidden">
                 <div
                   className={`h-full transition-all duration-200 ${
@@ -107,7 +137,6 @@ export const LiveRecognitionPanel: React.FC<LiveRecognitionPanelProps> = ({
                 />
               </div>
 
-              {/* Stability frames progress (Mode A) */}
               {mode === 'guided' && candidate && (
                 <div className="flex items-center justify-between text-[11px] text-slate-400 pt-0.5">
                   <span>Stability filter</span>
@@ -119,11 +148,16 @@ export const LiveRecognitionPanel: React.FC<LiveRecognitionPanelProps> = ({
             </div>
           </>
         ) : (
+          /* State B or C: Waiting or Collecting */
           <div className="flex flex-col items-center justify-center text-slate-400 space-y-2 py-4">
             <Clock className="w-8 h-8 text-slate-300 stroke-1" />
-            <p className="text-sm font-medium text-slate-500">Waiting for sign gesture...</p>
+            <p className="text-sm font-medium text-slate-500">
+              {stateCode === 'STATE_C_COLLECTING'
+                ? 'Collecting sign motion frames...'
+                : 'Waiting for sign gesture...'}
+            </p>
             <p className="text-xs text-slate-400 max-w-xs">
-              Perform a dynamic ASL sign in front of the camera. The system will detect your gesture.
+              Perform a dynamic ASL sign in front of the camera. The system will detect your motion.
             </p>
           </div>
         )}
@@ -134,12 +168,12 @@ export const LiveRecognitionPanel: React.FC<LiveRecognitionPanelProps> = ({
         <button
           onClick={onConfirmWord}
           disabled={!activeWord}
-          className={`flex items-center justify-center space-x-1.5 py-2 px-3 rounded-xl text-xs font-semibold shadow-xs transition-all ${
+          className={`flex items-center justify-center space-x-1.5 py-2.5 px-3 rounded-xl text-xs font-semibold shadow-xs transition-all ${
             activeWord
               ? 'bg-emerald-600 hover:bg-emerald-700 text-white cursor-pointer active:scale-98'
               : 'bg-slate-100 text-slate-400 cursor-not-allowed'
           }`}
-          title="Manually confirm and commit active word to transcript"
+          title="Manually confirm and commit word to transcript"
         >
           <Check className="w-4 h-4" />
           <span>Confirm Word</span>
@@ -148,26 +182,26 @@ export const LiveRecognitionPanel: React.FC<LiveRecognitionPanelProps> = ({
         <button
           onClick={onRejectCandidate}
           disabled={!activeWord}
-          className={`flex items-center justify-center space-x-1.5 py-2 px-3 rounded-xl border text-xs font-semibold transition-all ${
+          className={`flex items-center justify-center space-x-1.5 py-2.5 px-3 rounded-xl border text-xs font-semibold transition-all ${
             activeWord
               ? 'bg-white hover:bg-slate-50 text-slate-700 border-slate-200 cursor-pointer active:scale-98'
               : 'bg-slate-50 text-slate-300 border-slate-100 cursor-not-allowed'
           }`}
-          title="Reject active candidate and reset buffer"
+          title="Reject candidate and reset gesture buffer"
         >
           <X className="w-4 h-4" />
-          <span>Reject / Clear</span>
+          <span>Reject / Reset</span>
         </button>
       </div>
 
-      {/* Top Candidates Probability Distribution */}
+      {/* Probability Distribution */}
       <div className="space-y-2 pt-1 border-t border-slate-100">
         <div className="flex items-center justify-between text-xs text-slate-600 font-medium">
           <span className="flex items-center space-x-1">
             <TrendingUp className="w-3.5 h-3.5 text-slate-400" />
-            <span>Candidate Distribution</span>
+            <span>Top Candidates Distribution</span>
           </span>
-          <span className="text-[11px] text-slate-400 font-mono">Top 5</span>
+          <span className="text-[11px] text-slate-400 font-mono">Ranked</span>
         </div>
 
         {prediction?.top_k && prediction.top_k.length > 0 ? (
@@ -176,7 +210,7 @@ export const LiveRecognitionPanel: React.FC<LiveRecognitionPanelProps> = ({
               const pct = Math.round(cand.confidence * 100);
               return (
                 <div key={idx} className="flex items-center text-xs space-x-2">
-                  <span className="w-20 truncate font-medium text-slate-700 capitalize">
+                  <span className="w-24 truncate font-medium text-slate-700 capitalize">
                     {cand.label}
                   </span>
                   <div className="flex-1 h-1.5 bg-slate-100 rounded-full overflow-hidden">
@@ -213,13 +247,13 @@ export const LiveRecognitionPanel: React.FC<LiveRecognitionPanelProps> = ({
         <div className="text-[11px] leading-relaxed">
           {mode === 'guided' ? (
             <>
-              <strong>Mode A (Guided Accumulation):</strong> Sign one word at a time, then pause.
-              The system confirms stable words and commits them to your transcript.
+              <strong>Guided Mode:</strong> Sign one word at a time, then pause. Confirmed words are
+              safely committed to your transcript.
             </>
           ) : (
             <>
-              <strong>Mode B (Continuous - Experimental):</strong> Continuous sliding window active.
-              Boundaries are heuristic and based on isolated-model features.
+              <strong>Continuous Mode (Experimental):</strong> Heuristic temporal segmentation.
+              Candidates stream as sliding windows complete.
             </>
           )}
         </div>

@@ -2,6 +2,11 @@ import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { Header } from './components/Header';
 import { CameraPanel } from './components/CameraPanel';
 import { LiveRecognitionPanel } from './components/LiveRecognitionPanel';
+import { HandQualityCoach } from './components/HandQualityCoach';
+import { PostureInspector } from './components/PostureInspector';
+import { GestureReplay } from './components/GestureReplay';
+import { RobustnessLab } from './components/RobustnessLab';
+import { PracticeMode } from './components/PracticeMode';
 import { TranscriptWorkspace } from './components/TranscriptWorkspace';
 import { SpeechWorkspace } from './components/SpeechWorkspace';
 import { SettingsModal } from './components/SettingsModal';
@@ -16,14 +21,29 @@ import {
   LandmarksStatus,
   PerformanceMetrics,
   AppSettings,
+  LandmarkPoint,
+  BoundingBox,
+  QualityCoachMetrics,
+  RecognitionStateCode,
+  ReplayFrame,
 } from './types';
-import { AlertCircle, RefreshCw, Radio, ExternalLink } from 'lucide-react';
+import {
+  AlertCircle,
+  RefreshCw,
+  Radio,
+  ExternalLink,
+  ShieldCheck,
+  Hand,
+  Clock,
+  FlaskConical,
+  GraduationCap,
+} from 'lucide-react';
 
 const DEFAULT_SETTINGS: AppSettings = {
-  confidenceThreshold: 0.40,
-  debounceFrames: 5,
-  pauseThresholdSec: 0.6,
-  targetFps: 12,
+  confidenceThreshold: 0.28,
+  debounceFrames: 2,
+  pauseThresholdSec: 0.5,
+  targetFps: 15,
   autoSpeak: false,
   ttsRate: 1.0,
   ttsPitch: 1.0,
@@ -35,6 +55,8 @@ const DEFAULT_SETTINGS: AppSettings = {
       ? `wss://${window.location.hostname}:8000/ws/live`
       : 'ws://127.0.0.1:8000/ws/live',
 };
+
+type AdvancedTab = 'coach_posture' | 'replay' | 'robustness' | 'practice';
 
 export const App: React.FC = () => {
   // System & Model Status
@@ -50,6 +72,16 @@ export const App: React.FC = () => {
   const [prediction, setPrediction] = useState<LivePrediction | null>(null);
   const [candidate, setCandidate] = useState<WordCandidate | null>(null);
   const [performance, setPerformance] = useState<PerformanceMetrics | null>(null);
+
+  // Advanced Visuals & Quality States
+  const [leftLandmarks, setLeftLandmarks] = useState<LandmarkPoint[]>([]);
+  const [rightLandmarks, setRightLandmarks] = useState<LandmarkPoint[]>([]);
+  const [leftBox, setLeftBox] = useState<BoundingBox | null>(null);
+  const [rightBox, setRightBox] = useState<BoundingBox | null>(null);
+  const [quality, setQuality] = useState<QualityCoachMetrics | null>(null);
+  const [stateCode, setStateCode] = useState<RecognitionStateCode>('STATE_A_INACTIVE');
+  const [replayFrames, setReplayFrames] = useState<ReplayFrame[]>([]);
+  const [activeTab, setActiveTab] = useState<AdvancedTab>('coach_posture');
 
   // Transcript Tokens
   const [tokens, setTokens] = useState<CommittedToken[]>(() => {
@@ -80,7 +112,7 @@ export const App: React.FC = () => {
   const wsRef = useRef<WebSocket | null>(null);
   const reconnectTimeoutRef = useRef<number | null>(null);
 
-  // Persist tokens to localStorage
+  // Persist tokens
   useEffect(() => {
     try {
       localStorage.setItem('signflow_tokens', JSON.stringify(tokens));
@@ -98,7 +130,7 @@ export const App: React.FC = () => {
     }
   }, [settings]);
 
-  // Fetch backend health and model info via HTTP
+  // Fetch backend health and model info
   const fetchStatus = useCallback(async () => {
     try {
       const baseUrl = 'http://127.0.0.1:8000';
@@ -132,17 +164,20 @@ export const App: React.FC = () => {
   }, [fetchStatus]);
 
   // Auto-speak newly committed token if enabled
-  const speakWord = useCallback((word: string) => {
-    if (typeof window === 'undefined' || !('speechSynthesis' in window)) return;
-    const utterance = new SpeechSynthesisUtterance(word);
-    utterance.rate = settings.ttsRate;
-    utterance.pitch = settings.ttsPitch;
-    if (settings.ttsVoice) {
-      const v = window.speechSynthesis.getVoices().find((x) => x.name === settings.ttsVoice);
-      if (v) utterance.voice = v;
-    }
-    window.speechSynthesis.speak(utterance);
-  }, [settings]);
+  const speakWord = useCallback(
+    (word: string) => {
+      if (typeof window === 'undefined' || !('speechSynthesis' in window)) return;
+      const utterance = new SpeechSynthesisUtterance(word);
+      utterance.rate = settings.ttsRate;
+      utterance.pitch = settings.ttsPitch;
+      if (settings.ttsVoice) {
+        const v = window.speechSynthesis.getVoices().find((x) => x.name === settings.ttsVoice);
+        if (v) utterance.voice = v;
+      }
+      window.speechSynthesis.speak(utterance);
+    },
+    [settings]
+  );
 
   // Connect to WebSocket
   const connectWebSocket = useCallback(() => {
@@ -157,7 +192,6 @@ export const App: React.FC = () => {
       ws.onopen = () => {
         setWsConnected(true);
         setBackendError(null);
-        // Send initial configuration
         ws.send(
           JSON.stringify({
             type: 'config',
@@ -183,8 +217,18 @@ export const App: React.FC = () => {
               setLandmarksStatus(msg);
               break;
 
+            case 'hand_landmarks':
+              if (msg.left_landmarks) setLeftLandmarks(msg.left_landmarks);
+              if (msg.right_landmarks) setRightLandmarks(msg.right_landmarks);
+              setLeftBox(msg.left_box || null);
+              setRightBox(msg.right_box || null);
+              if (msg.quality) setQuality(msg.quality);
+              if (msg.state_code) setStateCode(msg.state_code);
+              break;
+
             case 'live_prediction':
               setPrediction(msg);
+              if (msg.state_code) setStateCode(msg.state_code);
               break;
 
             case 'word_candidate':
@@ -200,8 +244,17 @@ export const App: React.FC = () => {
                 mode: msg.mode || 'guided',
               };
               setTokens((prev) => [...prev, newToken]);
+              setStateCode('STATE_E_COMMITTED');
               if (settings.autoSpeak) {
                 speakWord(msg.word);
+              }
+              // Automatically fetch replay buffer for recently completed gesture
+              ws.send(JSON.stringify({ type: 'request_replay' }));
+              break;
+
+            case 'replay_buffer':
+              if (msg.frames) {
+                setReplayFrames(msg.frames);
               }
               break;
 
@@ -223,7 +276,6 @@ export const App: React.FC = () => {
 
       ws.onclose = () => {
         setWsConnected(false);
-        // Attempt reconnect after delay
         reconnectTimeoutRef.current = window.setTimeout(() => {
           connectWebSocket();
         }, 3000);
@@ -248,7 +300,7 @@ export const App: React.FC = () => {
     };
   }, [connectWebSocket]);
 
-  // Handle frame capture from camera
+  // Frame transmission
   const handleFrameCaptured = useCallback(
     (imageDataUrl: string, timestampMs: number) => {
       if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN) {
@@ -307,9 +359,15 @@ export const App: React.FC = () => {
     setCandidate(null);
   };
 
+  const requestReplayBuffer = () => {
+    if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN) {
+      wsRef.current.send(JSON.stringify({ type: 'request_replay' }));
+    }
+  };
+
   return (
     <div className="min-h-screen flex flex-col bg-slate-50 selection:bg-teal-100 selection:text-teal-900">
-      {/* Top Header */}
+      {/* Top Navigation Header */}
       <Header
         health={health}
         modelInfo={modelInfo}
@@ -342,30 +400,38 @@ export const App: React.FC = () => {
           </div>
         )}
 
-        {/* Model Missing Advisory */}
+        {/* Checkpoint Missing Advisory */}
         {health && !health.trained_model_loaded && (
           <div className="p-4 rounded-2xl bg-amber-50 border border-amber-200 text-amber-900 text-xs flex items-start space-x-3 shadow-xs">
             <AlertCircle className="w-5 h-5 text-amber-600 shrink-0 mt-0.5" />
             <div className="space-y-1">
               <p className="font-bold text-sm">Trained Model Checkpoint Not Detected</p>
               <p className="leading-relaxed">
-                The backend is currently running without a trained model checkpoint. To enable full
-                recognition, verify that <code>models/temporal_transformer_trained.pt</code> exists in
-                your workspace.
+                The backend is currently running without a trained model checkpoint. Expected{' '}
+                <code>models/temporal_transformer_trained.pt</code>. In accordance with thesis
+                integrity requirements, predictions are paused to avoid invented words or random
+                fallbacks.
               </p>
             </div>
           </div>
         )}
 
-        {/* Live Recognition Workspace: 2-Column Grid */}
+        {/* Primary Workspace: Live Camera (Left) + Live Recognition (Right) */}
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
-          {/* Left Column: Live Camera Panel */}
+          {/* Left Panel: Camera, 21-pt Skeleton, Hand Focus Inset */}
           <div className="lg:col-span-7">
             <CameraPanel
               onFrameCaptured={handleFrameCaptured}
               isStreaming={isStreaming}
               setIsStreaming={setIsStreaming}
               landmarksStatus={landmarksStatus}
+              leftLandmarks={leftLandmarks}
+              rightLandmarks={rightLandmarks}
+              leftBox={leftBox}
+              rightBox={rightBox}
+              quality={quality}
+              stateCode={stateCode}
+              candidateWord={candidate?.word || prediction?.predicted_label || null}
               performance={performance}
               targetFps={settings.targetFps}
               mirrorCamera={settings.mirrorCamera}
@@ -375,16 +441,120 @@ export const App: React.FC = () => {
             />
           </div>
 
-          {/* Right Column: Live Recognition & Candidate Card */}
+          {/* Right Panel: Recognition Card, Candidate Distribution, Confirm Actions */}
           <div className="lg:col-span-5">
             <LiveRecognitionPanel
               prediction={prediction}
               candidate={candidate}
               mode={recognitionMode}
+              stateCode={stateCode}
               onConfirmWord={handleConfirmWord}
               onRejectCandidate={handleRejectCandidate}
               confidenceThreshold={settings.confidenceThreshold}
+              lastCommittedWord={tokens.length > 0 ? tokens[tokens.length - 1].word : null}
             />
+          </div>
+        </div>
+
+        {/* Advanced Features Tab Strip */}
+        <div className="space-y-4">
+          <div className="flex items-center space-x-2 border-b border-slate-200 pb-2 overflow-x-auto">
+            <button
+              onClick={() => setActiveTab('coach_posture')}
+              className={`flex items-center space-x-2 px-3.5 py-2 rounded-xl text-xs font-semibold transition-all whitespace-nowrap ${
+                activeTab === 'coach_posture'
+                  ? 'bg-teal-600 text-white shadow-xs'
+                  : 'bg-white text-slate-600 hover:bg-slate-100 border border-slate-200'
+              }`}
+            >
+              <ShieldCheck className="w-4 h-4" />
+              <span>Hand Quality Coach & Posture</span>
+            </button>
+
+            <button
+              onClick={() => {
+                setActiveTab('replay');
+                requestReplayBuffer();
+              }}
+              className={`flex items-center space-x-2 px-3.5 py-2 rounded-xl text-xs font-semibold transition-all whitespace-nowrap ${
+                activeTab === 'replay'
+                  ? 'bg-teal-600 text-white shadow-xs'
+                  : 'bg-white text-slate-600 hover:bg-slate-100 border border-slate-200'
+              }`}
+            >
+              <Clock className="w-4 h-4" />
+              <span>Gesture Replay Timeline</span>
+            </button>
+
+            <button
+              onClick={() => setActiveTab('robustness')}
+              className={`flex items-center space-x-2 px-3.5 py-2 rounded-xl text-xs font-semibold transition-all whitespace-nowrap ${
+                activeTab === 'robustness'
+                  ? 'bg-indigo-600 text-white shadow-xs'
+                  : 'bg-white text-slate-600 hover:bg-slate-100 border border-slate-200'
+              }`}
+            >
+              <FlaskConical className="w-4 h-4" />
+              <span>Robustness Lab (Thesis)</span>
+            </button>
+
+            <button
+              onClick={() => setActiveTab('practice')}
+              className={`flex items-center space-x-2 px-3.5 py-2 rounded-xl text-xs font-semibold transition-all whitespace-nowrap ${
+                activeTab === 'practice'
+                  ? 'bg-teal-600 text-white shadow-xs'
+                  : 'bg-white text-slate-600 hover:bg-slate-100 border border-slate-200'
+              }`}
+            >
+              <GraduationCap className="w-4 h-4" />
+              <span>Guided Practice Mode</span>
+            </button>
+          </div>
+
+          {/* Active Tab Content Area */}
+          <div>
+            {activeTab === 'coach_posture' && (
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <HandQualityCoach
+                  quality={quality}
+                  handsDetected={Boolean(landmarksStatus?.hands_detected)}
+                  stateCode={stateCode}
+                />
+                <PostureInspector
+                  leftLandmarks={leftLandmarks}
+                  rightLandmarks={rightLandmarks}
+                  currentWord={candidate?.word || prediction?.predicted_label || null}
+                />
+              </div>
+            )}
+
+            {activeTab === 'replay' && (
+              <GestureReplay
+                frames={replayFrames}
+                onClose={() => setActiveTab('coach_posture')}
+                candidateWord={candidate?.word || prediction?.predicted_label || null}
+                confidence={candidate?.confidence ?? prediction?.confidence ?? 0}
+              />
+            )}
+
+            {activeTab === 'robustness' && (
+              <RobustnessLab
+                validPoints={landmarksStatus?.valid_points ?? 0}
+                totalPoints={553}
+                stability={quality?.stability ?? 1.0}
+                bufferCompleteness={quality?.buffer_completeness ?? 0.0}
+                confidence={prediction?.confidence ?? 0}
+                latencyMs={performance?.total_latency_ms ?? 0}
+              />
+            )}
+
+            {activeTab === 'practice' && (
+              <PracticeMode
+                currentPrediction={prediction?.predicted_label || null}
+                confidence={prediction?.confidence ?? 0}
+                qualityScore={quality?.score ?? 0}
+              />
+            )}
           </div>
         </div>
 
@@ -419,7 +589,7 @@ export const App: React.FC = () => {
             <strong>SignFlow</strong> — Robust Real-Time Dynamic Word-Level ASL Recognition Thesis Project
           </p>
           <div className="flex items-center space-x-3 text-slate-400">
-            <span>WLASL Benchmark</span>
+            <span>WLASL Benchmark (100 Classes)</span>
             <span>•</span>
             <span>Local Inference Only</span>
           </div>

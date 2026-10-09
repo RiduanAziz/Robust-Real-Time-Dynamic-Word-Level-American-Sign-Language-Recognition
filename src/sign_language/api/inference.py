@@ -86,6 +86,17 @@ class RealTimePredictor:
         raw_dim = self.input_dim // 3 if self.input_dim >= 4977 else self.input_dim
         self.pipeline = LandmarkPipeline(feature_dim=raw_dim, sequence_length=self.sequence_length)
 
+        # Optional empirical calibration vector to neutralize training mode-collapse biases
+        self.prior_logits = None
+        prior_path = Path("models/prior_logits_100.npy")
+        if prior_path.is_file():
+            try:
+                vec = np.load(prior_path)
+                if vec.shape[0] == self.num_classes:
+                    self.prior_logits = vec.astype(np.float32)
+            except Exception as exc:
+                logger.debug("Could not load calibration prior: %s", exc)
+
     def predict_logits(self, sequence: np.ndarray) -> np.ndarray:
         """Compute raw output logits for a sequence."""
         arr = np.asarray(sequence, dtype=np.float32)
@@ -112,10 +123,22 @@ class RealTimePredictor:
         """Backward-compatible predict method returning raw output logits."""
         return self.predict_logits(sequence)
 
-    def predict_label(self, sequence: np.ndarray, confidence_threshold: float = 0.0) -> dict[str, Any]:
+    def predict_label(
+        self,
+        sequence: np.ndarray,
+        confidence_threshold: float = 0.0,
+        calibrate: bool = True,
+        calibration_alpha: float = 0.85,
+    ) -> dict[str, Any]:
         """Predict class label, confidence score, top-k candidates, and probabilities."""
         logits = self.predict_logits(sequence)
-        exp_logits = np.exp(logits - np.max(logits))
+
+        # Apply prior debiasing if available to prevent degenerate class saturation
+        eval_logits = logits.copy()
+        if calibrate and self.prior_logits is not None:
+            eval_logits = eval_logits - (calibration_alpha * self.prior_logits)
+
+        exp_logits = np.exp(eval_logits - np.max(eval_logits))
         probs = exp_logits / np.sum(exp_logits)
 
         pred_idx = int(np.argmax(probs))
