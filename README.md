@@ -32,35 +32,52 @@ The repository is currently validated through the following milestones:
 - Phase 6 — robustness evaluation: complete
 - Phase 7 — real-time deployment scaffold: complete
 
-## Repository structure
+## SignFlow — Live ASL to Text & Speech Web Application
 
-- [configs](configs): experiment configuration files
-- [docs](docs): architecture and planning notes
-- [scripts](scripts): reproducible operational entry points
-- [src](src): reusable project source code
-- [tests](tests): validation and regression checks
-- [results](results): generated metrics and figures
-- [data](data): dataset manifests and metadata storage
+**SignFlow** is an assistive communication web application integrated into this thesis project. It translates real-time dynamic ASL gestures from the user's camera into an accumulated, editable transcript with browser text-to-speech (TTS) output.
 
-## Installation
+### Key Capabilities
+- **Camera Capture & Holistic Landmark Tracking**: MediaPipe HolisticLandmarker tracking 553 canonical landmark points (hands, pose, face).
+- **Deep Sequence Recognition**: Live inference powered by trained Temporal Transformer / Robust Holistic Fusion models (`models/temporal_transformer_trained.pt`).
+- **Two Recognition Modes**:
+  - **Mode A — Guided Word Accumulation**: Primary mode. Detects signs one by one with neutral pause boundary detection and stability debounce filtering before committing words to the persistent transcript.
+  - **Mode B — Continuous Sign Recognition (Experimental)**: Sliding window prototype with experimental motion boundaries.
+- **Transcript Workspace**: Interactive word chips, editable textarea, quick punctuation inserters (`.`, `,`, `?`, `!`, `Space`), undo, clear with confirmation, copy, and `.txt` file export.
+- **Browser Text-to-Speech (TTS)**: Built-in SpeechSynthesis API integration with voice selection, speed/pitch control, pause/resume, and auto-speak.
 
-```bash
-git clone <repository-url>
-cd Robust-Real-Time-Dynamic-Word-Level-American-Sign-Language-Recognition
-python -m venv .venv
-source .venv/bin/activate
-pip install -e .
+### Quick Start Guide
+
+#### 1. Start the Backend API & WebSocket Service (PowerShell)
+```powershell
+# Activate environment and launch FastAPI backend
+.\.venv\Scripts\uvicorn sign_language.api.main:app --host 127.0.0.1 --port 8000
+```
+- API Health: [`http://127.0.0.1:8000/health`](http://127.0.0.1:8000/health)
+- Model Info: [`http://127.0.0.1:8000/model/info`](http://127.0.0.1:8000/model/info)
+- Interactive API Docs: [`http://127.0.0.1:8000/docs`](http://127.0.0.1:8000/docs)
+- Direct Web Application: [`http://127.0.0.1:8000/`](http://127.0.0.1:8000/) *(serves production build)*
+
+#### 2. Start the Frontend Development Server (Optional / Live Dev)
+```powershell
+cd app/frontend
+npm run dev
+```
+Navigate to [`http://127.0.0.1:5173/`](http://127.0.0.1:5173/) in your browser.
+
+#### 3. Real-Time Desktop OpenCV Demonstration
+For a standalone native OpenCV desktop popup window:
+```powershell
+.\.venv\Scripts\python scripts/realtime.py
 ```
 
-## Environment files
+## Repository structure
 
-- A pip-based installation is defined in [requirements.txt](requirements.txt)
-- A Conda environment definition is available in [environment.yml](environment.yml)
+- [app/frontend](app/frontend): SignFlow React + TypeScript + Vite + Tailwind CSS web application
+- [configs](configs): experiment configuration files
+- [docs](docs): architecture and project status notes
+- [scripts](scripts): operational training, extraction, and real-time CLI entry points
+- [src](src): canonical `sign_language` package
+- [tests](tests): validation, model, and API test suites
+- [results](results): metrics, reports, and generated figures
+- [models](models): trained checkpoints and MediaPipe task assets
 
-## Validation status
-
-The project is under continuous test validation and currently passes the repository test suite.
-
-## Notes
-
-This repository intentionally keeps the research and deployment layers modular. Model training and full webcam integration remain scoped as future research extensions, while the current codebase provides the validated research pipeline and runtime inference scaffolding needed for the next experimental iteration.

@@ -12,4 +12,6 @@ services:
       - ./configs:/app/configs:ro
       - ./models:/app/models:ro
       - ./results:/app/results
+      - ./app/frontend/dist:/app/frontend/dist:ro
     command: uvicorn sign_language.api.main:app --host 0.0.0.0 --port 8000
+

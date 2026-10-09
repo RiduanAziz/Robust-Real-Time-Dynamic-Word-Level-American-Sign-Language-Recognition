@@ -36,11 +36,14 @@
 | **Phase 18** | Research Reporting | ✅ IMPLEMENTED & VALIDATED | `scripts/generate_report.py` generates `results/figures/training_curves.png`, `results/figures/robustness_curves.png`, and `results/research_summary.md` from real evaluation runs. |
 | **Phase 19** | CI & Documentation | ✅ IMPLEMENTED & VALIDATED | CI workflow streamlined; Docker configuration updated; all 8 CLI scripts verified with `--help`. |
 | **Phase 20** | Acceptance Testing | ✅ IMPLEMENTED & VALIDATED | 34 automated unit and integration tests passing in `pytest -q`. |
+| **Phase 21** | SignFlow Web Application | ✅ IMPLEMENTED & VALIDATED | Full React + TypeScript + Vite + Tailwind CSS frontend (`app/frontend/`), `/ws/live` WebSocket streaming, live MediaPipe extraction, rolling buffer, debounce/boundary state machine, persistent transcript workspace, and browser Web Speech TTS. Production bundle compiled to `app/frontend/dist` and served via FastAPI at `http://127.0.0.1:8000/`. |
 
 ---
 
 ## Status Classification
-- **Code Implemented**: 100% of required modules, CLI scripts, and architecture components.
-- **Unit / Smoke Tested**: 34 unit tests covering config, datasets, features, models, transformer masks, proposed fusion, robustness operators, and API.
+- **Code Implemented**: 100% of required modules, CLI scripts, web application components, and architecture components.
+- **Unit / Smoke Tested**: 38 unit tests covering config, datasets, features, models, transformer masks, proposed fusion, robustness operators, static serving, and WebSocket API in `pytest -q`.
+- **Frontend Tested**: Production bundle built via `npm run build` and unit tested via `npm run test` (Vitest).
 - **Real-Data Validated**: Real landmark `.task` asset extraction, real-data baseline training, real-data proposed model training, real held-out evaluation, real multi-noise robustness grid evaluation, and automated thesis report generation.
 - **Full-Scale Experiments**: Ready for full-vocabulary multi-epoch GPU training runs.
+

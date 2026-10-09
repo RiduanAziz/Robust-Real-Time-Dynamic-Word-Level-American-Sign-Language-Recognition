@@ -77,6 +77,7 @@ class RealTimePredictor:
             self.config.model.num_classes = len(self.class_names)
             self.model = build_model(self.config)
 
+        self.checkpoint_path = str(ckpt_path) if model_path is not None else None
         self.model.to(self.device)
         self.model.eval()
         self.num_classes = len(self.class_names)
@@ -112,7 +113,7 @@ class RealTimePredictor:
         return self.predict_logits(sequence)
 
     def predict_label(self, sequence: np.ndarray, confidence_threshold: float = 0.0) -> dict[str, Any]:
-        """Predict class label, confidence score, and top probability."""
+        """Predict class label, confidence score, top-k candidates, and probabilities."""
         logits = self.predict_logits(sequence)
         exp_logits = np.exp(logits - np.max(logits))
         probs = exp_logits / np.sum(exp_logits)
@@ -123,10 +124,21 @@ class RealTimePredictor:
 
         meets_threshold = confidence >= confidence_threshold
 
+        top_indices = np.argsort(probs)[::-1][:min(5, len(probs))]
+        top_k = [
+            {
+                "class_index": int(i),
+                "label": self.class_names[i] if i < len(self.class_names) else f"Class_{i}",
+                "confidence": float(probs[i]),
+            }
+            for i in top_indices
+        ]
+
         return {
             "predicted_class": pred_idx,
             "predicted_label": pred_label if meets_threshold else "Unknown (Low Confidence)",
             "confidence": confidence,
             "meets_threshold": meets_threshold,
             "probabilities": probs.tolist(),
+            "top_k": top_k,
         }
