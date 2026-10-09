@@ -1,0 +1,33 @@
+dataset:
+  labels:
+    - before
+    - thin
+    - cool
+    - drink
+    - go
+    - computer
+    - who
+    - cousin
+    - help
+    - candy
+    - thanksgiving
+    - bed
+    - bowling
+    - tall
+    - accident
+    - short
+    - 'yes'
+    - what
+    - later
+    - man
+model:
+  name: robust_holistic_fusion
+  num_classes: 20
+  hidden_dim: 128
+  embedding_dim: 64
+  num_layers: 1
+  dropout: 0.2
+training:
+  epochs: 10
+  batch_size: 16
+  learning_rate: 0.001

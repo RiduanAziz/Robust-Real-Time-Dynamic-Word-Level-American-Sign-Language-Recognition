@@ -17,6 +17,10 @@ class SignSample:
     session_id: str | None = None
     metadata: dict[str, Any] = field(default_factory=dict)
 
+    @property
+    def class_name(self) -> str:
+        return self.label
+
 
 class SignLanguageDataset(Dataset):
     """Dataset abstraction for sign samples with landmark sequences."""
@@ -35,10 +39,12 @@ class SignLanguageDataset(Dataset):
 
     def __getitem__(self, index: int) -> dict[str, Any]:
         sample = self.samples[index]
-        
+        mask = None
         if isinstance(sample.landmarks, (str, Path)):
-            loaded = np.load(str(sample.landmarks))
-            landmarks = loaded["landmarks"].astype(np.float32)
+            with np.load(str(sample.landmarks)) as loaded:
+                landmarks = loaded["landmarks"].astype(np.float32)
+                if "mask" in loaded:
+                    mask = loaded["mask"].astype(np.float32)
         else:
             landmarks = np.asarray(sample.landmarks, dtype=np.float32)
             
@@ -49,6 +55,7 @@ class SignLanguageDataset(Dataset):
             "label": label_index,
             "label_name": sample.label,
             "landmarks": landmarks,
+            "mask": mask,
             "metadata": sample.metadata,
         }
 

@@ -63,18 +63,24 @@ def _rows_from_json_metadata(payload: Any) -> list[dict[str, str]]:
             if not isinstance(gloss_entry, Mapping):
                 continue
             gloss_name = str(gloss_entry.get("gloss") or gloss_entry.get("class_name") or "").strip()
+            gloss_class_id = gloss_entry.get("class_id")
             for instance in gloss_entry.get("instances", []) or []:
                 if not isinstance(instance, Mapping):
                     continue
                 video_id = str(instance.get("video_id") or instance.get("id") or "").strip()
-                signer_id = str(instance.get("signer_id") or "unknown").strip()
+                raw_signer = instance.get("signer_id")
+                signer_id = str(raw_signer).strip() if raw_signer is not None else ""
+                raw_cid = instance.get("class_id")
+                if raw_cid is None:
+                    raw_cid = gloss_class_id
+                cid_str = str(raw_cid).strip() if raw_cid is not None and str(raw_cid).strip() != "" else ""
                 row = {
                     "sample_id": video_id,
                     "signer_id": signer_id,
                     "class_name": gloss_name,
                     "video_path": f"{video_id}.mp4" if video_id else "",
                     "video_id": video_id,
-                    "class_id": str(instance.get("class_id") or 0),
+                    "class_id": cid_str,
                     "split": str(instance.get("split") or "").strip(),
                 }
                 rows.append({str(k): str(v or "").strip() for k, v in row.items()})
@@ -83,18 +89,24 @@ def _rows_from_json_metadata(payload: Any) -> list[dict[str, str]]:
             if not isinstance(value, Mapping):
                 continue
             gloss_name = str(value.get("gloss") or key).strip()
+            gloss_class_id = value.get("class_id")
             for instance in value.get("instances", []) or []:
                 if not isinstance(instance, Mapping):
                     continue
                 video_id = str(instance.get("video_id") or instance.get("id") or "").strip()
-                signer_id = str(instance.get("signer_id") or "unknown").strip()
+                raw_signer = instance.get("signer_id")
+                signer_id = str(raw_signer).strip() if raw_signer is not None else ""
+                raw_cid = instance.get("class_id")
+                if raw_cid is None:
+                    raw_cid = gloss_class_id
+                cid_str = str(raw_cid).strip() if raw_cid is not None and str(raw_cid).strip() != "" else ""
                 row = {
                     "sample_id": video_id,
                     "signer_id": signer_id,
                     "class_name": gloss_name,
                     "video_path": f"{video_id}.mp4" if video_id else "",
                     "video_id": video_id,
-                    "class_id": str(instance.get("class_id") or 0),
+                    "class_id": cid_str,
                     "split": str(instance.get("split") or "").strip(),
                 }
                 rows.append({str(k): str(v or "").strip() for k, v in row.items()})
@@ -194,6 +206,10 @@ def build_video_manifest(
 
     for row in rows:
         video_path = (raw_root / row["video_path"]).resolve()
+        try:
+            video_path.relative_to(raw_root)
+        except ValueError:
+            raise DatasetValidationError(f"Video path escapes dataset root: {video_path}")
         if not video_path.is_file():
             missing_files.append(row["video_path"])
             continue

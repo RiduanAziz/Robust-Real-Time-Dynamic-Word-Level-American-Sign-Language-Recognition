@@ -10,46 +10,126 @@ def normalize_landmarks(
     mask: np.ndarray | None = None,
     reference_index: int | None = None,
 ) -> np.ndarray:
-    """Normalize coordinates per frame using visible points and geometric scale."""
+    """Normalize coordinates per frame using visible points and geometric scale.
+
+    Operates on true spatial coordinates (3D or 2D geometry) rather than
+    unstructured flattened vectors. Supports 1D [D], 2D [T, D], and 3D [T, N, 3] inputs.
+    """
     arr = np.asarray(landmarks, dtype=np.float32)
     if arr.size == 0:
         return arr.copy()
 
-    if arr.ndim == 1:
+    if mode == "none":
+        return arr.copy()
+
+    was_1d = (arr.ndim == 1)
+    if was_1d:
         arr = arr.reshape(1, -1)
 
-    if mode == "none":
-        return arr
-    if mode != "center_scale":
-        raise ValueError(f"Unsupported normalization mode: {mode}")
-
-    if arr.ndim == 3:
-        coordinates = arr.copy()
-        valid = np.ones(coordinates.shape[:2], dtype=bool)
+    # 1. 3D tensor: [T, N, 3]
+    if arr.ndim == 3 and arr.shape[-1] == 3:
+        coords = arr.copy()
+        num_frames = coords.shape[0]
+        num_points = coords.shape[1]
         if mask is not None:
             mask_arr = np.asarray(mask, dtype=np.float32)
-            if mask_arr.shape != coordinates.shape:
-                raise ValueError("mask must have the same shape as landmarks")
-            valid = mask_arr.any(axis=-1)
-        for frame_index in range(coordinates.shape[0]):
-            visible = valid[frame_index]
-            if not visible.any():
-                coordinates[frame_index] = 0.0
-                continue
-            if reference_index is not None and visible[reference_index]:
-                center = coordinates[frame_index, reference_index]
+            if mask_arr.ndim == 3 and mask_arr.shape == coords.shape:
+                pt_valid = (mask_arr > 0.5).any(axis=-1)
+            elif mask_arr.ndim == 2 and mask_arr.shape == (num_frames, num_points * 3):
+                pt_valid = (mask_arr.reshape(num_frames, num_points, 3) > 0.5).any(axis=-1)
+            elif mask_arr.ndim == 2 and mask_arr.shape == (num_frames, num_points):
+                pt_valid = mask_arr > 0.5
             else:
-                center = coordinates[frame_index, visible].mean(axis=0)
-            centered = coordinates[frame_index] - center
+                pt_valid = np.ones((num_frames, num_points), dtype=bool)
+        else:
+            pt_valid = (np.abs(coords).sum(axis=-1) > 1e-6)
+
+        for t in range(num_frames):
+            visible = pt_valid[t]
+            if not visible.any():
+                coords[t] = 0.0
+                continue
+            if reference_index is not None and reference_index < num_points and visible[reference_index]:
+                center = coords[t, reference_index]
+            else:
+                center = coords[t, visible].mean(axis=0)
+            centered = coords[t] - center
             scale = np.sqrt(np.mean(np.square(centered[visible])))
             if scale >= eps:
-                coordinates[frame_index] = centered / scale
+                coords[t] = centered / scale
             else:
-                coordinates[frame_index] = centered
-            coordinates[frame_index, ~visible] = 0.0
-        return coordinates
+                coords[t] = centered
+            coords[t, ~visible] = 0.0
+        return coords
 
-    centered = arr - arr.mean(axis=1, keepdims=True)
-    scale = np.linalg.norm(centered, axis=1, keepdims=True)
-    scale = np.where(scale < eps, 1.0, scale)
-    return centered / scale
+    # 2. Flattened 3D coordinate sequence [T, N * 3]
+    if arr.ndim == 2 and arr.shape[-1] % 3 == 0 and arr.shape[-1] >= 6:
+        num_frames = arr.shape[0]
+        num_points = arr.shape[1] // 3
+        coords = arr.reshape(num_frames, num_points, 3).copy()
+
+        # Parse mask if provided
+        if mask is not None:
+            mask_arr = np.asarray(mask, dtype=np.float32)
+            if was_1d and mask_arr.ndim == 1:
+                mask_arr = mask_arr.reshape(1, -1)
+
+            if mask_arr.shape == arr.shape:
+                pt_valid = (mask_arr.reshape(num_frames, num_points, 3) > 0.5).any(axis=-1)
+            elif mask_arr.shape == (num_frames, num_points):
+                pt_valid = mask_arr > 0.5
+            elif mask_arr.ndim == 3 and mask_arr.shape == (num_frames, num_points, 3):
+                pt_valid = (mask_arr > 0.5).any(axis=-1)
+            else:
+                pt_valid = np.ones((num_frames, num_points), dtype=bool)
+        else:
+            # Derive validity from non-zero coordinates
+            pt_valid = (np.abs(coords).sum(axis=-1) > 1e-6)
+
+        for t in range(num_frames):
+            visible = pt_valid[t]
+            if not visible.any():
+                coords[t] = 0.0
+                continue
+
+            if reference_index is not None and reference_index < num_points and visible[reference_index]:
+                center = coords[t, reference_index]
+            else:
+                center = coords[t, visible].mean(axis=0)
+
+            centered = coords[t] - center
+            scale = np.sqrt(np.mean(np.square(centered[visible])))
+            if scale >= eps:
+                coords[t] = centered / scale
+            else:
+                coords[t] = centered
+            coords[t, ~visible] = 0.0
+
+        res = coords.reshape(num_frames, -1)
+        return res[0] if was_1d else res
+
+    # 3. General 2D array of coordinates [N, D] (where rows are points)
+    if mode == "center_scale":
+        center = arr.mean(axis=0, keepdims=True)
+        centered = arr - center
+        scale = np.sqrt(np.mean(np.square(centered)))
+        if scale < eps:
+            scale = 1.0
+        res = centered / scale
+        return res[0] if was_1d else res
+
+    if mode == "standardize":
+        mean = arr.mean(axis=0, keepdims=True)
+        std = arr.std(axis=0, keepdims=True)
+        std = np.where(std < eps, 1.0, std)
+        res = (arr - mean) / std
+        return res[0] if was_1d else res
+
+    if mode == "minmax":
+        min_val = arr.min(axis=0, keepdims=True)
+        max_val = arr.max(axis=0, keepdims=True)
+        denom = np.where((max_val - min_val) < eps, 1.0, max_val - min_val)
+        res = (arr - min_val) / denom
+        return res[0] if was_1d else res
+
+    raise ValueError(f"Unsupported normalization mode: {mode}")

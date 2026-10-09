@@ -19,38 +19,57 @@ def _validate_severity(severity: float) -> float:
 def coordinate_jitter(sequence: np.ndarray, severity: float, seed: int = 42) -> np.ndarray:
     value = _validate_severity(severity)
     array = np.asarray(sequence, dtype=np.float32)
+    if value == 0.0:
+        return array.copy()
     rng = np.random.default_rng(seed)
-    return array + rng.normal(0.0, value, size=array.shape).astype(np.float32)
+    return array + rng.normal(0.0, value * 0.05, size=array.shape).astype(np.float32)
 
 
 def translation_noise(sequence: np.ndarray, severity: float, seed: int = 42) -> np.ndarray:
     value = _validate_severity(severity)
     array = np.asarray(sequence, dtype=np.float32)
+    if value == 0.0:
+        return array.copy()
     rng = np.random.default_rng(seed)
-    offset = rng.normal(0.0, value, size=(1, array.shape[-1])).astype(np.float32)
+    # Translate spatial channels
+    offset = rng.normal(0.0, value * 0.1, size=(1, array.shape[-1])).astype(np.float32)
     return array + offset
 
 
 def scale_noise(sequence: np.ndarray, severity: float, seed: int = 42) -> np.ndarray:
     value = _validate_severity(severity)
     array = np.asarray(sequence, dtype=np.float32)
+    if value == 0.0:
+        return array.copy()
     rng = np.random.default_rng(seed)
-    scale = float(rng.uniform(1.0 - value, 1.0 + value))
+    scale = float(rng.uniform(1.0 - value * 0.3, 1.0 + value * 0.3))
     return array * scale
 
 
-def landmark_dropout(sequence: np.ndarray, severity: float, seed: int = 42) -> np.ndarray:
+def landmark_dropout(
+    sequence: np.ndarray,
+    severity: float,
+    seed: int = 42,
+    mask: np.ndarray | None = None,
+) -> np.ndarray:
     value = _validate_severity(severity)
     array = np.asarray(sequence, dtype=np.float32).copy()
+    if value == 0.0:
+        return array
     if array.ndim != 2:
         raise ValueError("landmark dropout expects a [T, F] sequence")
     rng = np.random.default_rng(seed)
     landmark_count = array.shape[1] // 3 if array.shape[1] % 3 == 0 else array.shape[1]
     dropped = rng.random(landmark_count) < value
     if array.shape[1] % 3 == 0:
-        array[:, dropped.repeat(3)] = 0.0
+        expanded_drop = np.repeat(dropped, 3)
+        array[:, expanded_drop] = 0.0
+        if mask is not None:
+            mask[:, expanded_drop] = 0.0
     else:
         array[:, dropped] = 0.0
+        if mask is not None:
+            mask[:, dropped] = 0.0
     return array
 
 
@@ -59,12 +78,16 @@ def apply_spatial_noise(
     noise_type: str,
     severity: float,
     seed: int = 42,
+    mask: np.ndarray | None = None,
 ) -> np.ndarray:
-    operators: dict[str, Callable[..., np.ndarray]] = {
+    if severity == 0.0:
+        return np.asarray(sequence, dtype=np.float32).copy()
+
+    operators = {
         "coordinate_jitter": coordinate_jitter,
         "translation": translation_noise,
         "scale": scale_noise,
-        "landmark_dropout": landmark_dropout,
+        "landmark_dropout": lambda seq, sev, s: landmark_dropout(seq, sev, s, mask=mask),
     }
     try:
         operator = operators[noise_type]
@@ -73,35 +96,62 @@ def apply_spatial_noise(
     return operator(sequence, severity, seed)
 
 
-def frame_drop(sequence: np.ndarray, severity: float, seed: int = 42) -> np.ndarray:
+def frame_drop(
+    sequence: np.ndarray, severity: float, seed: int = 42, mask: np.ndarray | None = None
+) -> np.ndarray | tuple[np.ndarray, np.ndarray]:
     value = _validate_severity(severity)
     array = np.asarray(sequence, dtype=np.float32)
-    if array.shape[0] == 0:
-        return array.copy()
+    if array.shape[0] <= 1 or value == 0.0:
+        return (array.copy(), np.asarray(mask).copy()) if mask is not None else array.copy()
     rng = np.random.default_rng(seed)
     keep = rng.random(array.shape[0]) >= value
-    keep[0] = True
-    return array[keep]
+    keep[0] = True  # Always preserve first frame
+    if not keep.any():
+        keep[0] = True
+    out_seq = array[keep]
+    if mask is not None:
+        return out_seq, np.asarray(mask)[keep]
+    return out_seq
 
 
-def frame_duplicate(sequence: np.ndarray, severity: float, seed: int = 42) -> np.ndarray:
+def frame_duplicate(
+    sequence: np.ndarray, severity: float, seed: int = 42, mask: np.ndarray | None = None
+) -> np.ndarray | tuple[np.ndarray, np.ndarray]:
     value = _validate_severity(severity)
     array = np.asarray(sequence, dtype=np.float32)
     if array.shape[0] == 0 or value == 0.0:
-        return array.copy()
+        return (array.copy(), np.asarray(mask).copy()) if mask is not None else array.copy()
     rng = np.random.default_rng(seed)
-    duplicate_count = round(array.shape[0] * value)
-    indices = rng.integers(0, array.shape[0], size=duplicate_count)
-    return np.concatenate([array, array[indices]], axis=0)
+    dup_flags = rng.random(array.shape[0]) < value
+    repeated_seq = []
+    repeated_mask = [] if mask is not None else None
+    mask_arr = np.asarray(mask) if mask is not None else None
+    for i in range(array.shape[0]):
+        repeated_seq.append(array[i])
+        if repeated_mask is not None and mask_arr is not None:
+            repeated_mask.append(mask_arr[i])
+        if dup_flags[i]:
+            repeated_seq.append(array[i])
+            if repeated_mask is not None and mask_arr is not None:
+                repeated_mask.append(mask_arr[i])
+    out_seq = np.stack(repeated_seq, axis=0)
+    if repeated_mask is not None:
+        return out_seq, np.stack(repeated_mask, axis=0)
+    return out_seq
 
 
-def sequence_truncate(sequence: np.ndarray, severity: float, seed: int = 42) -> np.ndarray:
+def sequence_truncate(
+    sequence: np.ndarray, severity: float, seed: int = 42, mask: np.ndarray | None = None
+) -> np.ndarray | tuple[np.ndarray, np.ndarray]:
     value = _validate_severity(severity)
     array = np.asarray(sequence, dtype=np.float32)
-    if array.shape[0] == 0:
-        return array.copy()
+    if array.shape[0] == 0 or value == 0.0:
+        return (array.copy(), np.asarray(mask).copy()) if mask is not None else array.copy()
     keep_count = max(1, round(array.shape[0] * (1.0 - value)))
-    return array[:keep_count]
+    out_seq = array[:keep_count]
+    if mask is not None:
+        return out_seq, np.asarray(mask)[:keep_count]
+    return out_seq
 
 
 def apply_temporal_noise(
@@ -109,14 +159,21 @@ def apply_temporal_noise(
     noise_type: str,
     severity: float,
     seed: int = 42,
-) -> np.ndarray:
+    mask: np.ndarray | None = None,
+) -> np.ndarray | tuple[np.ndarray, np.ndarray]:
+    if severity == 0.0:
+        seq_copy = np.asarray(sequence, dtype=np.float32).copy()
+        if mask is not None:
+            return seq_copy, np.asarray(mask).copy()
+        return seq_copy
+
     operators = {
         "frame_drop": frame_drop,
         "frame_duplicate": frame_duplicate,
         "sequence_truncate": sequence_truncate,
     }
     try:
-        return operators[noise_type](sequence, severity, seed)
+        return operators[noise_type](sequence, severity, seed, mask=mask)
     except KeyError as error:
         raise ValueError(f"Unsupported temporal noise type: {noise_type}") from error
 
@@ -185,5 +242,7 @@ def evaluate_robustness(scenarios: list[NoiseScenario]) -> dict[str, Any]:
     return {
         "scenario_count": len(entries),
         "scenarios": entries,
-        "average_mean_absolute_error": float(np.mean([item["mean_absolute_error"] for item in entries])) if entries else 0.0,
+        "average_mean_absolute_error": (
+            float(np.mean([item["mean_absolute_error"] for item in entries])) if entries else 0.0
+        ),
     }

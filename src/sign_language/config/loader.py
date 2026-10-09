@@ -130,7 +130,17 @@ def _build_config(data: dict[str, Any]) -> ExperimentConfig:
 
 
 def _validate_config(config: ExperimentConfig) -> None:
-    if config.model.name not in {"mlp", "lstm", "gru", "transformer", "temporal_transformer"}:
+    valid_models = {
+        "mlp",
+        "lstm",
+        "gru",
+        "transformer",
+        "temporal_transformer",
+        "robust_holistic_fusion",
+        "fusion",
+        "proposed",
+    }
+    if config.model.name not in valid_models:
         raise ValueError(f"Unsupported model name: {config.model.name}")
     if config.model.input_dim <= 0 or config.model.num_classes <= 0:
         raise ValueError("model.input_dim and model.num_classes must be positive")

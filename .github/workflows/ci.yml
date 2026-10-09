@@ -13,5 +13,21 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: '3.11'
-      - run: pip install -e .
-      - run: pytest -q
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install --extra-index-url https://download.pytorch.org/whl/cpu torch torchvision
+          pip install -e ".[test]"
+      - name: Syntax and import verification
+        run: |
+          python -c "import sign_language; print('Package import OK')"
+          python scripts/train.py --help
+          python scripts/evaluate.py --help
+          python scripts/evaluate_robustness.py --help
+          python scripts/prepare_dataset.py --help
+      - name: Configuration dry-run
+        run: |
+          python scripts/train.py --dry-run --config configs/base.yaml
+      - name: Run unit test suite
+        run: |
+          pytest -q
