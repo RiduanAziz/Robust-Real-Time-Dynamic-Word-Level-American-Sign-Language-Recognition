@@ -44,9 +44,10 @@ async def lifespan(app: FastAPI):
     # Prioritize user-trained temporal_transformer_trained.pt
     if not model_path:
         candidates = [
+            ("models/robust_holistic_fusion_best.pt", "configs/experiments/wlasl100_proposed.yaml"),
+            ("models/robust_holistic_fusion_best.pt", "configs/experiments/wlasl20_proposed.yaml"),
             ("models/temporal_transformer_trained.pt", "configs/base.yaml"),
             ("models/temporal_transformer_best.pt", "configs/base.yaml"),
-            ("models/robust_holistic_fusion_best.pt", "configs/experiments/wlasl20_proposed.yaml"),
         ]
         for m_cand, c_cand in candidates:
             if Path(m_cand).is_file():
