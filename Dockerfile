@@ -1,3 +1,14 @@
+# Stage 1: Build production React frontend
+FROM node:24-slim AS frontend-builder
+WORKDIR /build
+
+COPY app/frontend/package*.json ./
+RUN npm ci
+
+COPY app/frontend ./
+RUN npm run build
+
+# Stage 2: Python backend service
 FROM python:3.11-slim
 
 WORKDIR /app
@@ -16,6 +27,9 @@ COPY tests ./tests
 
 RUN pip install --no-cache-dir --upgrade pip && \
     pip install --no-cache-dir -e ".[test]"
+
+# Copy built frontend bundle from Stage 1 into the static serving path
+COPY --from=frontend-builder /build/dist ./app/frontend/dist
 
 EXPOSE 8000
 

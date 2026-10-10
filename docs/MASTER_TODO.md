@@ -13,7 +13,7 @@
 - [x] Singleton FastAPI service implemented and tested (`test_api.py`)
 - [x] Automated thesis reporting and figure generation implemented (`scripts/generate_report.py`)
 - [x] CI workflow, Docker setup, and pyproject dependencies repaired
-- [x] Full test suite green (34 tests passing in `pytest -q`)
+- [x] Full test suite green (54 tests passing in `pytest -q`, 10 in `vitest`)
 
 ---
 

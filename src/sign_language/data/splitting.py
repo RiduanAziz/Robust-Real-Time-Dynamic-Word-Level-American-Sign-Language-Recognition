@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import collections
 import json
 import random
 from dataclasses import replace
@@ -45,6 +46,12 @@ def split_manifest_by_signer(
     entries = list(manifest)
     if not entries:
         return [], [], []
+
+    # Check for duplicate sample IDs
+    sample_ids = [item.sample_id for item in entries]
+    if len(sample_ids) != len(set(sample_ids)):
+        duplicates = [sid for sid, count in collections.Counter(sample_ids).items() if count > 1]
+        raise ValueError(f"Duplicate sample IDs detected in manifest: {duplicates[:10]}")
 
     all_signers = sorted({item.signer_id for item in entries})
     train_signers = list(train_signers) if train_signers is not None else []
@@ -105,22 +112,33 @@ def signer_aware_split(
     test_signers: set[str] | list[str] | None = None,
 ) -> tuple[list[SignSample], list[SignSample], list[SignSample]]:
     """Split a dataset by signer so samples from the same signer stay in only one split."""
+    # Check for duplicate sample IDs
+    sample_ids = [sample.sample_id for sample in samples]
+    if len(sample_ids) != len(set(sample_ids)):
+        duplicates = [sid for sid, count in collections.Counter(sample_ids).items() if count > 1]
+        raise ValueError(f"Duplicate sample IDs detected in dataset: {duplicates[:10]}")
+
     all_signers = sorted({sample.signer_id for sample in samples})
 
     if train_signers is None and val_signers is None and test_signers is None:
+        if len(all_signers) < 3:
+            raise ValueError("At least three unique signers are required for a train/val/test split")
         train_count = max(1, int(len(all_signers) * 0.7))
         val_count = max(1, int(len(all_signers) * 0.15))
+        if train_count + val_count >= len(all_signers):
+            train_count = len(all_signers) - 2
+            val_count = 1
         train_signers = set(all_signers[:train_count])
         val_signers = set(all_signers[train_count : train_count + val_count])
         test_signers = set(all_signers[train_count + val_count :])
+    else:
+        train_signers = set(train_signers or [])
+        val_signers = set(val_signers or [])
+        test_signers = set(test_signers or [])
 
-    train_signers = set(train_signers or [])
-    val_signers = set(val_signers or [])
-    test_signers = set(test_signers or [])
-
-    missing = set(all_signers) - (train_signers | val_signers | test_signers)
-    if missing:
-        raise ValueError(f"Signers {sorted(missing)} were not assigned to any split.")
+    validate_signer_assignments(
+        set(all_signers), train_signers, val_signers, test_signers
+    )
 
     train = [sample for sample in samples if sample.signer_id in train_signers]
     val = [sample for sample in samples if sample.signer_id in val_signers]

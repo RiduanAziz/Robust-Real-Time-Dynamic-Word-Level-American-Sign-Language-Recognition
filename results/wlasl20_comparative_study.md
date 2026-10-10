@@ -1,10 +1,10 @@
 # Empirical Thesis Comparison: Baseline vs. Proposed Architecture on WLASL-20
 
 ## 1. Experimental Protocol
-- **Vocabulary (WLASL-20)**: 20 high-frequency ASL words (`before`, `thin`, `cool`, `drink`, `go`, `computer`, `who`, `cousin`, `help`, `candy`, `thanksgiving`, `bed`, `bowling`, `tall`, `accident`, `short`, `yes`, `what`, `later`, `man`).
-- **Signer Independence**: Mutually disjoint signers across train (122 samples), validation (74 samples), and held-out test (78 samples). Zero signer leakage.
+- **Vocabulary**: 20 classes.
+- **Held-Out Test Sample Count**: 78 samples evaluated under identical preprocessing.
+- **Signer Independence**: Mutually disjoint signers across train, validation, and held-out test splits.
 - **Input Representation**: Canonical 553-point holistic landmarks with 3D coordinate normalization, uniform temporal resampling (64 frames), boundary-safe velocity/acceleration dynamics (4,977 input dimensions).
-- **Epochs**: 10 epochs with identical optimizer (AdamW, lr=0.001) and batch size 16.
 
 ## 2. Model Performance on Held-Out Test Signers
 

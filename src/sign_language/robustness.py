@@ -51,11 +51,12 @@ def landmark_dropout(
     severity: float,
     seed: int = 42,
     mask: np.ndarray | None = None,
-) -> np.ndarray:
+) -> np.ndarray | tuple[np.ndarray, np.ndarray]:
     value = _validate_severity(severity)
     array = np.asarray(sequence, dtype=np.float32).copy()
+    out_mask = np.asarray(mask, dtype=np.float32).copy() if mask is not None else None
     if value == 0.0:
-        return array
+        return (array, out_mask) if out_mask is not None else array
     if array.ndim != 2:
         raise ValueError("landmark dropout expects a [T, F] sequence")
     rng = np.random.default_rng(seed)
@@ -64,13 +65,13 @@ def landmark_dropout(
     if array.shape[1] % 3 == 0:
         expanded_drop = np.repeat(dropped, 3)
         array[:, expanded_drop] = 0.0
-        if mask is not None:
-            mask[:, expanded_drop] = 0.0
+        if out_mask is not None:
+            out_mask[:, expanded_drop] = 0.0
     else:
         array[:, dropped] = 0.0
-        if mask is not None:
-            mask[:, dropped] = 0.0
-    return array
+        if out_mask is not None:
+            out_mask[:, dropped] = 0.0
+    return (array, out_mask) if out_mask is not None else array
 
 
 def apply_spatial_noise(
@@ -79,21 +80,30 @@ def apply_spatial_noise(
     severity: float,
     seed: int = 42,
     mask: np.ndarray | None = None,
-) -> np.ndarray:
+) -> np.ndarray | tuple[np.ndarray, np.ndarray]:
     if severity == 0.0:
-        return np.asarray(sequence, dtype=np.float32).copy()
+        seq_copy = np.asarray(sequence, dtype=np.float32).copy()
+        if mask is not None:
+            return seq_copy, np.asarray(mask, dtype=np.float32).copy()
+        return seq_copy
+
+    if noise_type == "landmark_dropout":
+        return landmark_dropout(sequence, severity, seed, mask=mask)
 
     operators = {
         "coordinate_jitter": coordinate_jitter,
         "translation": translation_noise,
         "scale": scale_noise,
-        "landmark_dropout": lambda seq, sev, s: landmark_dropout(seq, sev, s, mask=mask),
     }
     try:
         operator = operators[noise_type]
     except KeyError as error:
         raise ValueError(f"Unsupported spatial noise type: {noise_type}") from error
-    return operator(sequence, severity, seed)
+
+    noisy_seq = operator(sequence, severity, seed)
+    if mask is not None:
+        return noisy_seq, np.asarray(mask, dtype=np.float32).copy()
+    return noisy_seq
 
 
 def frame_drop(

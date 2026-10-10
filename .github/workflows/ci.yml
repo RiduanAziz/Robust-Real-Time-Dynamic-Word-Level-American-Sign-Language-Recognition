@@ -6,7 +6,8 @@ on:
   pull_request:
 
 jobs:
-  tests:
+  python-backend:
+    name: Python Backend Verification & Tests
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -18,6 +19,9 @@ jobs:
           python -m pip install --upgrade pip
           pip install --extra-index-url https://download.pytorch.org/whl/cpu torch torchvision
           pip install -e ".[test]"
+      - name: Syntax and bytecode compilation
+        run: |
+          python -m compileall src scripts tests
       - name: Syntax and import verification
         run: |
           python -c "import sign_language; print('Package import OK')"
@@ -25,20 +29,33 @@ jobs:
           python scripts/evaluate.py --help
           python scripts/evaluate_robustness.py --help
           python scripts/prepare_dataset.py --help
+          python scripts/split_dataset.py --help
       - name: Configuration dry-run
         run: |
           python scripts/train.py --dry-run --config configs/base.yaml
-      - uses: actions/setup-node@v4
-        with:
-          node-version: '20'
-          cache: 'npm'
-          cache-dependency-path: 'app/frontend/package-lock.json'
-      - name: Frontend unit tests and build
-        run: |
-          cd app/frontend
-          npm ci
-          npm test -- --run
-          npm run build
       - name: Run unit test suite
         run: |
           pytest -q
+
+  frontend:
+    name: React Frontend Verification & Build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: 'npm'
+          cache-dependency-path: 'app/frontend/package-lock.json'
+      - name: Install frontend dependencies
+        run: |
+          cd app/frontend
+          npm ci
+      - name: Run frontend unit tests
+        run: |
+          cd app/frontend
+          npm test -- --run
+      - name: Build production bundle
+        run: |
+          cd app/frontend
+          npm run build

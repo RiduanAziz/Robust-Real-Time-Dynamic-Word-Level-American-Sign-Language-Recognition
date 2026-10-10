@@ -45,15 +45,25 @@ def main() -> None:
     if isinstance(ckpt, dict) and "model_state_dict" in ckpt:
         state_dict = ckpt["model_state_dict"]
         class_names = ckpt.get("class_names")
+        saved_config = ckpt.get("config", {})
         input_dim = ckpt.get("input_dim", 4977)
         seq_len = ckpt.get("sequence_length", 64)
     else:
         state_dict = ckpt
         class_names = None
+        saved_config = {}
         input_dim = 4977
         seq_len = 64
 
     config = load_experiment_config(args.config)
+    if saved_config and isinstance(saved_config, dict):
+        if "model" in saved_config and isinstance(saved_config["model"], dict):
+            for k, v in saved_config["model"].items():
+                setattr(config.model, k, v)
+        if "dataset" in saved_config and isinstance(saved_config["dataset"], dict):
+            for k, v in saved_config["dataset"].items():
+                setattr(config.dataset, k, v)
+
     if class_names is None:
         class_names = list(config.dataset.labels)
 
@@ -102,11 +112,12 @@ def main() -> None:
 
     with torch.no_grad():
         for sample in loaded_samples:
-            norm_seq = pipeline.normalize_sequence(
+            norm_seq, norm_mask = pipeline.normalize_sequence_with_mask(
                 sample["landmarks"], mask=sample["mask"], include_dynamics=(input_dim >= 4977)
             )
             t_in = torch.tensor(norm_seq, dtype=torch.float32).unsqueeze(0).to(device)
-            logits = model(t_in)
+            m_in = torch.tensor(norm_mask, dtype=torch.float32).unsqueeze(0).to(device)
+            logits = model(t_in, mask=m_in)
             clean_preds.append(int(logits.argmax(dim=-1).item()))
 
     clean_acc = float(np.mean([p == t for p, t in zip(clean_preds, targets)]))
@@ -125,12 +136,19 @@ def main() -> None:
             with torch.no_grad():
                 for sample in loaded_samples:
                     # Apply spatial perturbation to raw coordinates
-                    noisy_raw = apply_spatial_noise(sample["landmarks"], noise_type, severity=sev, seed=42)
-                    norm_seq = pipeline.normalize_sequence(
-                        noisy_raw, mask=sample["mask"], include_dynamics=(input_dim >= 4977)
+                    if sample["mask"] is not None:
+                        noisy_raw, noisy_mask = apply_spatial_noise(
+                            sample["landmarks"], noise_type, severity=sev, seed=42, mask=sample["mask"]
+                        )
+                    else:
+                        noisy_raw = apply_spatial_noise(sample["landmarks"], noise_type, severity=sev, seed=42)
+                        noisy_mask = None
+                    norm_seq, norm_mask = pipeline.normalize_sequence_with_mask(
+                        noisy_raw, mask=noisy_mask, include_dynamics=(input_dim >= 4977)
                     )
                     t_in = torch.tensor(norm_seq, dtype=torch.float32).unsqueeze(0).to(device)
-                    logits = model(t_in)
+                    m_in = torch.tensor(norm_mask, dtype=torch.float32).unsqueeze(0).to(device)
+                    logits = model(t_in, mask=m_in)
                     noisy_preds.append(int(logits.argmax(dim=-1).item()))
 
             record = recognition_robustness_report(
@@ -164,11 +182,12 @@ def main() -> None:
                     else:
                         noisy_raw = apply_temporal_noise(sample["landmarks"], noise_type, severity=sev, seed=42)
                         noisy_mask = None
-                    norm_seq = pipeline.normalize_sequence(
+                    norm_seq, norm_mask = pipeline.normalize_sequence_with_mask(
                         noisy_raw, mask=noisy_mask, include_dynamics=(input_dim >= 4977)
                     )
                     t_in = torch.tensor(norm_seq, dtype=torch.float32).unsqueeze(0).to(device)
-                    logits = model(t_in)
+                    m_in = torch.tensor(norm_mask, dtype=torch.float32).unsqueeze(0).to(device)
+                    logits = model(t_in, mask=m_in)
                     noisy_preds.append(int(logits.argmax(dim=-1).item()))
 
             record = recognition_robustness_report(
