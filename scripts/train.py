@@ -85,19 +85,22 @@ def main() -> None:
 
     def collate_with_pipeline(batch: list[dict]) -> dict[str, torch.Tensor | list[str]]:
         features = []
+        masks = []
         labels = []
         sample_ids = []
         for item in batch:
             seq = item["landmarks"]
-            norm_seq = pipeline.normalize_sequence(
+            norm_seq, norm_mask = pipeline.normalize_sequence_with_mask(
                 seq, mask=item.get("mask"), include_dynamics=(config.model.input_dim >= 4977)
             )
             features.append(norm_seq)
+            masks.append(norm_mask)
             labels.append(item["label"])
             sample_ids.append(item.get("sample_id", ""))
 
         return {
             "landmarks": torch.tensor(np.stack(features), dtype=torch.float32),
+            "mask": torch.tensor(np.stack(masks), dtype=torch.float32),
             "label": torch.tensor(labels, dtype=torch.long),
             "sample_id": sample_ids,
         }
@@ -169,10 +172,11 @@ def main() -> None:
         total_loss = 0.0
         for batch in train_loader:
             inputs = batch["landmarks"].to(device)
+            masks = batch["mask"].to(device)
             targets = batch["label"].to(device)
 
             optimizer.zero_grad()
-            logits = model(inputs)
+            logits = model(inputs, mask=masks)
             loss = criterion(logits, targets)
             loss.backward()
 
@@ -194,8 +198,9 @@ def main() -> None:
             with torch.no_grad():
                 for batch in val_loader:
                     inputs = batch["landmarks"].to(device)
+                    masks = batch["mask"].to(device)
                     targets = batch["label"].to(device)
-                    out = model(inputs)
+                    out = model(inputs, mask=masks)
                     val_logits.append(out.cpu())
                     val_targets.append(targets.cpu())
             if val_logits:

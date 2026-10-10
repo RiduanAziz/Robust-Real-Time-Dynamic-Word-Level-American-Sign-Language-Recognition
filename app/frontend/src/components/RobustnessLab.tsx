@@ -51,25 +51,23 @@ export const RobustnessLab: React.FC<RobustnessLabProps> = ({
     { id: 'sequence_truncate', label: 'Sequence Truncation (Temporal)', desc: 'Abrupt gesture cutoff' },
   ];
 
+  const hasRealFeatures = Boolean(recentFeatures && recentFeatures.length >= 8);
+
   const runExperiment = async () => {
+    if (!hasRealFeatures || !recentFeatures) {
+      setError('A live gesture sequence with at least 8 frames is required. Perform a sign in the camera view first.');
+      return;
+    }
+
     setIsRunning(true);
     setError(null);
-
-    // Prepare feature sequence (fallback synthetic if live buffer is filling)
-    let seq = recentFeatures;
-    if (!seq || seq.length === 0) {
-      // Build representative 64-frame feature sequence [64, 1659]
-      seq = Array.from({ length: 32 }, () =>
-        Array.from({ length: 1659 }, () => (Math.random() > 0.4 ? Math.random() * 0.5 : 0.0))
-      );
-    }
 
     try {
       const response = await fetch('/api/robustness/experiment', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          sequence: seq,
+          sequence: recentFeatures,
           perturbation_type: perturbationType,
           severity,
           seed: 42,
@@ -172,11 +170,31 @@ export const RobustnessLab: React.FC<RobustnessLabProps> = ({
           </div>
         </div>
 
+        {!hasRealFeatures && (
+          <div className="p-2.5 rounded-xl bg-amber-50 border border-amber-200/80 text-amber-800 text-xs flex items-start space-x-2">
+            <Info className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
+            <div>
+              <span className="font-semibold block">Live Gesture Required:</span>
+              <span>Perform a sign in the camera view to capture real landmark features before running perturbation testing.</span>
+            </div>
+          </div>
+        )}
+
+        {hasRealFeatures && (
+          <div className="p-2 rounded-xl bg-emerald-50 border border-emerald-200/80 text-emerald-800 text-xs flex items-center justify-between">
+            <div className="flex items-center space-x-2">
+              <CheckCircle className="w-4 h-4 text-emerald-600 shrink-0" />
+              <span>Live Gesture Captured ({recentFeatures?.length} frames ready)</span>
+            </div>
+            <span className="font-mono text-[11px] font-semibold text-emerald-700">1659 features/frame</span>
+          </div>
+        )}
+
         {/* Action Button */}
         <button
           onClick={runExperiment}
-          disabled={isRunning}
-          className="w-full py-2 px-3 rounded-xl bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 text-white text-xs font-semibold shadow-xs flex items-center justify-center space-x-2 transition-colors"
+          disabled={isRunning || !hasRealFeatures}
+          className="w-full py-2 px-3 rounded-xl bg-indigo-600 hover:bg-indigo-700 disabled:opacity-40 disabled:cursor-not-allowed text-white text-xs font-semibold shadow-xs flex items-center justify-center space-x-2 transition-colors"
         >
           {isRunning ? (
             <>

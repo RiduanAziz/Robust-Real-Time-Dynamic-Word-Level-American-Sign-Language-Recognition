@@ -37,7 +37,7 @@ export const TranscriptWorkspace: React.FC<TranscriptWorkspaceProps> = ({
   const [copied, setCopied] = useState<boolean>(false);
   const [confirmClearOpen, setConfirmClearOpen] = useState<boolean>(false);
 
-  // Compute English draft assistance from tokens
+  // Compute formatted gloss draft assistance from tokens
   const generateEnglishDraft = (words: string[]): string => {
     if (words.length === 0) return '';
     const joined = words.join(' ').toLowerCase();
@@ -46,15 +46,24 @@ export const TranscriptWorkspace: React.FC<TranscriptWorkspaceProps> = ({
     return capitalized.endsWith('.') ? capitalized : `${capitalized}.`;
   };
 
-  // Synchronize transcriptText when new tokens arrive (if user hasn't manually diverged)
+  const prevTokensLengthRef = React.useRef<number>(tokens.length);
+
+  // Preserve user edits: append new tokens when they arrive without clobbering existing edits
   useEffect(() => {
-    if (tokens.length > 0) {
-      const glossString = tokens.map((t) => t.word.toUpperCase()).join(' ');
-      setTranscriptText(glossString);
-    } else {
-      setTranscriptText('');
+    const prevLen = prevTokensLengthRef.current;
+    if (tokens.length === 0) {
+      if (prevLen > 0) {
+        setTranscriptText('');
+      }
+    } else if (tokens.length > prevLen) {
+      // Append newly committed word(s)
+      const newTokens = tokens.slice(prevLen);
+      const newWords = newTokens.map((t) => t.word.toUpperCase()).join(' ');
+      const updated = transcriptText.trim() ? `${transcriptText.trim()} ${newWords}` : newWords;
+      setTranscriptText(updated);
     }
-  }, [tokens]);
+    prevTokensLengthRef.current = tokens.length;
+  }, [tokens, transcriptText, setTranscriptText]);
 
   // Copy to clipboard
   const handleCopy = async () => {
@@ -162,16 +171,16 @@ export const TranscriptWorkspace: React.FC<TranscriptWorkspaceProps> = ({
           </div>
         </div>
       ) : (
-        /* English Draft View Notice */
+        /* Formatted Gloss Draft View Notice */
         <div className="p-3 bg-indigo-50/60 border border-indigo-100 rounded-xl text-xs text-indigo-900 space-y-1">
           <div className="font-semibold flex items-center space-x-1.5">
             <Sparkles className="w-4 h-4 text-indigo-600" />
-            <span>Deterministic English Draft Assistant</span>
+            <span>Formatted Gloss Draft (Assisted Formatting)</span>
           </div>
           <p className="text-[11px] text-indigo-700/80 leading-relaxed">
-            Draft: <em>"{generateEnglishDraft(tokens.map((t) => t.word)) || 'No words accumulated yet.'}"</em>
+            Formatted Draft: <em>"{generateEnglishDraft(tokens.map((t) => t.word)) || 'No words accumulated yet.'}"</em>
             <br />
-            (Note: Preserves academic honesty. ASL glosses are not 1:1 English sentences.)
+            (Note: Formats recognized glosses with standard sentence capitalization and punctuation. ASL glosses do not have a 1:1 syntax with English sentences.)
           </p>
         </div>
       )}

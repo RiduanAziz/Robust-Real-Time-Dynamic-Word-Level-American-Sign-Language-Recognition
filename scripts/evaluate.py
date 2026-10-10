@@ -52,6 +52,14 @@ def main() -> None:
         input_dim = 4977
 
     config = load_experiment_config(args.config)
+    if saved_config and isinstance(saved_config, dict):
+        if "model" in saved_config and isinstance(saved_config["model"], dict):
+            for k, v in saved_config["model"].items():
+                setattr(config.model, k, v)
+        if "dataset" in saved_config and isinstance(saved_config["dataset"], dict):
+            for k, v in saved_config["dataset"].items():
+                setattr(config.dataset, k, v)
+
     if class_names is None:
         class_names = list(config.dataset.labels)
 
@@ -93,11 +101,12 @@ def main() -> None:
             target_idx = item["label"]
             seq = item["landmarks"]
             mask = item.get("mask")
-            norm_seq = pipeline.normalize_sequence(
+            norm_seq, norm_mask = pipeline.normalize_sequence_with_mask(
                 seq, mask=mask, include_dynamics=(input_dim >= 4977)
             )
             tensor_in = torch.tensor(norm_seq, dtype=torch.float32).unsqueeze(0).to(device)
-            logits = model(tensor_in)
+            mask_in = torch.tensor(norm_mask, dtype=torch.float32).unsqueeze(0).to(device)
+            logits = model(tensor_in, mask=mask_in)
             pred_idx = int(logits.argmax(dim=-1).item())
 
             targets.append(target_idx)

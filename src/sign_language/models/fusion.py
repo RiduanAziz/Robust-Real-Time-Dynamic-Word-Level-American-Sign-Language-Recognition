@@ -188,10 +188,22 @@ class RobustHolisticFusionClassifier(nn.Module):
         lh_feat, rh_feat, pose_feat, face_feat = self._extract_modality_tensors(x)
 
         # 2. Modality presence scores: presence in sample [B, 1]
-        lh_presence = (lh_feat.abs().sum(dim=[1, 2], keepdim=True) > 1e-4).float()
-        rh_presence = (rh_feat.abs().sum(dim=[1, 2], keepdim=True) > 1e-4).float()
-        pose_presence = (pose_feat.abs().sum(dim=[1, 2], keepdim=True) > 1e-4).float()
-        face_presence = (face_feat.abs().sum(dim=[1, 2], keepdim=True) > 1e-4).float()
+        if mask is not None and mask.dim() == 3:
+            base = TOTAL_HOLISTIC_COORDINATES
+            mask_coords = mask[..., :base] if mask.shape[-1] >= base else mask
+            lh_s, lh_e = MODALITY_COORD_OFFSETS["left_hand"]
+            rh_s, rh_e = MODALITY_COORD_OFFSETS["right_hand"]
+            pose_s, pose_e = MODALITY_COORD_OFFSETS["pose"]
+            face_s, face_e = MODALITY_COORD_OFFSETS["face"]
+            lh_presence = (mask_coords[..., lh_s:lh_e].abs().sum(dim=[1, 2], keepdim=True) > 1e-4).float()
+            rh_presence = (mask_coords[..., rh_s:rh_e].abs().sum(dim=[1, 2], keepdim=True) > 1e-4).float()
+            pose_presence = (mask_coords[..., pose_s:pose_e].abs().sum(dim=[1, 2], keepdim=True) > 1e-4).float()
+            face_presence = (mask_coords[..., face_s:face_e].abs().sum(dim=[1, 2], keepdim=True) > 1e-4).float()
+        else:
+            lh_presence = (lh_feat.abs().sum(dim=[1, 2], keepdim=True) > 1e-4).float()
+            rh_presence = (rh_feat.abs().sum(dim=[1, 2], keepdim=True) > 1e-4).float()
+            pose_presence = (pose_feat.abs().sum(dim=[1, 2], keepdim=True) > 1e-4).float()
+            face_presence = (face_feat.abs().sum(dim=[1, 2], keepdim=True) > 1e-4).float()
 
         # 3. Temporal recurrent encoding
         lh_h, _ = self.lh_temporal(lh_feat)

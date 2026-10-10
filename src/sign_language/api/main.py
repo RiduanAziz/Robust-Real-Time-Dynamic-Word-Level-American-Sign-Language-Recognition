@@ -387,6 +387,7 @@ async def websocket_live_recognition(websocket: WebSocket) -> None:
     min_sequence_frames = 10
 
     sequence_buffer: collections.deque = collections.deque(maxlen=seq_len)
+    mask_buffer: collections.deque = collections.deque(maxlen=seq_len)
     candidate_history: collections.deque = collections.deque(maxlen=debounce_frames)
     recent_replay_frames: collections.deque = collections.deque(maxlen=64)
     wrist_history: collections.deque = collections.deque(maxlen=5)
@@ -487,7 +488,9 @@ async def websocket_live_recognition(websocket: WebSocket) -> None:
                 # 4. Reset session buffers
                 elif msg_type == "reset":
                     sequence_buffer.clear()
+                    mask_buffer.clear()
                     candidate_history.clear()
+                    wrist_history.clear()
                     speed_history.clear()
                     current_candidate = None
                     last_committed_word = None
@@ -571,15 +574,20 @@ async def websocket_live_recognition(websocket: WebSocket) -> None:
                 selected_modalities.append("face")
 
             mod_values: list[np.ndarray] = []
+            mod_masks: list[np.ndarray] = []
             for m_name in selected_modalities:
-                c_mod, _ = structured.get_modality(m_name)
+                c_mod, m_mod = structured.get_modality(m_name)
                 mod_values.append(c_mod.reshape(-1))
+                mod_masks.append(np.repeat(m_mod, 3).astype(np.float32))
 
             obs_landmarks = np.concatenate(mod_values).astype(np.float32)
+            obs_mask = np.concatenate(mod_masks).astype(np.float32)
             if obs_landmarks.shape[0] > extractor.feature_dim:
                 obs_landmarks = obs_landmarks[: extractor.feature_dim]
+                obs_mask = obs_mask[: extractor.feature_dim]
             elif obs_landmarks.shape[0] < extractor.feature_dim:
                 obs_landmarks = np.pad(obs_landmarks, (0, extractor.feature_dim - obs_landmarks.shape[0]))
+                obs_mask = np.pad(obs_mask, (0, extractor.feature_dim - obs_mask.shape[0]))
 
             # Compute landmark presence and 21-point coordinates
             coords = structured.coordinates
@@ -811,6 +819,7 @@ async def websocket_live_recognition(websocket: WebSocket) -> None:
                 "state_code": state_code,
                 "candidate": current_candidate,
                 "confidence": current_confidence,
+                "features": obs_landmarks.tolist(),
             })
 
             # Hand activity tracking for neutral pause detection
@@ -818,17 +827,25 @@ async def websocket_live_recognition(websocket: WebSocket) -> None:
                 last_hand_activity_time = now
                 if state == "WAITING":
                     state = "CAPTURING"
+                # Append to rolling sequence and mask buffer ONLY when hands are actively present
+                sequence_buffer.append(obs_landmarks)
+                mask_buffer.append(obs_mask)
             else:
                 if (now - last_hand_activity_time) > pause_threshold_sec:
-                    # Neutral pause reached
+                    # Neutral pause reached: cleanly reset gesture boundary buffers
                     if state == "COMMITTED":
                         state = "WAITING"
                         last_committed_word = None  # Allow repeating the same word on next gesture
-                    elif state == "CAPTURING" and len(sequence_buffer) < min_sequence_frames:
+                        sequence_buffer.clear()
+                        mask_buffer.clear()
+                        wrist_history.clear()
+                        speed_history.clear()
+                    elif state == "CAPTURING":
                         state = "WAITING"
-
-            # Append to rolling sequence buffer
-            sequence_buffer.append(obs_landmarks)
+                        sequence_buffer.clear()
+                        mask_buffer.clear()
+                        wrist_history.clear()
+                        speed_history.clear()
 
             # Ensure model is ready
             if predictor is None:
@@ -895,12 +912,14 @@ async def websocket_live_recognition(websocket: WebSocket) -> None:
                     })
                     continue
 
-                # Evaluate actual dynamic motion trajectory with prior debiasing
+                # Evaluate actual dynamic motion trajectory with prior debiasing and masks
                 seq_array = np.stack(list(sequence_buffer))
+                mask_array = np.stack(list(mask_buffer))
                 t1 = time.perf_counter()
                 try:
                     pred_res = predictor.predict_label(
                         seq_array,
+                        mask=mask_array,
                         confidence_threshold=confidence_threshold,
                         calibrate=True,
                         calibration_alpha=0.85,

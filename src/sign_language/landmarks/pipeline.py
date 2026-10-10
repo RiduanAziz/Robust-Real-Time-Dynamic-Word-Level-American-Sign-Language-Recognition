@@ -152,13 +152,17 @@ class LandmarkPipeline:
             timestamps_ms=raw_timestamps,
         )
 
-    def normalize_sequence(
+    def normalize_sequence_with_mask(
         self,
         sequence: np.ndarray,
         mask: np.ndarray | None = None,
         include_dynamics: bool = True,
-    ) -> np.ndarray:
-        """Normalize geometric landmarks, resample uniformly, and compute dynamics."""
+    ) -> tuple[np.ndarray, np.ndarray]:
+        """Normalize geometric landmarks, resample uniformly, and compute dynamics.
+
+        Returns:
+            Tuple of (features, feature_mask) with matching shapes [T, D].
+        """
         arr = np.asarray(sequence, dtype=np.float32)
         if arr.ndim == 1:
             arr = arr.reshape(1, -1)
@@ -178,6 +182,27 @@ class LandmarkPipeline:
         # 3. Compute temporal dynamics if requested
         if include_dynamics:
             pos, vel, acc = compute_temporal_derivatives(resampled_pos, mask=resampled_mask)
-            return np.concatenate([pos, vel, acc], axis=-1)
+            t = resampled_pos.shape[0]
+            vel_mask = np.zeros_like(resampled_mask)
+            acc_mask = np.zeros_like(resampled_mask)
+            if t > 1:
+                vel_mask[1:] = resampled_mask[1:] * resampled_mask[:-1]
+            if t > 2:
+                acc_mask[2:] = vel_mask[2:] * vel_mask[1:-1]
+            feat = np.concatenate([pos, vel, acc], axis=-1)
+            feat_mask = np.concatenate([resampled_mask, vel_mask, acc_mask], axis=-1)
+            return feat, feat_mask
 
-        return resampled_pos
+        return resampled_pos, resampled_mask
+
+    def normalize_sequence(
+        self,
+        sequence: np.ndarray,
+        mask: np.ndarray | None = None,
+        include_dynamics: bool = True,
+    ) -> np.ndarray:
+        """Normalize geometric landmarks, resample uniformly, and compute dynamics."""
+        features, _ = self.normalize_sequence_with_mask(
+            sequence, mask=mask, include_dynamics=include_dynamics
+        )
+        return features

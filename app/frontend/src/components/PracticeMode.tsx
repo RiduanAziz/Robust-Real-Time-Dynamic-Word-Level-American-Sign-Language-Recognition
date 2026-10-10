@@ -22,44 +22,39 @@ export const PracticeMode: React.FC<PracticeModeProps> = ({
   confidence,
   qualityScore,
 }) => {
-  const DEFAULT_VOCAB = [
-    'drink',
-    'book',
-    'computer',
-    'before',
-    'chair',
-    'go',
-    'clothes',
-    'who',
-    'candy',
-    'cousin',
-  ];
-  const [vocabulary, setVocabulary] = useState<string[]>(DEFAULT_VOCAB);
-  const [selectedSign, setSelectedSign] = useState<string>('drink');
+  const [vocabulary, setVocabulary] = useState<string[]>([]);
+  const [selectedSign, setSelectedSign] = useState<string>('');
+  const [isLoading, setIsLoading] = useState<boolean>(true);
+  const [vocabError, setVocabError] = useState<string | null>(null);
   const [sessionHistory, setSessionHistory] = useState<PracticeSessionItem[]>([]);
-  const [evaluating, setEvaluating] = useState<boolean>(false);
   const [lastOutcome, setLastOutcome] = useState<'pass' | 'try_again' | null>(null);
 
   // Load vocabulary from backend checkpoint
   useEffect(() => {
     const fetchVocabulary = async () => {
+      setIsLoading(true);
+      setVocabError(null);
       try {
         const url =
-          typeof window !== 'undefined' && window.location.origin
+          typeof window !== 'undefined' && window.location.origin && !window.location.origin.includes(':5173')
             ? `${window.location.origin}/api/vocabulary`
             : 'http://127.0.0.1:8000/api/vocabulary';
         const res = await fetch(url);
         if (res.ok) {
           const data = await res.json();
-          if (data.vocabulary && data.vocabulary.length > 0) {
+          if (data.available && data.vocabulary && data.vocabulary.length > 0) {
             setVocabulary(data.vocabulary);
-            if (!data.vocabulary.includes(selectedSign)) {
-              setSelectedSign(data.vocabulary[0]);
-            }
+            setSelectedSign(data.vocabulary[0]);
+          } else {
+            setVocabError('Model checkpoint is not loaded. Train or supply a checkpoint to practice.');
           }
+        } else {
+          setVocabError('Unable to load vocabulary from backend service.');
         }
       } catch (err) {
-        // Fallback gracefully to default checkpoint words
+        setVocabError('Backend service unreachable. Start the backend server to load vocabulary.');
+      } finally {
+        setIsLoading(false);
       }
     };
     fetchVocabulary();
@@ -132,9 +127,20 @@ export const PracticeMode: React.FC<PracticeModeProps> = ({
           <div className="text-xs text-slate-400 py-1">Loading model vocabulary...</div>
         )}
 
+        {vocabError && (
+          <div className="p-2.5 rounded-lg bg-amber-50 border border-amber-200 text-amber-800 text-xs flex items-center space-x-2">
+            <Info className="w-4 h-4 text-amber-600 shrink-0" />
+            <span>{vocabError}</span>
+          </div>
+        )}
+
         <div className="flex items-center justify-between text-[11px] text-slate-500 pt-1">
           <span>Required Modality: Holistic Hands + Pose</span>
-          <span className="text-emerald-700 font-medium">Supported by Checkpoint</span>
+          {vocabulary.length > 0 ? (
+            <span className="text-emerald-700 font-medium">Supported by Active Checkpoint</span>
+          ) : (
+            <span className="text-amber-700 font-medium">Checkpoint Unavailable</span>
+          )}
         </div>
       </div>
 
@@ -143,7 +149,7 @@ export const PracticeMode: React.FC<PracticeModeProps> = ({
         <div className="p-3 rounded-xl bg-teal-50/60 border border-teal-200/70">
           <span className="text-[10px] text-teal-600 uppercase font-semibold">Target Gloss</span>
           <p className="text-lg font-bold text-teal-900 mt-1 uppercase tracking-wide">
-            {selectedSign}
+            {selectedSign || '---'}
           </p>
         </div>
 
@@ -161,8 +167,8 @@ export const PracticeMode: React.FC<PracticeModeProps> = ({
       {/* Evaluation Button */}
       <button
         onClick={evaluateAttempt}
-        disabled={!currentPrediction}
-        className="w-full py-2.5 px-4 rounded-xl bg-teal-600 hover:bg-teal-700 disabled:opacity-50 text-white text-xs font-semibold shadow-xs flex items-center justify-center space-x-2 transition-colors"
+        disabled={!currentPrediction || vocabulary.length === 0}
+        className="w-full py-2.5 px-4 rounded-xl bg-teal-600 hover:bg-teal-700 disabled:opacity-40 disabled:cursor-not-allowed text-white text-xs font-semibold shadow-xs flex items-center justify-center space-x-2 transition-colors"
       >
         <Sparkles className="w-4 h-4" />
         <span>Evaluate Practice Sign</span>

@@ -111,6 +111,9 @@ export const App: React.FC = () => {
 
   const wsRef = useRef<WebSocket | null>(null);
   const reconnectTimeoutRef = useRef<number | null>(null);
+  const isMountedRef = useRef<boolean>(true);
+  const settingsRef = useRef<AppSettings>(settings);
+  settingsRef.current = settings;
 
   // Persist tokens
   useEffect(() => {
@@ -130,10 +133,28 @@ export const App: React.FC = () => {
     }
   }, [settings]);
 
-  // Fetch backend health and model info
+  // Send dynamic configuration update over open WebSocket without reconnecting
+  useEffect(() => {
+    if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN) {
+      wsRef.current.send(
+        JSON.stringify({
+          type: 'config',
+          mode: recognitionMode,
+          confidence_threshold: settings.confidenceThreshold,
+          debounce_frames: settings.debounceFrames,
+          pause_threshold_sec: settings.pauseThresholdSec,
+        })
+      );
+    }
+  }, [settings.confidenceThreshold, settings.debounceFrames, settings.pauseThresholdSec, recognitionMode]);
+
+  // Fetch backend health and model info (environment aware)
   const fetchStatus = useCallback(async () => {
     try {
-      const baseUrl = 'http://127.0.0.1:8000';
+      const baseUrl =
+        typeof window !== 'undefined' && window.location.origin && !window.location.origin.includes(':5173')
+          ? window.location.origin
+          : 'http://127.0.0.1:8000';
       const healthRes = await fetch(`${baseUrl}/health`);
       if (healthRes.ok) {
         const hData = await healthRes.json();
@@ -152,7 +173,7 @@ export const App: React.FC = () => {
     } catch (err: any) {
       setHealth(null);
       setBackendError(
-        'Unable to reach FastAPI backend service at http://127.0.0.1:8000. Please ensure the backend is running.'
+        'Unable to reach FastAPI backend service. Please ensure the backend is running.'
       );
     }
   }, []);
@@ -168,18 +189,18 @@ export const App: React.FC = () => {
     (word: string) => {
       if (typeof window === 'undefined' || !('speechSynthesis' in window)) return;
       const utterance = new SpeechSynthesisUtterance(word);
-      utterance.rate = settings.ttsRate;
-      utterance.pitch = settings.ttsPitch;
-      if (settings.ttsVoice) {
-        const v = window.speechSynthesis.getVoices().find((x) => x.name === settings.ttsVoice);
+      utterance.rate = settingsRef.current.ttsRate;
+      utterance.pitch = settingsRef.current.ttsPitch;
+      if (settingsRef.current.ttsVoice) {
+        const v = window.speechSynthesis.getVoices().find((x) => x.name === settingsRef.current.ttsVoice);
         if (v) utterance.voice = v;
       }
       window.speechSynthesis.speak(utterance);
     },
-    [settings]
+    []
   );
 
-  // Connect to WebSocket
+  // Connect to WebSocket (only dependent on wsUrl)
   const connectWebSocket = useCallback(() => {
     if (wsRef.current) {
       wsRef.current.close();
@@ -196,9 +217,9 @@ export const App: React.FC = () => {
           JSON.stringify({
             type: 'config',
             mode: recognitionMode,
-            confidence_threshold: settings.confidenceThreshold,
-            debounce_frames: settings.debounceFrames,
-            pause_threshold_sec: settings.pauseThresholdSec,
+            confidence_threshold: settingsRef.current.confidenceThreshold,
+            debounce_frames: settingsRef.current.debounceFrames,
+            pause_threshold_sec: settingsRef.current.pauseThresholdSec,
           })
         );
       };
@@ -276,9 +297,13 @@ export const App: React.FC = () => {
 
       ws.onclose = () => {
         setWsConnected(false);
-        reconnectTimeoutRef.current = window.setTimeout(() => {
-          connectWebSocket();
-        }, 3000);
+        if (isMountedRef.current) {
+          reconnectTimeoutRef.current = window.setTimeout(() => {
+            if (isMountedRef.current) {
+              connectWebSocket();
+            }
+          }, 3000);
+        }
       };
 
       ws.onerror = (err) => {
@@ -289,12 +314,14 @@ export const App: React.FC = () => {
       console.error('WebSocket creation exception:', err);
       setWsConnected(false);
     }
-  }, [settings, recognitionMode, fetchStatus, speakWord]);
+  }, [settings.wsUrl, recognitionMode, fetchStatus, speakWord]);
 
   // Initial WS connection
   useEffect(() => {
+    isMountedRef.current = true;
     connectWebSocket();
     return () => {
+      isMountedRef.current = false;
       if (reconnectTimeoutRef.current) clearTimeout(reconnectTimeoutRef.current);
       if (wsRef.current) wsRef.current.close();
     };
@@ -545,6 +572,11 @@ export const App: React.FC = () => {
                 bufferCompleteness={quality?.buffer_completeness ?? 0.0}
                 confidence={prediction?.confidence ?? 0}
                 latencyMs={performance?.total_latency_ms ?? 0}
+                recentFeatures={
+                  replayFrames
+                    .filter((f) => f.features && f.features.length > 0)
+                    .map((f) => f.features as number[])
+                }
               />
             )}
 

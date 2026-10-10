@@ -160,6 +160,7 @@ export interface ReplayFrame {
   state_code: string;
   candidate: string | null;
   confidence: number;
+  features?: number[];
 }
 
 export interface RobustnessExperimentResult {

@@ -81,3 +81,8 @@ For a standalone native OpenCV desktop popup window:
 - [results](results): metrics, reports, and generated figures
 - [models](models): trained checkpoints and MediaPipe task assets
 
+
+# Open terminal in the project root directory:
+```powershell
+.\.venv\Scripts\python -m uvicorn sign_language.api.main:app --host 127.0.0.1 --port 8000
+```

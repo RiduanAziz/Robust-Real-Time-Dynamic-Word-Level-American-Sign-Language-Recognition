@@ -48,7 +48,13 @@ def main() -> None:
                 model_path = c
                 break
 
-    predictor = RealTimePredictor(model_path=model_path, config_path=args.config)
+    config_path = args.config
+    if "robust_holistic_fusion" in str(model_path) and config_path == "configs/base.yaml":
+        candidate_cfg = "configs/experiments/wlasl20_proposed.yaml"
+        if Path(candidate_cfg).is_file():
+            config_path = candidate_cfg
+
+    predictor = RealTimePredictor(model_path=model_path, config_path=config_path)
     extractor = LandmarkExtractor(
         model_asset_path=args.model_asset_path,
         representation=predictor.config.dataset.feature_representation,
@@ -69,6 +75,7 @@ def main() -> None:
 
     logger.info("Starting real-time recognition loop. Press 'q' to quit.")
     sequence_buffer: collections.deque = collections.deque(maxlen=pipeline.sequence_length)
+    mask_buffer: collections.deque = collections.deque(maxlen=pipeline.sequence_length)
     recent_predictions: collections.deque = collections.deque(maxlen=args.debounce_frames)
 
     frame_count = 0
@@ -90,13 +97,17 @@ def main() -> None:
             extraction_ms = (time.perf_counter() - t0) * 1000.0
 
             sequence_buffer.append(obs.landmarks)
+            mask_buffer.append(obs.mask)
 
             inference_ms = 0.0
             if len(sequence_buffer) == pipeline.sequence_length:
                 seq_array = np.stack(list(sequence_buffer))
+                mask_array = np.stack(list(mask_buffer))
                 t1 = time.perf_counter()
                 pred_res = predictor.predict_label(
-                    seq_array, confidence_threshold=args.confidence_threshold
+                    seq_array,
+                    mask=mask_array,
+                    confidence_threshold=args.confidence_threshold,
                 )
                 inference_ms = (time.perf_counter() - t1) * 1000.0
 
