@@ -1,349 +1,10 @@
-from __future__ import annotations
+import sys
 
-import base64
-import collections
-import json
-import logging
-import os
-import time
-import uuid
-from contextlib import asynccontextmanager
-from pathlib import Path
-from typing import Any
+with open("src/sign_language/api/main.py", "r") as f:
+    code = f.read()
 
-import cv2
-import numpy as np
-from fastapi import FastAPI, HTTPException, WebSocket, WebSocketDisconnect
-from fastapi.middleware.cors import CORSMiddleware
-from fastapi.staticfiles import StaticFiles
-from pydantic import BaseModel, Field
-
-from sign_language.api.inference import RealTimePredictor, create_prediction_payload
-from sign_language.landmarks.extractor import LandmarkExtractor
-from sign_language.landmarks.pipeline import resample_sequence
-from sign_language.robustness import apply_spatial_noise, apply_temporal_noise
-
-logger = logging.getLogger(__name__)
-
-# Global singleton predictor and extractor instances
-_predictor: RealTimePredictor | None = None
-_extractor: LandmarkExtractor | None = None
-_init_error: str | None = None
-_extractor_error: str | None = None
-
-
-@asynccontextmanager
-async def lifespan(app: FastAPI):
-    global _predictor, _extractor, _init_error, _extractor_error
-    model_path = os.environ.get("MODEL_PATH")
-    config_path = os.environ.get("CONFIG_PATH")
-    mediapipe_asset = os.environ.get(
-        "MEDIAPIPE_ASSET_PATH", "models/mediapipe/holistic_landmarker.task"
-    )
-
-    # Prioritize user-trained temporal_transformer_trained.pt
-    if not model_path:
-        candidates = [
-            ("models/temporal_transformer_trained.pt", "configs/base.yaml"),
-            ("models/temporal_transformer_best.pt", "configs/base.yaml"),
-            ("models/robust_holistic_fusion_best.pt", "configs/experiments/wlasl20_proposed.yaml"),
-        ]
-        for m_cand, c_cand in candidates:
-            if Path(m_cand).is_file():
-                model_path = m_cand
-                if not config_path and Path(c_cand).is_file():
-                    config_path = c_cand
-                break
-
-    if not config_path:
-        config_path = "configs/base.yaml"
-
-    # Initialize RealTimePredictor strictly from trained checkpoint
-    try:
-        if model_path and Path(model_path).is_file():
-            _predictor = RealTimePredictor(model_path=model_path, config_path=config_path)
-            logger.info("RealTimePredictor successfully initialized with model %s", model_path)
-            _init_error = None
-        else:
-            _predictor = None
-            _init_error = (
-                f"No trained model checkpoint found at {model_path or 'models/temporal_transformer_trained.pt'}. "
-                "Recognition disabled until valid checkpoint is supplied."
-            )
-            logger.warning(_init_error)
-    except Exception as exc:
-        _predictor = None
-        _init_error = str(exc)
-        logger.warning("Failed to initialize predictor at startup: %s", exc)
-
-    # Initialize LandmarkExtractor
-    task_path = Path(mediapipe_asset)
-    if task_path.is_file():
-        try:
-            rep = _predictor.config.dataset.feature_representation if _predictor else "holistic"
-            _extractor = LandmarkExtractor(
-                model_asset_path=task_path,
-                representation=rep,
-                running_mode="image",
-            )
-            _extractor_error = None
-            logger.info("LandmarkExtractor successfully initialized with %s", task_path)
-        except Exception as exc:
-            _extractor_error = str(exc)
-            logger.warning("Failed to initialize LandmarkExtractor: %s", exc)
-    else:
-        _extractor_error = f"MediaPipe asset not found at {task_path}"
-        logger.info("LandmarkExtractor disabled: %s", _extractor_error)
-
-    yield
-
-    # Clean up on shutdown
-    if _extractor is not None:
-        try:
-            _extractor.close()
-        except Exception as exc:
-            logger.debug("Error closing extractor on shutdown: %s", exc)
-
-
-app = FastAPI(
-    title="SignFlow — Live ASL Recognition API",
-    description="Backend API and WebSocket service for real-time American Sign Language recognition.",
-    version="1.0.0",
-    lifespan=lifespan,
-)
-
-# CORS middleware for local frontend development
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=["*"],
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
-
-
-def get_predictor() -> RealTimePredictor:
-    global _predictor, _init_error
-    if _predictor is None:
-        raise HTTPException(
-            status_code=503,
-            detail=f"Predictor service unavailable: {_init_error or 'No trained model checkpoint loaded.'}",
-        )
-    return _predictor
-
-
-def get_extractor() -> LandmarkExtractor | None:
-    global _extractor
-    return _extractor
-
-
-class PredictionRequest(BaseModel):
-    sequence: list[list[float]] = Field(..., description="2D sequence of landmark features [T, F]")
-    confidence_threshold: float = Field(0.0, ge=0.0, le=1.0, description="Minimum confidence threshold")
-
-
-@app.get("/health")
-def health() -> dict[str, Any]:
-    mediapipe_ready = _extractor is not None and getattr(_extractor, "_landmarker", None) is not None
-    if _extractor is not None and not mediapipe_ready:
-        # Check if model asset file exists even if landmarker not yet lazily created
-        mediapipe_ready = (
-            _extractor.model_asset_path is not None and _extractor.model_asset_path.is_file()
-        )
-
-    model_ready = (
-        _predictor is not None
-        and getattr(_predictor, "model", None) is not None
-        and _init_error is None
-    )
-
-    if model_ready and mediapipe_ready:
-        overall_status = "ok"
-    elif model_ready or mediapipe_ready:
-        overall_status = "degraded"
-    else:
-        overall_status = "error"
-
-    return {
-        "status": overall_status,
-        "process_alive": True,
-        "backend_initialized": True,
-        "mediapipe_available": mediapipe_ready,
-        "trained_model_loaded": model_ready,
-        "inference_ready": model_ready,
-        "checkpoint_path": getattr(_predictor, "checkpoint_path", None) if _predictor else None,
-        "error": _init_error,
-        "mediapipe_error": _extractor_error,
-    }
-
-
-@app.get("/model/info")
-def model_info() -> dict[str, Any]:
-    predictor = get_predictor()
-    return {
-        "name": predictor.config.model.name,
-        "architecture": predictor.model.__class__.__name__ if hasattr(predictor, "model") else "unknown",
-        "status": "ready" if _init_error is None else "error",
-        "checkpoint_path": getattr(predictor, "checkpoint_path", None),
-        "num_classes": predictor.num_classes,
-        "input_dim": predictor.input_dim,
-        "sequence_length": predictor.sequence_length,
-        "device": str(predictor.device),
-        "feature_representation": predictor.config.dataset.feature_representation,
-        "class_names_sample": predictor.class_names[:10] if predictor.class_names else [],
-        "total_classes": len(predictor.class_names),
-        "error": _init_error,
-    }
-
-
-@app.post("/predict")
-def predict(request: PredictionRequest) -> dict[str, Any]:
-    if not request.sequence:
-        raise HTTPException(status_code=422, detail="Sequence must not be empty.")
-
-    try:
-        sequence = np.asarray(request.sequence, dtype=np.float32)
-    except Exception as exc:
-        raise HTTPException(status_code=422, detail=f"Invalid numeric sequence data: {exc}")
-
-    if sequence.ndim != 2:
-        raise HTTPException(
-            status_code=422,
-            detail=f"Expected 2D array [time_steps, features], got {sequence.shape}",
-        )
-
-    if not np.all(np.isfinite(sequence)):
-        raise HTTPException(status_code=422, detail="Input sequence contains non-finite values (NaN or Inf).")
-
-    predictor = get_predictor()
-
-    try:
-        prediction_result = predictor.predict_label(
-            sequence, confidence_threshold=request.confidence_threshold
-        )
-        logits = predictor.predict_logits(sequence)
-    except Exception as exc:
-        raise HTTPException(status_code=400, detail=str(exc))
-
-    payload = create_prediction_payload(sequence)
-
-    return {
-        "sequence_length": payload["sequence_length"],
-        "feature_dim": payload["feature_dim"],
-        "logits": [float(v) for v in logits],
-        "predicted_class": prediction_result["predicted_class"],
-        "predicted_label": prediction_result["predicted_label"],
-        "confidence": prediction_result["confidence"],
-        "meets_threshold": prediction_result["meets_threshold"],
-        "top_k": prediction_result.get("top_k", []),
-    }
-
-
-class RobustnessExperimentRequest(BaseModel):
-    sequence: list[list[float]] = Field(..., description="Sequence of landmark features [T, F]")
-    perturbation_type: str = Field(
-        ...,
-        description="Perturbation type (coordinate_jitter, translation, scale, landmark_dropout, frame_drop, frame_duplicate, sequence_truncate)",
-    )
-    severity: float = Field(0.2, ge=0.0, le=1.0, description="Perturbation severity")
-    seed: int = Field(42, description="Random seed")
-
-
-@app.get("/api/vocabulary")
-def get_vocabulary() -> dict[str, Any]:
-    """Returns the true vocabulary of the loaded model checkpoint for Guided Practice Mode."""
-    predictor = _predictor
-    if predictor is None:
-        return {
-            "available": False,
-            "error": _init_error or "Model checkpoint not loaded.",
-            "vocabulary": [],
-            "count": 0,
-            "checkpoint": None,
-        }
-    return {
-        "available": True,
-        "vocabulary": predictor.class_names,
-        "count": len(predictor.class_names),
-        "checkpoint": getattr(predictor, "checkpoint_path", None),
-    }
-
-
-@app.post("/api/robustness/experiment")
-def run_robustness_experiment(request: RobustnessExperimentRequest) -> dict[str, Any]:
-    """Thesis-aligned robustness analysis comparing clean vs perturbed inference."""
-    predictor = get_predictor()
-    try:
-        seq_clean = np.asarray(request.sequence, dtype=np.float32)
-    except Exception as exc:
-        raise HTTPException(status_code=422, detail=f"Invalid numeric sequence data: {exc}")
-
-    if seq_clean.ndim != 2:
-        raise HTTPException(
-            status_code=422,
-            detail=f"Expected 2D array [T, F], got shape {seq_clean.shape}",
-        )
-
-    t0 = time.perf_counter()
-    clean_pred = predictor.predict_label(seq_clean, confidence_threshold=0.0)
-
-    noise_type = request.perturbation_type
-    severity = float(request.severity)
-    seed = int(request.seed)
-
-    spatial_types = {"coordinate_jitter", "translation", "scale", "landmark_dropout"}
-    temporal_types = {"frame_drop", "frame_duplicate", "sequence_truncate"}
-
-    try:
-        if noise_type in spatial_types:
-            perturbed_seq = apply_spatial_noise(seq_clean, noise_type, severity=severity, seed=seed)
-        elif noise_type in temporal_types:
-            result = apply_temporal_noise(seq_clean, noise_type, severity=severity, seed=seed)
-            perturbed_seq = result[0] if isinstance(result, tuple) else result
-        else:
-            raise HTTPException(
-                status_code=422,
-                detail=f"Unsupported perturbation '{noise_type}'. Must be one of {sorted(spatial_types | temporal_types)}",
-            )
-    except Exception as exc:
-        raise HTTPException(status_code=400, detail=f"Perturbation execution error: {exc}")
-
-    try:
-        perturbed_pred = predictor.predict_label(perturbed_seq, confidence_threshold=0.0)
-    except Exception as exc:
-        raise HTTPException(status_code=400, detail=f"Perturbed prediction execution error: {exc}")
-
-    elapsed_ms = (time.perf_counter() - t0) * 1000.0
-
-    is_consistent = bool(clean_pred["predicted_label"] == perturbed_pred["predicted_label"])
-    clean_sparsity = float(1.0 - (np.count_nonzero(seq_clean) / max(1, seq_clean.size)))
-    perturbed_sparsity = float(1.0 - (np.count_nonzero(perturbed_seq) / max(1, perturbed_seq.size)))
-
-    return {
-        "original_prediction": clean_pred["predicted_label"],
-        "original_confidence": float(clean_pred["confidence"]),
-        "perturbed_prediction": perturbed_pred["predicted_label"],
-        "perturbed_confidence": float(perturbed_pred["confidence"]),
-        "prediction_consistent": is_consistent,
-        "prediction_changed": not is_consistent,
-        "perturbation_type": noise_type,
-        "severity": severity,
-        "processing_time_ms": round(elapsed_ms, 2),
-        "clean_quality": {
-            "sequence_length": int(seq_clean.shape[0]),
-            "feature_dim": int(seq_clean.shape[1]),
-            "sparsity_ratio": round(clean_sparsity, 3),
-        },
-        "perturbed_quality": {
-            "sequence_length": int(perturbed_seq.shape[0]),
-            "feature_dim": int(perturbed_seq.shape[1]),
-            "sparsity_ratio": round(perturbed_sparsity, 3),
-        },
-        "note": "Prediction consistency is reported for this live sequence. Ground-truth accuracy is evaluated on labelled offline benchmark datasets.",
-    }
-
-
-
+# Define the new SessionState class
+state_class = """
 class SessionState:
     def __init__(self, seq_len: int):
         import collections, time
@@ -429,10 +90,21 @@ class SessionState:
         self.sequence_buffer.append(obs_landmarks)
         self.mask_buffer.append(obs_mask)
 
+"""
 
+# Extract everything up to websocket_live_recognition
+ws_start = code.find('@app.websocket("/ws/live")')
+if ws_start == -1:
+    print("Could not find websocket endpoint")
+    sys.exit(1)
+
+code_before = code[:ws_start]
+
+# We will completely replace the websocket_live_recognition function
+new_ws_func = """
 @app.websocket("/ws/live")
 async def websocket_live_recognition(websocket: WebSocket) -> None:
-    """Persistent bidirectional WebSocket connection for real-time ASL recognition."""
+    \"\"\"Persistent bidirectional WebSocket connection for real-time ASL recognition.\"\"\"
     await websocket.accept()
     session_id = str(uuid.uuid4())
     logger.info("WebSocket client connected. Session ID: %s", session_id)
@@ -762,3 +434,9 @@ async def websocket_live_recognition(websocket: WebSocket) -> None:
 _dist_dir = Path("app/frontend/dist")
 if _dist_dir.is_dir():
     app.mount("/", StaticFiles(directory=str(_dist_dir), html=True), name="frontend")
+"""
+
+with open("src/sign_language/api/main.py", "w") as f:
+    f.write(code_before + state_class + new_ws_func)
+
+print("Replaced main.py successfully")

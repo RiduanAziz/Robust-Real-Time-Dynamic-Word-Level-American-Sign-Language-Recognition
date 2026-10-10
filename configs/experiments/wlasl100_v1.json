@@ -1,0 +1,506 @@
+{
+  "vocabulary": [
+    "thin",
+    "before",
+    "cool",
+    "drink",
+    "go",
+    "who",
+    "help",
+    "computer",
+    "cousin",
+    "tall",
+    "bed",
+    "short",
+    "candy",
+    "thanksgiving",
+    "accident",
+    "bowling",
+    "trade",
+    "what",
+    "basketball",
+    "cold",
+    "yes",
+    "corn",
+    "later",
+    "man",
+    "change",
+    "call",
+    "pizza",
+    "shirt",
+    "dark",
+    "last",
+    "environment",
+    "no",
+    "mother",
+    "dog",
+    "family",
+    "apple",
+    "walk",
+    "play",
+    "brother",
+    "check",
+    "why",
+    "far",
+    "leave",
+    "soon",
+    "champion",
+    "deaf",
+    "woman",
+    "letter",
+    "example",
+    "thursday",
+    "room",
+    "score",
+    "bar",
+    "laugh",
+    "take",
+    "delay",
+    "bird",
+    "write",
+    "appointment",
+    "hot",
+    "fish",
+    "study",
+    "work",
+    "full",
+    "wait",
+    "snow",
+    "bad",
+    "good",
+    "convince",
+    "year",
+    "black",
+    "orange",
+    "white",
+    "give",
+    "son",
+    "yesterday",
+    "blanket",
+    "daughter",
+    "balance",
+    "fat",
+    "government",
+    "interest",
+    "argue",
+    "perspective",
+    "silly",
+    "sweet",
+    "ready",
+    "toast",
+    "like",
+    "many",
+    "graduate",
+    "doctor",
+    "secretary",
+    "cry",
+    "order",
+    "sandwich",
+    "theory",
+    "delicious",
+    "move",
+    "language"
+  ],
+  "metadata": {
+    "thin": {
+      "samples": 16,
+      "signers": 12
+    },
+    "before": {
+      "samples": 16,
+      "signers": 9
+    },
+    "cool": {
+      "samples": 16,
+      "signers": 8
+    },
+    "drink": {
+      "samples": 15,
+      "signers": 10
+    },
+    "go": {
+      "samples": 15,
+      "signers": 9
+    },
+    "who": {
+      "samples": 14,
+      "signers": 11
+    },
+    "help": {
+      "samples": 14,
+      "signers": 9
+    },
+    "computer": {
+      "samples": 14,
+      "signers": 7
+    },
+    "cousin": {
+      "samples": 14,
+      "signers": 7
+    },
+    "tall": {
+      "samples": 13,
+      "signers": 11
+    },
+    "bed": {
+      "samples": 13,
+      "signers": 10
+    },
+    "short": {
+      "samples": 13,
+      "signers": 10
+    },
+    "candy": {
+      "samples": 13,
+      "signers": 9
+    },
+    "thanksgiving": {
+      "samples": 13,
+      "signers": 9
+    },
+    "accident": {
+      "samples": 13,
+      "signers": 9
+    },
+    "bowling": {
+      "samples": 13,
+      "signers": 8
+    },
+    "trade": {
+      "samples": 13,
+      "signers": 7
+    },
+    "what": {
+      "samples": 12,
+      "signers": 11
+    },
+    "basketball": {
+      "samples": 12,
+      "signers": 11
+    },
+    "cold": {
+      "samples": 12,
+      "signers": 11
+    },
+    "yes": {
+      "samples": 12,
+      "signers": 10
+    },
+    "corn": {
+      "samples": 12,
+      "signers": 10
+    },
+    "later": {
+      "samples": 12,
+      "signers": 9
+    },
+    "man": {
+      "samples": 12,
+      "signers": 9
+    },
+    "change": {
+      "samples": 12,
+      "signers": 9
+    },
+    "call": {
+      "samples": 12,
+      "signers": 9
+    },
+    "pizza": {
+      "samples": 12,
+      "signers": 8
+    },
+    "shirt": {
+      "samples": 12,
+      "signers": 7
+    },
+    "dark": {
+      "samples": 12,
+      "signers": 7
+    },
+    "last": {
+      "samples": 12,
+      "signers": 7
+    },
+    "environment": {
+      "samples": 11,
+      "signers": 11
+    },
+    "no": {
+      "samples": 11,
+      "signers": 10
+    },
+    "mother": {
+      "samples": 11,
+      "signers": 10
+    },
+    "dog": {
+      "samples": 11,
+      "signers": 10
+    },
+    "family": {
+      "samples": 11,
+      "signers": 10
+    },
+    "apple": {
+      "samples": 11,
+      "signers": 10
+    },
+    "walk": {
+      "samples": 11,
+      "signers": 9
+    },
+    "play": {
+      "samples": 11,
+      "signers": 9
+    },
+    "brother": {
+      "samples": 11,
+      "signers": 9
+    },
+    "check": {
+      "samples": 11,
+      "signers": 9
+    },
+    "why": {
+      "samples": 11,
+      "signers": 9
+    },
+    "far": {
+      "samples": 11,
+      "signers": 9
+    },
+    "leave": {
+      "samples": 11,
+      "signers": 9
+    },
+    "soon": {
+      "samples": 11,
+      "signers": 9
+    },
+    "champion": {
+      "samples": 11,
+      "signers": 9
+    },
+    "deaf": {
+      "samples": 11,
+      "signers": 8
+    },
+    "woman": {
+      "samples": 11,
+      "signers": 8
+    },
+    "letter": {
+      "samples": 11,
+      "signers": 8
+    },
+    "example": {
+      "samples": 11,
+      "signers": 8
+    },
+    "thursday": {
+      "samples": 11,
+      "signers": 7
+    },
+    "room": {
+      "samples": 11,
+      "signers": 7
+    },
+    "score": {
+      "samples": 11,
+      "signers": 7
+    },
+    "bar": {
+      "samples": 11,
+      "signers": 6
+    },
+    "laugh": {
+      "samples": 11,
+      "signers": 6
+    },
+    "take": {
+      "samples": 11,
+      "signers": 6
+    },
+    "delay": {
+      "samples": 11,
+      "signers": 6
+    },
+    "bird": {
+      "samples": 10,
+      "signers": 10
+    },
+    "write": {
+      "samples": 10,
+      "signers": 10
+    },
+    "appointment": {
+      "samples": 10,
+      "signers": 10
+    },
+    "hot": {
+      "samples": 10,
+      "signers": 9
+    },
+    "fish": {
+      "samples": 10,
+      "signers": 9
+    },
+    "study": {
+      "samples": 10,
+      "signers": 9
+    },
+    "work": {
+      "samples": 10,
+      "signers": 9
+    },
+    "full": {
+      "samples": 10,
+      "signers": 9
+    },
+    "wait": {
+      "samples": 10,
+      "signers": 9
+    },
+    "snow": {
+      "samples": 10,
+      "signers": 9
+    },
+    "bad": {
+      "samples": 10,
+      "signers": 9
+    },
+    "good": {
+      "samples": 10,
+      "signers": 9
+    },
+    "convince": {
+      "samples": 10,
+      "signers": 9
+    },
+    "year": {
+      "samples": 10,
+      "signers": 8
+    },
+    "black": {
+      "samples": 10,
+      "signers": 8
+    },
+    "orange": {
+      "samples": 10,
+      "signers": 8
+    },
+    "white": {
+      "samples": 10,
+      "signers": 8
+    },
+    "give": {
+      "samples": 10,
+      "signers": 8
+    },
+    "son": {
+      "samples": 10,
+      "signers": 8
+    },
+    "yesterday": {
+      "samples": 10,
+      "signers": 8
+    },
+    "blanket": {
+      "samples": 10,
+      "signers": 8
+    },
+    "daughter": {
+      "samples": 10,
+      "signers": 8
+    },
+    "balance": {
+      "samples": 10,
+      "signers": 8
+    },
+    "fat": {
+      "samples": 10,
+      "signers": 8
+    },
+    "government": {
+      "samples": 10,
+      "signers": 8
+    },
+    "interest": {
+      "samples": 10,
+      "signers": 8
+    },
+    "argue": {
+      "samples": 10,
+      "signers": 8
+    },
+    "perspective": {
+      "samples": 10,
+      "signers": 8
+    },
+    "silly": {
+      "samples": 10,
+      "signers": 8
+    },
+    "sweet": {
+      "samples": 10,
+      "signers": 8
+    },
+    "ready": {
+      "samples": 10,
+      "signers": 8
+    },
+    "toast": {
+      "samples": 10,
+      "signers": 8
+    },
+    "like": {
+      "samples": 10,
+      "signers": 7
+    },
+    "many": {
+      "samples": 10,
+      "signers": 7
+    },
+    "graduate": {
+      "samples": 10,
+      "signers": 7
+    },
+    "doctor": {
+      "samples": 10,
+      "signers": 7
+    },
+    "secretary": {
+      "samples": 10,
+      "signers": 7
+    },
+    "cry": {
+      "samples": 10,
+      "signers": 7
+    },
+    "order": {
+      "samples": 10,
+      "signers": 7
+    },
+    "sandwich": {
+      "samples": 10,
+      "signers": 7
+    },
+    "theory": {
+      "samples": 10,
+      "signers": 7
+    },
+    "delicious": {
+      "samples": 10,
+      "signers": 7
+    },
+    "move": {
+      "samples": 10,
+      "signers": 7
+    },
+    "language": {
+      "samples": 10,
+      "signers": 6
+    }
+  }
+}
