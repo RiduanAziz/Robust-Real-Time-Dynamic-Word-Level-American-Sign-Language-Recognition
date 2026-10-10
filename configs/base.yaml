@@ -8,9 +8,13 @@ training:
   weight_decay: 0.0001
   gradient_clip: 1.0
 model:
-  name: temporal_transformer
-  input_dim: 4977
+  name: robust_holistic_fusion
+  input_dim: 1659
+  num_classes: 100
   hidden_dim: 128
+  embedding_dim: 64
+  num_layers: 1
+  dropout: 0.2
 checkpoint_dir: checkpoints
 results_dir: results
 evaluation:
