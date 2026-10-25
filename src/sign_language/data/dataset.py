@@ -63,24 +63,59 @@ def build_dataset_from_manifest(
     manifest_path: str | Path,
     landmarks_dir: str | Path,
     allowed_classes: list[str] | None = None,
-) -> list[SignSample]:
+    missing_policy: str = "strict",
+    return_diagnostics: bool = False,
+) -> list[SignSample] | tuple[list[SignSample], dict[str, Any]]:
+    """Build a dataset from a manifest file, preventing silent sample loss.
+
+    Args:
+        manifest_path: Path to JSON manifest.
+        landmarks_dir: Root directory containing extracted landmark .npz archives.
+        allowed_classes: Optional class name whitelist filter.
+        missing_policy: "strict" (raise FileNotFoundError on missing file),
+                        "diagnostic" (record exclusions and log warning),
+                        "ignore" (silently skip, legacy exploratory mode).
+        return_diagnostics: If True, return (samples, diagnostics_dict).
+    """
     import json
+    import logging
     from pathlib import Path
-    
+
+    logger = logging.getLogger(__name__)
     with open(manifest_path, "r", encoding="utf-8") as f:
         manifest = json.load(f)
-        
+
     landmarks_root = Path(landmarks_dir)
-    samples = []
-    
+    samples: list[SignSample] = []
+    excluded_samples: list[dict[str, Any]] = []
+    matching_manifest_count = 0
+
+    allowed_set = set(allowed_classes) if allowed_classes is not None else None
+
     for entry in manifest:
-        if allowed_classes and entry["class_name"] not in allowed_classes:
+        if allowed_set is not None and entry["class_name"] not in allowed_set:
             continue
-            
+
+        matching_manifest_count += 1
         npz_path = landmarks_root / f"{entry['sample_id']}.npz"
         if not npz_path.exists():
+            reason = f"Missing landmark archive: {npz_path}"
+            excluded_samples.append({
+                "sample_id": entry["sample_id"],
+                "class_name": entry["class_name"],
+                "signer_id": entry["signer_id"],
+                "reason": reason,
+            })
+            if missing_policy == "strict":
+                raise FileNotFoundError(
+                    f"Strict mode violation: Required landmark file does not exist: {npz_path} "
+                    f"for sample_id={entry['sample_id']} (class={entry['class_name']}). "
+                    "Refusing to silently drop dataset samples."
+                )
+            elif missing_policy == "diagnostic":
+                logger.warning("Sample excluded [%s]: %s", entry["sample_id"], reason)
             continue
-            
+
         samples.append(
             SignSample(
                 sample_id=entry["sample_id"],
@@ -91,9 +126,22 @@ def build_dataset_from_manifest(
                     "num_frames": entry["num_frames"],
                     "fps": entry["fps"],
                     "split": entry.get("split"),
-                }
+                },
             )
         )
+
+    diagnostics = {
+        "manifest_path": str(manifest_path),
+        "landmarks_dir": str(landmarks_dir),
+        "total_manifest_samples": len(manifest),
+        "matching_class_samples": matching_manifest_count,
+        "loaded_samples_count": len(samples),
+        "excluded_samples_count": len(excluded_samples),
+        "excluded_samples": excluded_samples,
+    }
+
+    if return_diagnostics:
+        return samples, diagnostics
     return samples
 
 

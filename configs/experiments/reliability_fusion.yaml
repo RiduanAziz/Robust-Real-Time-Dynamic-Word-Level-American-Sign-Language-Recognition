@@ -1,0 +1,8 @@
+model:
+  name: reliability_fusion
+  hidden_dim: 64
+  embedding_dim: 64
+  num_layers: 1
+  dropout: 0.25
+training:
+  epochs: 20

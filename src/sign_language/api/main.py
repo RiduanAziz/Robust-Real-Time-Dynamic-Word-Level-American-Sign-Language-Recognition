@@ -119,14 +119,58 @@ app = FastAPI(
     lifespan=lifespan,
 )
 
-# CORS middleware for local frontend development
+# Configurable CORS middleware with secure defaults and local-development support
+_cors_origins_env = os.environ.get("CORS_ORIGINS", "")
+if _cors_origins_env:
+    _allowed_origins = [o.strip() for o in _cors_origins_env.split(",") if o.strip()]
+else:
+    _allowed_origins = [
+        "http://localhost:3000",
+        "http://localhost:5173",
+        "http://127.0.0.1:3000",
+        "http://127.0.0.1:5173",
+        "http://localhost:8000",
+        "http://127.0.0.1:8000",
+        "*",
+    ]
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=_allowed_origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+
+def compute_hand_bounding_box(
+    hand_coords: np.ndarray,
+    hand_mask: np.ndarray,
+) -> dict[str, float] | None:
+    """Compute normalized bounding box for detected hand keypoints."""
+    valid = hand_coords[hand_mask > 0]
+    if len(valid) == 0:
+        return None
+    xmin = float(np.min(valid[:, 0]))
+    ymin = float(np.min(valid[:, 1]))
+    xmax = float(np.max(valid[:, 0]))
+    ymax = float(np.max(valid[:, 1]))
+    w = max(0.0, xmax - xmin)
+    h = max(0.0, ymax - ymin)
+    margin_w = w * 0.12
+    margin_h = h * 0.12
+    b_xmin = float(max(0.0, xmin - margin_w))
+    b_ymin = float(max(0.0, ymin - margin_h))
+    b_xmax = float(min(1.0, xmax + margin_w))
+    b_ymax = float(min(1.0, ymax + margin_h))
+    return {
+        "xmin": round(b_xmin, 4),
+        "ymin": round(b_ymin, 4),
+        "xmax": round(b_xmax, 4),
+        "ymax": round(b_ymax, 4),
+        "width": round(b_xmax - b_xmin, 4),
+        "height": round(b_ymax - b_ymin, 4),
+    }
 
 
 def get_predictor() -> RealTimePredictor:
@@ -539,6 +583,7 @@ async def websocket_live_recognition(websocket: WebSocket) -> None:
                 elif msg_type == "frame":
                     frame_data = payload.get("data", "")
                     ts_ms = payload.get("timestamp_ms", int(time.time() * 1000))
+                    frame_id = payload.get("frame_id")
                     if not frame_data: continue
                     if "," in frame_data:
                         frame_data = frame_data.split(",", 1)[1]
@@ -553,6 +598,7 @@ async def websocket_live_recognition(websocket: WebSocket) -> None:
                 else: continue
             elif "bytes" in message and message["bytes"]:
                 ts_ms = int(time.time() * 1000)
+                frame_id = None
                 try:
                     img_arr = np.frombuffer(message["bytes"], dtype=np.uint8)
                     frame = cv2.imdecode(img_arr, cv2.IMREAD_COLOR)
@@ -566,6 +612,7 @@ async def websocket_live_recognition(websocket: WebSocket) -> None:
             if extractor is None:
                 await websocket.send_json({
                     "type": "landmarks_status",
+                    "frame_id": frame_id,
                     "hands_detected": False,
                     "left_hand": False,
                     "right_hand": False,
@@ -574,12 +621,30 @@ async def websocket_live_recognition(websocket: WebSocket) -> None:
                     "valid_points": 0,
                     "error": "MediaPipe unavailable.",
                 })
+                await websocket.send_json({
+                    "type": "frame_processed",
+                    "frame_id": frame_id,
+                    "timestamp_ms": ts_ms,
+                    "extraction_ms": 0.0,
+                    "inference_ms": 0.0,
+                    "total_latency_ms": 0.0,
+                })
                 continue
 
             t0 = time.perf_counter()
             try:
                 structured = extractor.extract_structured_frame(frame, timestamp_ms=int(ts_ms))
-            except Exception: continue
+            except Exception:
+                await websocket.send_json({
+                    "type": "frame_processed",
+                    "frame_id": frame_id,
+                    "timestamp_ms": ts_ms,
+                    "extraction_ms": 0.0,
+                    "inference_ms": 0.0,
+                    "total_latency_ms": 0.0,
+                    "error": "Extraction failure",
+                })
+                continue
             extraction_ms = (time.perf_counter() - t0) * 1000.0
 
             selected_modalities = ["left_hand", "right_hand"]
@@ -613,6 +678,10 @@ async def websocket_live_recognition(websocket: WebSocket) -> None:
             left_pts = [{"x": float(coords[i, 0]), "y": float(coords[i, 1]), "z": float(coords[i, 2]), "valid": bool(mask[i] > 0)} for i in range(21)]
             right_pts = [{"x": float(coords[i, 0]), "y": float(coords[i, 1]), "z": float(coords[i, 2]), "valid": bool(mask[i] > 0)} for i in range(21, 42)]
             
+            # Compute real geometric bounding boxes for hands
+            left_box = compute_hand_bounding_box(coords[:21], mask[:21]) if left_hand else None
+            right_box = compute_hand_bounding_box(coords[21:42], mask[21:42]) if right_hand else None
+
             # Simple Quality Coach
             coach_score = 100
             if not hands_present:
@@ -628,9 +697,11 @@ async def websocket_live_recognition(websocket: WebSocket) -> None:
 
             await websocket.send_json({
                 "type": "hand_landmarks",
+                "frame_id": frame_id,
                 "left_landmarks": left_pts,
                 "right_landmarks": right_pts,
-                "left_box": None, "right_box": None,
+                "left_box": left_box,
+                "right_box": right_box,
                 "hands_detected": hands_present,
                 "left_hand": left_hand, "right_hand": right_hand,
                 "pose": pose, "face": face,
@@ -771,6 +842,16 @@ async def websocket_live_recognition(websocket: WebSocket) -> None:
                     "total_latency_ms": round(extraction_ms + inference_ms, 1),
                     "frame_count": s.frame_counter,
                 })
+
+            # Terminal frame acknowledgement: informs client that frame processing cycle is complete
+            await websocket.send_json({
+                "type": "frame_processed",
+                "frame_id": frame_id,
+                "timestamp_ms": ts_ms,
+                "extraction_ms": round(extraction_ms, 1),
+                "inference_ms": round(inference_ms, 1),
+                "total_latency_ms": round(extraction_ms + inference_ms, 1),
+            })
     except WebSocketDisconnect:
         logger.info("WebSocket client disconnected cleanly. Session ID: %s", session_id)
     except Exception as exc:

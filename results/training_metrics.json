@@ -1,13 +1,13 @@
 {
   "loss_history": [
-    5.211890697479248
+    3.931635022163391
   ],
   "validation_history": [
     {
       "accuracy": 1.0,
       "macro_f1": 1.0,
       "weighted_f1": 1.0,
-      "loss": 2.569910764694214,
+      "loss": 1.3034167289733887,
       "num_samples": 4
     }
   ],

@@ -1,0 +1,39 @@
+{
+  "protocol": "official",
+  "strict": false,
+  "passed": true,
+  "errors": [],
+  "warnings": [
+    "Protocol A (Official WLASL) has documented signer overlap: train-test=104 shared signers. Not signer-independent."
+  ],
+  "summary": {
+    "splits": {
+      "train": {
+        "samples": 14289,
+        "unique_signers": 117,
+        "unique_classes": 2000
+      },
+      "validation": {
+        "samples": 3916,
+        "unique_signers": 109,
+        "unique_classes": 2000
+      },
+      "test": {
+        "samples": 2878,
+        "unique_signers": 105,
+        "unique_classes": 1999
+      }
+    },
+    "sample_id_leakage": 0,
+    "signer_overlap": {
+      "train_validation": 108,
+      "train_test": 104,
+      "validation_test": 98
+    },
+    "missing_landmark_files": 0,
+    "features_checked": 150,
+    "nan_count": 0,
+    "inf_count": 0,
+    "corrupted_count": 0
+  }
+}

@@ -238,6 +238,8 @@ data/frames/
 data/WLASL_v0.3.json
 data/nslt_*.json
 data/missing.txt
+data/WLASL-2/
+data/WLASL-3/
 
 # Training outputs
 runs/

@@ -26,10 +26,11 @@ import {
 } from '../types';
 
 interface CameraPanelProps {
-  onFrameCaptured: (imageDataUrl: string, timestampMs: number) => void;
+  onFrameCaptured: (imageDataUrl: string, timestampMs: number, frameId?: number) => void;
   isStreaming: boolean;
   setIsStreaming: (streaming: boolean) => void;
   lastFrameAck?: number;
+  lastProcessedFrameId?: number | null;
   landmarksStatus: LandmarksStatus | null;
   leftLandmarks: LandmarkPoint[];
   rightLandmarks: LandmarkPoint[];
@@ -79,6 +80,7 @@ export const CameraPanel: React.FC<CameraPanelProps> = ({
   isStreaming,
   setIsStreaming,
   lastFrameAck,
+  lastProcessedFrameId,
   landmarksStatus,
   leftLandmarks,
   rightLandmarks,
@@ -181,15 +183,19 @@ export const CameraPanel: React.FC<CameraPanelProps> = ({
     setIsStreaming(false);
   };
 
-  // In-flight transmission lock to prevent socket buffer backlog
+  // Monotonic frame ID generator & in-flight tracking
+  const frameIdCounterRef = useRef<number>(0);
+  const inFlightFrameIdRef = useRef<number>(0);
   const inFlightRef = useRef<boolean>(false);
 
-  // Release in-flight lock instantly whenever server delivers ANY response
+  // Release in-flight lock strictly when server acknowledges that frame or a newer frame has been processed
   useEffect(() => {
-    inFlightRef.current = false;
-  }, [lastFrameAck, leftLandmarks, rightLandmarks, landmarksStatus]);
+    if (lastProcessedFrameId != null && lastProcessedFrameId >= inFlightFrameIdRef.current) {
+      inFlightRef.current = false;
+    }
+  }, [lastProcessedFrameId]);
 
-  // Frame Capture Loop (Adaptive requestAnimationFrame pipeline for lowest latency & highest FPS)
+  // Frame Capture Loop (Adaptive requestAnimationFrame pipeline with explicit frame acknowledgement)
   useEffect(() => {
     if (!cameraActive || !isStreaming) {
       if (intervalRef.current) {
@@ -209,16 +215,15 @@ export const CameraPanel: React.FC<CameraPanelProps> = ({
 
       if (video && canvas && video.readyState >= 2) {
         const elapsed = now - lastSendTime;
-        // Transmit next frame the exact millisecond backend is ready and minimum interval has passed
+        // Transmit next frame only when the previous frame has been acknowledged by server
         if (!inFlightRef.current && elapsed >= minFrameIntervalMs) {
           const width = video.videoWidth || 640;
           const height = video.videoHeight || 480;
 
-          // High-speed 320x240 frame
+          // Standardized 320x240 frame
           const targetW = 320;
           const targetH = Math.round((height / width) * 320);
 
-          // Avoid resetting canvas dimensions unless changed (prevents DOM GPU texture churn)
           if (canvas.width !== targetW || canvas.height !== targetH) {
             canvas.width = targetW;
             canvas.height = targetH;
@@ -227,16 +232,21 @@ export const CameraPanel: React.FC<CameraPanelProps> = ({
           const ctx = canvas.getContext('2d');
           if (ctx) {
             ctx.drawImage(video, 0, 0, targetW, targetH);
+            frameIdCounterRef.current += 1;
+            const currentFrameId = frameIdCounterRef.current;
+            inFlightFrameIdRef.current = currentFrameId;
             inFlightRef.current = true;
             lastSendTime = now;
-            // 0.52 JPEG compression is 3x faster in browser canvas without loss of landmark precision
-            const dataUrl = canvas.toDataURL('image/jpeg', 0.52);
-            onFrameCaptured(dataUrl, Date.now());
 
-            // 55ms safety timeout in case socket dropped a frame
+            const dataUrl = canvas.toDataURL('image/jpeg', 0.52);
+            onFrameCaptured(dataUrl, Date.now(), currentFrameId);
+
+            // Watchdog (600ms): Only unblocks if server stalls or WebSocket connection drops
             window.setTimeout(() => {
-              inFlightRef.current = false;
-            }, 55);
+              if (inFlightFrameIdRef.current === currentFrameId && inFlightRef.current) {
+                inFlightRef.current = false;
+              }
+            }, 600);
           }
         }
       }

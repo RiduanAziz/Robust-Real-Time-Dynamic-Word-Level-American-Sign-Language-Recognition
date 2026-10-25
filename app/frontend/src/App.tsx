@@ -73,6 +73,7 @@ export const App: React.FC = () => {
   const [candidate, setCandidate] = useState<WordCandidate | null>(null);
   const [performance, setPerformance] = useState<PerformanceMetrics | null>(null);
   const [lastFrameAck, setLastFrameAck] = useState<number>(0);
+  const [lastProcessedFrameId, setLastProcessedFrameId] = useState<number | null>(null);
 
   // Advanced Visuals & Quality States
   const [leftLandmarks, setLeftLandmarks] = useState<LandmarkPoint[]>([]);
@@ -230,6 +231,13 @@ export const App: React.FC = () => {
           const msg = JSON.parse(event.data);
           setLastFrameAck(Date.now());
           switch (msg.type) {
+            case 'frame_processed':
+              if (typeof msg.frame_id === 'number') {
+                setLastProcessedFrameId(msg.frame_id);
+              }
+              setLastFrameAck(Date.now());
+              break;
+
             case 'session_started':
               if (msg.model_ready) {
                 fetchStatus();
@@ -331,13 +339,14 @@ export const App: React.FC = () => {
 
   // Frame transmission
   const handleFrameCaptured = useCallback(
-    (imageDataUrl: string, timestampMs: number) => {
+    (imageDataUrl: string, timestampMs: number, frameId?: number) => {
       if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN) {
         wsRef.current.send(
           JSON.stringify({
             type: 'frame',
             data: imageDataUrl,
             timestamp_ms: timestampMs,
+            frame_id: frameId,
           })
         );
       }
@@ -454,6 +463,7 @@ export const App: React.FC = () => {
               isStreaming={isStreaming}
               setIsStreaming={setIsStreaming}
               lastFrameAck={lastFrameAck}
+              lastProcessedFrameId={lastProcessedFrameId}
               landmarksStatus={landmarksStatus}
               leftLandmarks={leftLandmarks}
               rightLandmarks={rightLandmarks}

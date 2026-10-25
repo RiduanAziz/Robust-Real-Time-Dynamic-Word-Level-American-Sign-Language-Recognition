@@ -99,12 +99,22 @@ class LandmarkPipeline:
         sequence_length: int = 64,
         extractor: LandmarkExtractor | None = None,
     ) -> None:
-        self.extractor = extractor or LandmarkExtractor(feature_dim=feature_dim)
-        self.feature_dim = int(feature_dim or self.extractor.feature_dim)
+        self._extractor = extractor
+        self.feature_dim = int(feature_dim)
         self.sequence_length = int(sequence_length)
 
+    @property
+    def extractor(self) -> LandmarkExtractor:
+        if self._extractor is None:
+            self._extractor = LandmarkExtractor(feature_dim=self.feature_dim)
+        return self._extractor
+
     def process(self, frame: np.ndarray) -> np.ndarray:
-        """Process a single frame into landmark features repeated across sequence_length."""
+        """Process a single frame into landmark features.
+
+        Warning: Only for single-frame debugging. Dynamic motion models must be
+        evaluated on real temporal video sequences, never single-frame repetitions.
+        """
         arr = np.asarray(frame)
         if arr.size == 0:
             return np.zeros((self.sequence_length, self.feature_dim), dtype=np.float32)

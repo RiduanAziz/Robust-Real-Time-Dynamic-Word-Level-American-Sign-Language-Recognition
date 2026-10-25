@@ -1,0 +1,5 @@
+model:
+  name: tcn
+  dropout: 0.25
+training:
+  epochs: 20

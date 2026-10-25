@@ -1,0 +1,32 @@
+{
+  "protocol": "Protocol B \u2014 Signer-disjoint",
+  "total_signers": 119,
+  "split_signers": {
+    "train": 87,
+    "validation": 16,
+    "test": 16
+  },
+  "sample_counts": {
+    "train": 14757,
+    "validation": 3163,
+    "test": 3163,
+    "total": 21083
+  },
+  "class_coverage_2000": {
+    "train": 2000,
+    "validation": 1576,
+    "test": 1783,
+    "all_3_splits": 1401
+  },
+  "class_coverage_wlasl100": {
+    "train": 100,
+    "validation": 98,
+    "test": 94,
+    "all_3_splits": 92
+  },
+  "signer_overlap": {
+    "train_val": 0,
+    "train_test": 0,
+    "val_test": 0
+  }
+}

@@ -1,0 +1,210 @@
+{
+  "platform": "Windows-11-10.0.26300-SP0",
+  "python_version": "3.14.7 (tags/v3.14.7:823f032, Aug  5 2026, 10:51:32) [MSC v.1944 64 bit (AMD64)]",
+  "repo_root": "F:\\Robust-Real-Time-Dynamic-Word-Level-American-Sign-Language-Recognition",
+  "torch_version": "2.14.1+cpu",
+  "cuda_available": false,
+  "cuda_device_count": 0,
+  "mediapipe_version": "1.0.1",
+  "checkpoints": [
+    {
+      "rel_path": "models\\prior_logits_100.npy",
+      "size_mb": 0.0
+    },
+    {
+      "rel_path": "models\\robust_holistic_fusion_best.pt",
+      "size_mb": 4.05
+    },
+    {
+      "rel_path": "models\\mediapipe\\holistic_landmarker.task",
+      "size_mb": 13.05
+    }
+  ],
+  "manifests": {
+    "dataset_report.json": {
+      "type": "dict",
+      "keys": [
+        "sample_count",
+        "class_count",
+        "signer_count",
+        "train_count",
+        "validation_count",
+        "test_count",
+        "split_signers",
+        "classes"
+      ],
+      "sample_count": 8
+    },
+    "full_manifest.json": {
+      "type": "list",
+      "count": 21083,
+      "sample_keys": [
+        "sample_id",
+        "signer_id",
+        "class_id",
+        "class_name",
+        "video_path",
+        "num_frames",
+        "fps",
+        "duration",
+        "split"
+      ]
+    },
+    "sample10_manifest.json": {
+      "type": "list",
+      "count": 10,
+      "sample_keys": [
+        "sample_id",
+        "signer_id",
+        "class_id",
+        "class_name",
+        "video_path",
+        "num_frames",
+        "fps",
+        "duration",
+        "split"
+      ]
+    },
+    "test_manifest.json": {
+      "type": "list",
+      "count": 2878,
+      "sample_keys": [
+        "sample_id",
+        "signer_id",
+        "class_id",
+        "class_name",
+        "video_path",
+        "num_frames",
+        "fps",
+        "duration",
+        "split"
+      ]
+    },
+    "train_manifest.json": {
+      "type": "list",
+      "count": 14289,
+      "sample_keys": [
+        "sample_id",
+        "signer_id",
+        "class_id",
+        "class_name",
+        "video_path",
+        "num_frames",
+        "fps",
+        "duration",
+        "split"
+      ]
+    },
+    "validation_manifest.json": {
+      "type": "list",
+      "count": 3916,
+      "sample_keys": [
+        "sample_id",
+        "signer_id",
+        "class_id",
+        "class_name",
+        "video_path",
+        "num_frames",
+        "fps",
+        "duration",
+        "split"
+      ]
+    }
+  },
+  "data_structure": {
+    "landmarks": {
+      "is_dir": true,
+      "direct_children": 21083
+    },
+    "manifests": {
+      "is_dir": true,
+      "direct_children": 6
+    },
+    "missing.txt": {
+      "is_dir": false,
+      "size_kb": 62.23
+    },
+    "nslt_100.json": {
+      "is_dir": false,
+      "size_kb": 104.63
+    },
+    "nslt_1000.json": {
+      "is_dir": false,
+      "size_kb": 687.75
+    },
+    "nslt_2000.json": {
+      "is_dir": false,
+      "size_kb": 1109.65
+    },
+    "nslt_300.json": {
+      "is_dir": false,
+      "size_kb": 266.01
+    },
+    "README.md": {
+      "is_dir": false,
+      "size_kb": 0.93
+    },
+    "WLASL-2": {
+      "is_dir": true,
+      "direct_children": 6
+    },
+    "WLASL-3": {
+      "is_dir": true,
+      "direct_children": 4
+    },
+    "wlasl_class_list.txt": {
+      "is_dir": false,
+      "size_kb": 24.32
+    },
+    "WLASL_v0.3.json": {
+      "is_dir": false,
+      "size_kb": 12033.33
+    },
+    "word_embeddings.npz": {
+      "is_dir": false,
+      "size_kb": 2647.11
+    }
+  },
+  "results": [
+    {
+      "name": "baseline_training_metrics.json",
+      "size_kb": 2.54
+    },
+    {
+      "name": "dataset_inventory.json",
+      "size_kb": 1.95
+    },
+    {
+      "name": "evaluation_report.json",
+      "size_kb": 111.53
+    },
+    {
+      "name": "proposed_evaluation_report.json",
+      "size_kb": 111.53
+    },
+    {
+      "name": "proposed_training_metrics.json",
+      "size_kb": 2.58
+    },
+    {
+      "name": "robust_holistic_fusion_best_training_metrics.json",
+      "size_kb": 22.4
+    },
+    {
+      "name": "training_metrics.json",
+      "size_kb": 1.65
+    },
+    {
+      "name": "wlasl100_evaluation_report.json",
+      "size_kb": 101.99
+    },
+    {
+      "name": "wlasl20_baseline_evaluation.json",
+      "size_kb": 7.25
+    },
+    {
+      "name": "wlasl20_proposed_evaluation.json",
+      "size_kb": 7.35
+    }
+  ]
+}

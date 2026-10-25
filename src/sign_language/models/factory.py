@@ -8,6 +8,8 @@ from .baseline import MLPClassifier
 from .fusion import RobustHolisticFusionClassifier
 from .gru import GRUClassifier
 from .lstm import LSTMClassifier
+from .reliability_fusion import ReliabilityAwareIsolatedFusionClassifier
+from .tcn import TCNClassifier
 from .transformer import TemporalTransformerClassifier
 
 
@@ -38,6 +40,21 @@ def build_model(config: ExperimentConfig) -> torch.nn.Module:
             num_layers=params.num_layers,
             num_classes=params.num_classes,
             bidirectional=params.bidirectional,
+            dropout=params.dropout,
+        )
+    if name == "tcn":
+        return TCNClassifier(
+            input_dim=params.input_dim,
+            num_classes=params.num_classes,
+            dropout=params.dropout,
+        )
+    if name in {"reliability_fusion", "reliability_aware", "proposed_v2"}:
+        return ReliabilityAwareIsolatedFusionClassifier(
+            input_dim=params.input_dim,
+            num_classes=params.num_classes,
+            emb_dim=getattr(params, "embedding_dim", 64),
+            hidden_dim=getattr(params, "hidden_dim", 64),
+            num_layers=getattr(params, "num_layers", 1),
             dropout=params.dropout,
         )
     if name in {"robust_holistic_fusion", "fusion", "proposed"}:

@@ -30,8 +30,11 @@ from .splitting import (
     validate_signer_assignments,
     write_manifest_splits,
 )
+from .vocabulary import CanonicalVocabulary, compute_vocabulary_hash
 
 __all__ = [
+    "CanonicalVocabulary",
+    "compute_vocabulary_hash",
     "DatasetManifestEntry",
     "DatasetValidationError",
     "DatasetValidationReport",

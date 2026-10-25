@@ -15,7 +15,7 @@ from torch.utils.data import DataLoader
 
 from sign_language.config import load_experiment_config
 
-from sign_language.data import SignLanguageDataset, build_dataset_from_manifest
+from sign_language.data import SignLanguageDataset, build_dataset_from_manifest, compute_vocabulary_hash
 from sign_language.landmarks.pipeline import LandmarkPipeline
 from sign_language.landmarks.schema import SCHEMA_VERSION
 from sign_language.models import build_model
@@ -106,10 +106,18 @@ def main() -> None:
     parser.add_argument("--val-interval", type=int, default=1, help="Run validation every N epochs")
     parser.add_argument("--val-limit", type=int, default=None, help="Limit number of validation samples for faster epochs")
     parser.add_argument("--drive-backup", type=str, default=None, help="Auto-sync checkpoint copies to Drive directory")
+    parser.add_argument("--run-name", type=str, default=None, help="Descriptive experiment run name to prevent overwriting")
+    parser.add_argument("--smoke-test", action="store_true", help="Run a fast 1-epoch smoke test on small subset")
     args = parser.parse_args()
 
     config = load_experiment_config(args.config)
-    if args.epochs is not None:
+    if args.smoke_test:
+        logger.info("Executing fast smoke test (1 epoch, 8 samples, batch_size=4)...")
+        config.training.epochs = 1
+        args.limit = 8
+        args.val_limit = 4
+        config.training.batch_size = 4
+    elif args.epochs is not None:
         config.training.epochs = args.epochs
     if args.batch_size is not None:
         config.training.batch_size = args.batch_size
@@ -221,8 +229,24 @@ def main() -> None:
 
     checkpoint_dir = Path(args.checkpoint_dir)
     checkpoint_dir.mkdir(parents=True, exist_ok=True)
-    best_ckpt_path = checkpoint_dir / f"{config.model.name}_best.pt"
-    last_ckpt_path = checkpoint_dir / f"{config.model.name}.pt"
+
+    if args.smoke_test:
+        run_name = "smoke_test"
+    elif args.run_name:
+        run_name = args.run_name
+    else:
+        run_name = config.model.name
+
+    best_ckpt_path = checkpoint_dir / f"{run_name}_best.pt"
+    last_ckpt_path = checkpoint_dir / f"{run_name}.pt"
+
+    # Strictly protect the historical baseline checkpoint from accidental overwrite
+    if best_ckpt_path.name == "robust_holistic_fusion_best.pt" and best_ckpt_path.is_file() and not getattr(args, "force_overwrite", False):
+        import time
+        safe_suffix = int(time.time())
+        best_ckpt_path = checkpoint_dir / f"robust_holistic_fusion_run_{safe_suffix}_best.pt"
+        last_ckpt_path = checkpoint_dir / f"robust_holistic_fusion_run_{safe_suffix}.pt"
+        logger.info("Preserving baseline checkpoint: redirecting new outputs to %s", best_ckpt_path)
 
     # 4. Training Loop
     logger.info("Beginning training for %d epochs...", config.training.epochs)
@@ -319,6 +343,7 @@ def main() -> None:
             "input_dim": config.model.input_dim,
             "num_classes": len(class_names),
             "class_names": class_names,
+            "vocabulary_hash": compute_vocabulary_hash(class_names),
             "label_to_index": label_to_index,
             "sequence_length": config.dataset.sequence_length,
             "feature_representation": config.dataset.feature_representation,
@@ -356,7 +381,10 @@ def main() -> None:
     results_dir.mkdir(parents=True, exist_ok=True)
     metrics_out = {
         "loss_history": loss_history,
+        "train_loss": loss_history,
         "validation_history": val_history,
+        "val_macro_f1": [v.get("macro_f1", 0.0) for v in val_history],
+        "val_accuracy": [v.get("accuracy", 0.0) for v in val_history],
         "best_macro_f1": best_macro_f1,
         "class_count": len(class_names),
         "classes": class_names,
@@ -366,6 +394,19 @@ def main() -> None:
         json.dump(metrics_out, f, indent=2)
 
     logger.info("Training complete. Results saved to %s", metrics_path)
+
+    if args.smoke_test:
+        logger.info("Verifying checkpoint reload for smoke test...")
+        reloaded_ckpt = torch.load(best_ckpt_path, map_location=device, weights_only=False)
+        assert "model_state_dict" in reloaded_ckpt, "Reloaded checkpoint missing model_state_dict"
+        test_model = build_model(config).to(device)
+        test_model.load_state_dict(reloaded_ckpt["model_state_dict"])
+        test_model.eval()
+        dummy_in = torch.randn(1, config.dataset.sequence_length, config.model.input_dim).to(device)
+        with torch.no_grad():
+            dummy_out = test_model(dummy_in)
+        assert dummy_out.shape[-1] == len(class_names), "Model output dimension mismatch"
+        logger.info("SMOKE_TEST_VERIFIED: Forward pass, backward step, checkpoint save & reload fully operational.")
 
 
 if __name__ == "__main__":

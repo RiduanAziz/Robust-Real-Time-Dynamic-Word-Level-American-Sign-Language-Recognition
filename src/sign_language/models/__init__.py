@@ -5,6 +5,8 @@ from .factory import build_model
 from .fusion import MultimodalFusionClassifier, RobustHolisticFusionClassifier
 from .gru import GRUClassifier
 from .lstm import LSTMClassifier
+from .reliability_fusion import ReliabilityAwareIsolatedFusionClassifier
+from .tcn import TCNClassifier
 from .transformer import TemporalTransformerClassifier
 
 __all__ = [
@@ -12,7 +14,9 @@ __all__ = [
     "LSTMClassifier",
     "MLPClassifier",
     "MultimodalFusionClassifier",
+    "ReliabilityAwareIsolatedFusionClassifier",
     "RobustHolisticFusionClassifier",
+    "TCNClassifier",
     "TemporalTransformerClassifier",
     "build_model",
 ]
