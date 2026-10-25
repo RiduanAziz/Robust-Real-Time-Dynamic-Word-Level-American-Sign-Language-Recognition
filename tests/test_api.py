@@ -208,7 +208,7 @@ def test_offline_online_preprocessing_parity(test_predictor: RealTimePredictor) 
 
     # 1. Pipeline path
     feat_pipe, mask_pipe = test_predictor.pipeline.normalize_sequence_with_mask(
-        raw_sequence, mask=raw_mask, include_dynamics=True
+        raw_sequence, mask=raw_mask, include_dynamics=(test_predictor.input_dim >= 4977)
     )
 
     # 2. Assert output shape contracts

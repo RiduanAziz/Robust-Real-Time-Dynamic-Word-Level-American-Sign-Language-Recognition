@@ -111,8 +111,8 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
           {/* Target FPS */}
           <div className="space-y-1.5">
             <label className="font-medium text-slate-700">Target Transmission Cadence</label>
-            <div className="grid grid-cols-3 gap-2">
-              {[10, 15, 20].map((fps) => (
+            <div className="grid grid-cols-4 gap-2">
+              {[15, 20, 25, 30].map((fps) => (
                 <button
                   key={fps}
                   onClick={() => onUpdateSettings({ targetFps: fps })}

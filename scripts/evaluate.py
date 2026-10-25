@@ -1,15 +1,20 @@
-from __future__ import annotations
-
 import argparse
 import json
 import logging
+import sys
 from pathlib import Path
+
+# Automatically add 'src' directory to Python path
+_SRC_DIR = Path(__file__).resolve().parent.parent / "src"
+if _SRC_DIR.is_dir() and str(_SRC_DIR) not in sys.path:
+    sys.path.insert(0, str(_SRC_DIR))
 
 import numpy as np
 import torch
 from sklearn.metrics import accuracy_score, confusion_matrix, precision_recall_fscore_support
 
 from sign_language.config import load_experiment_config
+
 from sign_language.data import SignLanguageDataset, build_dataset_from_manifest
 from sign_language.landmarks.pipeline import LandmarkPipeline
 from sign_language.models import build_model
@@ -42,15 +47,6 @@ def main() -> None:
         state_dict = ckpt["model_state_dict"]
         class_names = ckpt.get("class_names")
         saved_config = ckpt.get("config", {})
-        seq_len = ckpt.get("sequence_length", 64)
-        input_dim = ckpt.get("input_dim", 4977)
-    else:
-        state_dict = ckpt
-        class_names = None
-        saved_config = {}
-        seq_len = 64
-        input_dim = 4977
-
     config = load_experiment_config(args.config)
     if saved_config and isinstance(saved_config, dict):
         if "model" in saved_config and isinstance(saved_config["model"], dict):
@@ -62,6 +58,9 @@ def main() -> None:
 
     if class_names is None:
         class_names = list(config.dataset.labels)
+
+    input_dim = ckpt.get("input_dim", config.model.input_dim)
+    seq_len = ckpt.get("sequence_length", config.dataset.sequence_length)
 
     label_to_index = {l: i for i, l in enumerate(class_names)}
     config.model.num_classes = len(class_names)

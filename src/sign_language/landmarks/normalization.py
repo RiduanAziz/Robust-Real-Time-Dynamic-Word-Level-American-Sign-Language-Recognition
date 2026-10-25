@@ -44,22 +44,34 @@ def normalize_landmarks(
         else:
             pt_valid = (np.abs(coords).sum(axis=-1) > 1e-6)
 
-        for t in range(num_frames):
-            visible = pt_valid[t]
-            if not visible.any():
-                coords[t] = 0.0
-                continue
-            if reference_index is not None and reference_index < num_points and visible[reference_index]:
-                center = coords[t, reference_index]
-            else:
-                center = coords[t, visible].mean(axis=0)
-            centered = coords[t] - center
-            scale = np.sqrt(np.mean(np.square(centered[visible])))
-            if scale >= eps:
-                coords[t] = centered / scale
-            else:
-                coords[t] = centered
-            coords[t, ~visible] = 0.0
+        if reference_index is None:
+            m3 = pt_valid[:, :, None].astype(np.float32)
+            vc = m3.sum(axis=1, keepdims=True)
+            has_pts = (vc > 0)
+            centers = np.where(has_pts, (coords * m3).sum(axis=1, keepdims=True) / np.maximum(1.0, vc), 0.0)
+            centered = (coords - centers) * m3
+            sq_sum = np.sum(np.square(centered), axis=(1, 2), keepdims=True)
+            sq_count = np.maximum(1.0, vc * 3.0)
+            scale = np.sqrt(np.where(has_pts, sq_sum / sq_count, 1.0))
+            scale = np.where(scale >= eps, scale, 1.0)
+            coords = np.where(m3 > 0, centered / scale, 0.0)
+        else:
+            for t in range(num_frames):
+                visible = pt_valid[t]
+                if not visible.any():
+                    coords[t] = 0.0
+                    continue
+                if reference_index < num_points and visible[reference_index]:
+                    center = coords[t, reference_index]
+                else:
+                    center = coords[t, visible].mean(axis=0)
+                centered = coords[t] - center
+                scale = np.sqrt(np.mean(np.square(centered[visible])))
+                if scale >= eps:
+                    coords[t] = centered / scale
+                else:
+                    coords[t] = centered
+                coords[t, ~visible] = 0.0
         return coords
 
     # 2. Flattened 3D coordinate sequence [T, N * 3]
@@ -86,24 +98,36 @@ def normalize_landmarks(
             # Derive validity from non-zero coordinates
             pt_valid = (np.abs(coords).sum(axis=-1) > 1e-6)
 
-        for t in range(num_frames):
-            visible = pt_valid[t]
-            if not visible.any():
-                coords[t] = 0.0
-                continue
+        if reference_index is None:
+            m3 = pt_valid[:, :, None].astype(np.float32)
+            vc = m3.sum(axis=1, keepdims=True)
+            has_pts = (vc > 0)
+            centers = np.where(has_pts, (coords * m3).sum(axis=1, keepdims=True) / np.maximum(1.0, vc), 0.0)
+            centered = (coords - centers) * m3
+            sq_sum = np.sum(np.square(centered), axis=(1, 2), keepdims=True)
+            sq_count = np.maximum(1.0, vc * 3.0)
+            scale = np.sqrt(np.where(has_pts, sq_sum / sq_count, 1.0))
+            scale = np.where(scale >= eps, scale, 1.0)
+            coords = np.where(m3 > 0, centered / scale, 0.0)
+        else:
+            for t in range(num_frames):
+                visible = pt_valid[t]
+                if not visible.any():
+                    coords[t] = 0.0
+                    continue
 
-            if reference_index is not None and reference_index < num_points and visible[reference_index]:
-                center = coords[t, reference_index]
-            else:
-                center = coords[t, visible].mean(axis=0)
+                if reference_index < num_points and visible[reference_index]:
+                    center = coords[t, reference_index]
+                else:
+                    center = coords[t, visible].mean(axis=0)
 
-            centered = coords[t] - center
-            scale = np.sqrt(np.mean(np.square(centered[visible])))
-            if scale >= eps:
-                coords[t] = centered / scale
-            else:
-                coords[t] = centered
-            coords[t, ~visible] = 0.0
+                centered = coords[t] - center
+                scale = np.sqrt(np.mean(np.square(centered[visible])))
+                if scale >= eps:
+                    coords[t] = centered / scale
+                else:
+                    coords[t] = centered
+                coords[t, ~visible] = 0.0
 
         res = coords.reshape(num_frames, -1)
         return res[0] if was_1d else res

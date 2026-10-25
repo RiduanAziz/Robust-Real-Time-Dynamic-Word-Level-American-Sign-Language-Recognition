@@ -50,9 +50,10 @@ def main() -> None:
 
     config_path = args.config
     if "robust_holistic_fusion" in str(model_path) and config_path == "configs/base.yaml":
-        candidate_cfg = "configs/experiments/wlasl20_proposed.yaml"
-        if Path(candidate_cfg).is_file():
-            config_path = candidate_cfg
+        for cand in ["configs/experiments/wlasl100_proposed.yaml", "configs/experiments/wlasl20_proposed.yaml"]:
+            if Path(cand).is_file():
+                config_path = cand
+                break
 
     predictor = RealTimePredictor(model_path=model_path, config_path=config_path)
     extractor = LandmarkExtractor(

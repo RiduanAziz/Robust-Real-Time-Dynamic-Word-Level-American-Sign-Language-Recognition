@@ -43,7 +43,7 @@ const DEFAULT_SETTINGS: AppSettings = {
   confidenceThreshold: 0.28,
   debounceFrames: 2,
   pauseThresholdSec: 0.5,
-  targetFps: 15,
+  targetFps: 25,
   autoSpeak: false,
   ttsRate: 1.0,
   ttsPitch: 1.0,
@@ -72,6 +72,7 @@ export const App: React.FC = () => {
   const [prediction, setPrediction] = useState<LivePrediction | null>(null);
   const [candidate, setCandidate] = useState<WordCandidate | null>(null);
   const [performance, setPerformance] = useState<PerformanceMetrics | null>(null);
+  const [lastFrameAck, setLastFrameAck] = useState<number>(0);
 
   // Advanced Visuals & Quality States
   const [leftLandmarks, setLeftLandmarks] = useState<LandmarkPoint[]>([]);
@@ -227,6 +228,7 @@ export const App: React.FC = () => {
       ws.onmessage = (event) => {
         try {
           const msg = JSON.parse(event.data);
+          setLastFrameAck(Date.now());
           switch (msg.type) {
             case 'session_started':
               if (msg.model_ready) {
@@ -451,6 +453,7 @@ export const App: React.FC = () => {
               onFrameCaptured={handleFrameCaptured}
               isStreaming={isStreaming}
               setIsStreaming={setIsStreaming}
+              lastFrameAck={lastFrameAck}
               landmarksStatus={landmarksStatus}
               leftLandmarks={leftLandmarks}
               rightLandmarks={rightLandmarks}

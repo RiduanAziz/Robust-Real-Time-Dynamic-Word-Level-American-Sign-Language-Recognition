@@ -4,10 +4,109 @@
     "signer_id": "118",
     "class_id": 0,
     "class_name": "book",
-    "video_path": "69241.mp4",
+    "video_path": "data/WLASL-3/videos/69241.mp4",
     "num_frames": 75,
-    "fps": 29.97002997002997,
-    "duration": 2.5025,
+    "fps": 25.0,
+    "duration": 3.0,
+    "split": "train"
+  },
+  {
+    "sample_id": "65225",
+    "signer_id": "90",
+    "class_id": 0,
+    "class_name": "book",
+    "video_path": "data/WLASL-3/videos/65225.mp4",
+    "num_frames": 64,
+    "fps": 25.0,
+    "duration": 2.56,
+    "split": "train"
+  },
+  {
+    "sample_id": "68011",
+    "signer_id": "110",
+    "class_id": 0,
+    "class_name": "book",
+    "video_path": "data/WLASL-3/videos/68011.mp4",
+    "num_frames": 47,
+    "fps": 25.0,
+    "duration": 1.88,
+    "split": "train"
+  },
+  {
+    "sample_id": "68208",
+    "signer_id": "113",
+    "class_id": 0,
+    "class_name": "book",
+    "video_path": "data/WLASL-3/videos/68208.mp4",
+    "num_frames": 60,
+    "fps": 25.0,
+    "duration": 2.4,
+    "split": "train"
+  },
+  {
+    "sample_id": "68012",
+    "signer_id": "109",
+    "class_id": 0,
+    "class_name": "book",
+    "video_path": "data/WLASL-3/videos/68012.mp4",
+    "num_frames": 96,
+    "fps": 25.0,
+    "duration": 3.84,
+    "split": "train"
+  },
+  {
+    "sample_id": "70212",
+    "signer_id": "121",
+    "class_id": 0,
+    "class_name": "book",
+    "video_path": "data/WLASL-3/videos/70212.mp4",
+    "num_frames": 100,
+    "fps": 25.0,
+    "duration": 4.0,
+    "split": "val"
+  },
+  {
+    "sample_id": "70266",
+    "signer_id": "121",
+    "class_id": 0,
+    "class_name": "book",
+    "video_path": "data/WLASL-3/videos/70266.mp4",
+    "num_frames": 121,
+    "fps": 25.0,
+    "duration": 4.84,
+    "split": "train"
+  },
+  {
+    "sample_id": "07085",
+    "signer_id": "49",
+    "class_id": 0,
+    "class_name": "book",
+    "video_path": "data/WLASL-3/videos/07085.mp4",
+    "num_frames": 93,
+    "fps": 25.0,
+    "duration": 3.72,
+    "split": "train"
+  },
+  {
+    "sample_id": "07086",
+    "signer_id": "49",
+    "class_id": 0,
+    "class_name": "book",
+    "video_path": "data/WLASL-3/videos/07086.mp4",
+    "num_frames": 100,
+    "fps": 25.0,
+    "duration": 4.0,
+    "split": "train"
+  },
+  {
+    "sample_id": "07087",
+    "signer_id": "18",
+    "class_id": 0,
+    "class_name": "book",
+    "video_path": "data/WLASL-3/videos/07087.mp4",
+    "num_frames": 80,
+    "fps": 25.0,
+    "duration": 3.2,
     "split": "train"
   }
 ]

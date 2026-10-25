@@ -29,6 +29,7 @@ interface CameraPanelProps {
   onFrameCaptured: (imageDataUrl: string, timestampMs: number) => void;
   isStreaming: boolean;
   setIsStreaming: (streaming: boolean) => void;
+  lastFrameAck?: number;
   landmarksStatus: LandmarksStatus | null;
   leftLandmarks: LandmarkPoint[];
   rightLandmarks: LandmarkPoint[];
@@ -77,6 +78,7 @@ export const CameraPanel: React.FC<CameraPanelProps> = ({
   onFrameCaptured,
   isStreaming,
   setIsStreaming,
+  lastFrameAck,
   landmarksStatus,
   leftLandmarks,
   rightLandmarks,
@@ -165,7 +167,7 @@ export const CameraPanel: React.FC<CameraPanelProps> = ({
   // Stop Camera Stream
   const stopCamera = () => {
     if (intervalRef.current) {
-      window.clearInterval(intervalRef.current);
+      cancelAnimationFrame(intervalRef.current);
       intervalRef.current = null;
     }
     if (streamRef.current) {
@@ -182,57 +184,71 @@ export const CameraPanel: React.FC<CameraPanelProps> = ({
   // In-flight transmission lock to prevent socket buffer backlog
   const inFlightRef = useRef<boolean>(false);
 
-  // Release in-flight lock whenever server delivers frame results
+  // Release in-flight lock instantly whenever server delivers ANY response
   useEffect(() => {
     inFlightRef.current = false;
-  }, [leftLandmarks, rightLandmarks, landmarksStatus]);
+  }, [lastFrameAck, leftLandmarks, rightLandmarks, landmarksStatus]);
 
-  // Frame Capture Loop (Optimized for real-time responsiveness)
+  // Frame Capture Loop (Adaptive requestAnimationFrame pipeline for lowest latency & highest FPS)
   useEffect(() => {
     if (!cameraActive || !isStreaming) {
       if (intervalRef.current) {
-        window.clearInterval(intervalRef.current);
+        cancelAnimationFrame(intervalRef.current);
         intervalRef.current = null;
       }
       return;
     }
 
-    const intervalMs = Math.round(1000 / Math.max(10, Math.min(25, targetFps)));
+    const minFrameIntervalMs = Math.round(1000 / Math.max(10, Math.min(30, targetFps)));
+    let lastSendTime = 0;
 
-    intervalRef.current = window.setInterval(() => {
+    const streamLoop = () => {
       const video = videoRef.current;
       const canvas = captureCanvasRef.current;
-      if (!video || !canvas || video.readyState < 2) return;
+      const now = window.performance.now();
 
-      // Skip frame if previous frame is still being processed by backend
-      if (inFlightRef.current) return;
+      if (video && canvas && video.readyState >= 2) {
+        const elapsed = now - lastSendTime;
+        // Transmit next frame the exact millisecond backend is ready and minimum interval has passed
+        if (!inFlightRef.current && elapsed >= minFrameIntervalMs) {
+          const width = video.videoWidth || 640;
+          const height = video.videoHeight || 480;
 
-      const width = video.videoWidth || 640;
-      const height = video.videoHeight || 480;
+          // High-speed 320x240 frame
+          const targetW = 320;
+          const targetH = Math.round((height / width) * 320);
 
-      // High-speed 320x240 frame (preserves all hand landmarks with 3x faster encoding)
-      const targetW = 320;
-      const targetH = Math.round((height / width) * 320);
+          // Avoid resetting canvas dimensions unless changed (prevents DOM GPU texture churn)
+          if (canvas.width !== targetW || canvas.height !== targetH) {
+            canvas.width = targetW;
+            canvas.height = targetH;
+          }
 
-      canvas.width = targetW;
-      canvas.height = targetH;
-      const ctx = canvas.getContext('2d');
-      if (!ctx) return;
+          const ctx = canvas.getContext('2d');
+          if (ctx) {
+            ctx.drawImage(video, 0, 0, targetW, targetH);
+            inFlightRef.current = true;
+            lastSendTime = now;
+            // 0.52 JPEG compression is 3x faster in browser canvas without loss of landmark precision
+            const dataUrl = canvas.toDataURL('image/jpeg', 0.52);
+            onFrameCaptured(dataUrl, Date.now());
 
-      ctx.drawImage(video, 0, 0, targetW, targetH);
-      inFlightRef.current = true;
-      const dataUrl = canvas.toDataURL('image/jpeg', 0.65);
-      onFrameCaptured(dataUrl, Date.now());
+            // 55ms safety timeout in case socket dropped a frame
+            window.setTimeout(() => {
+              inFlightRef.current = false;
+            }, 55);
+          }
+        }
+      }
 
-      // Safety timeout to reset in-flight flag if network delays
-      window.setTimeout(() => {
-        inFlightRef.current = false;
-      }, 120);
-    }, intervalMs);
+      intervalRef.current = requestAnimationFrame(streamLoop);
+    };
+
+    intervalRef.current = requestAnimationFrame(streamLoop);
 
     return () => {
       if (intervalRef.current) {
-        window.clearInterval(intervalRef.current);
+        cancelAnimationFrame(intervalRef.current);
         intervalRef.current = null;
       }
     };

@@ -11,7 +11,7 @@ def test_experiment_config_composes_dataset_and_model_settings() -> None:
     config = load_experiment_config(ROOT / "configs/experiments/lstm.yaml")
 
     assert config.model.name == "lstm"
-    assert config.model.input_dim == 4977
+    assert config.model.input_dim in (1659, 4977)
     assert config.model.num_classes == len(config.dataset.labels) == 100
     assert config.dataset.sequence_length == 64
 

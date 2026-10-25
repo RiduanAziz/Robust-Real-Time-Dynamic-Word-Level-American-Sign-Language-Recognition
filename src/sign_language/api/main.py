@@ -63,7 +63,10 @@ async def lifespan(app: FastAPI):
     try:
         if model_path and Path(model_path).is_file():
             _predictor = RealTimePredictor(model_path=model_path, config_path=config_path)
-            logger.info("RealTimePredictor successfully initialized with model %s", model_path)
+            # Pre-warm model forward pass
+            dummy_seq = np.zeros((_predictor.sequence_length, _predictor.input_dim), dtype=np.float32)
+            _predictor.predict_label(dummy_seq, confidence_threshold=0.0)
+            logger.info("RealTimePredictor successfully initialized and pre-warmed with model %s", model_path)
             _init_error = None
         else:
             _predictor = None
@@ -87,8 +90,11 @@ async def lifespan(app: FastAPI):
                 representation=rep,
                 running_mode="image",
             )
+            # Pre-warm MediaPipe so the first webcam frame does not stall
+            dummy_frame = np.zeros((240, 320, 3), dtype=np.uint8)
+            _extractor.extract_structured_frame(dummy_frame)
             _extractor_error = None
-            logger.info("LandmarkExtractor successfully initialized with %s", task_path)
+            logger.info("LandmarkExtractor successfully initialized and pre-warmed with %s", task_path)
         except Exception as exc:
             _extractor_error = str(exc)
             logger.warning("Failed to initialize LandmarkExtractor: %s", exc)
@@ -368,6 +374,7 @@ class SessionState:
         self.current_candidate = None
         self.current_confidence = 0.0
         self.last_committed_word = None
+        self.last_pred_res = None
         
         # continuous mode specific
         self.continuous_candidate_history = collections.deque(maxlen=5) # longer hysteresis for continuous
@@ -405,12 +412,14 @@ class SessionState:
         self.current_candidate = None
         self.current_confidence = 0.0
         self.last_committed_word = None
+        self.last_pred_res = None
         self.state = "WAITING"
 
     def transition_to_committed(self, word: str):
         self.last_committed_word = word
         self.state = "COMMITTED"
         self.current_candidate = None
+        self.last_pred_res = None
         self.sequence_buffer.clear()
         self.mask_buffer.clear()
         self.candidate_history.clear()
@@ -420,6 +429,7 @@ class SessionState:
     def handle_neutral_pause(self):
         if self.state in {"COMMITTED", "CAPTURING", "CANDIDATE"}:
             self.state = "WAITING"
+            self.last_pred_res = None
             self.sequence_buffer.clear()
             self.mask_buffer.clear()
             self.wrist_history.clear()
@@ -668,22 +678,29 @@ async def websocket_live_recognition(websocket: WebSocket) -> None:
                 if len(s.sequence_buffer) < s.min_sequence_frames: continue
                 if not is_moving and s.current_candidate is None: continue
 
-                # Inference
-                seq_array = np.stack(list(s.sequence_buffer))
-                mask_array = np.stack(list(s.mask_buffer))
-                
+                # High-speed inference stride: run temporal classification every 2 frames
+                # Hands tracking and skeleton overlay continue to run at 100% full frame rate
+                should_run_infer = (s.frame_counter % 2 == 0) or (not hasattr(s, "last_pred_res") or s.last_pred_res is None)
+
                 # Cooldown logic for continuous mode
                 if s.mode == "continuous" and s.continuous_cooldown_frames > 0:
                     s.continuous_cooldown_frames -= 1
                     continue
-                    
-                t1 = time.perf_counter()
-                try:
-                    pred_res = predictor.predict_label(
-                        seq_array, mask=mask_array, confidence_threshold=s.confidence_threshold, calibrate=True, calibration_alpha=0.85
-                    )
-                except Exception as exc: continue
-                inference_ms = (time.perf_counter() - t1) * 1000.0
+
+                if should_run_infer:
+                    seq_array = np.stack(list(s.sequence_buffer))
+                    mask_array = np.stack(list(s.mask_buffer))
+                    t1 = time.perf_counter()
+                    try:
+                        pred_res = predictor.predict_label(
+                            seq_array, mask=mask_array, confidence_threshold=s.confidence_threshold, calibrate=True, calibration_alpha=0.85
+                        )
+                        s.last_pred_res = pred_res
+                    except Exception as exc: continue
+                    inference_ms = (time.perf_counter() - t1) * 1000.0
+                else:
+                    pred_res = getattr(s, "last_pred_res", None)
+                    if pred_res is None: continue
 
                 pred_label = pred_res["predicted_label"]
                 conf = pred_res["confidence"]
