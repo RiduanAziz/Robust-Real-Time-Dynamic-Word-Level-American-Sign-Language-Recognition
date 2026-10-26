@@ -137,6 +137,7 @@ def main() -> None:
     parser.add_argument("--drive-backup", type=str, default=None, help="Auto-sync checkpoint copies to Drive directory")
     parser.add_argument("--run-name", type=str, default=None, help="Descriptive experiment run name to prevent overwriting")
     parser.add_argument("--smoke-test", action="store_true", help="Run a fast 1-epoch smoke test on small subset")
+    parser.add_argument("--missing-policy", type=str, default="strict", choices=["strict", "diagnostic", "ignore"], help="Policy for missing feature files")
     args = parser.parse_args()
 
     config = load_experiment_config(args.config)
@@ -176,6 +177,7 @@ def main() -> None:
         manifest_path=args.manifest,
         landmarks_dir=args.landmarks_dir,
         allowed_classes=config.dataset.labels,
+        missing_policy=args.missing_policy,
     )
     if args.limit:
         train_samples = train_samples[: args.limit]
@@ -223,6 +225,7 @@ def main() -> None:
             manifest_path=args.validation_manifest,
             landmarks_dir=args.landmarks_dir,
             allowed_classes=class_names,
+            missing_policy=args.missing_policy,
         )
         if args.val_limit:
             val_samples = val_samples[: args.val_limit]

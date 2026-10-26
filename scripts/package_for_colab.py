@@ -65,7 +65,7 @@ def package_landmarks_subset(
     sample_ids = {e["sample_id"] for e in selected_entries}
     print(f"\nCreating {subset_name} archive with {len(sample_ids)} landmark files...")
 
-    with tarfile.open(out_file, "w:gz") as tar:
+    with tarfile.open(out_file, "w:gz", compresslevel=1) as tar:
         for i, sid in enumerate(sample_ids):
             npz_path = landmarks_dir / f"{sid}.npz"
             if npz_path.exists():
@@ -73,8 +73,12 @@ def package_landmarks_subset(
             if (i + 1) % 500 == 0 or (i + 1) == len(sample_ids):
                 print(f"  Archived {i + 1}/{len(sample_ids)} files...")
 
+    # Verify archive integrity
+    print("Verifying archive integrity...")
+    with tarfile.open(out_file, "r:gz") as tar:
+        verified_count = len(tar.getnames())
     size_mb = out_file.stat().st_size / (1024 * 1024)
-    print(f"Archived {subset_name} successfully: {size_mb:.2f} MB -> {out_file}")
+    print(f"Archived & Verified {subset_name} successfully: {verified_count} files ({size_mb:.2f} MB) -> {out_file}")
     return out_file
 
 
@@ -104,14 +108,12 @@ def main() -> None:
         package_landmarks_subset(repo_root, out_dir, "wlasl20", w20_classes)
 
     elif args.subset == "wlasl100":
-        config_yaml = repo_root / "configs" / "experiments" / "wlasl100_proposed.yaml"
-        if config_yaml.is_file():
-            import yaml
-            with open(config_yaml, "r", encoding="utf-8") as f:
-                w100_classes = set(yaml.safe_load(f)["dataset"]["labels"])
-        else:
-            with open(repo_root / "configs" / "experiments" / "wlasl100_v1.json", "r", encoding="utf-8") as f:
-                w100_classes = set(json.load(f)["vocabulary"])
+        config_yaml = repo_root / "configs" / "colab" / "wlasl100_baseline_colab.yaml"
+        if not config_yaml.is_file():
+            config_yaml = repo_root / "configs" / "base.yaml"
+        import yaml
+        with open(config_yaml, "r", encoding="utf-8") as f:
+            w100_classes = set(yaml.safe_load(f)["dataset"]["labels"])
         package_landmarks_subset(repo_root, out_dir, "wlasl100", w100_classes)
 
     elif args.subset == "all":

@@ -1,0 +1,25 @@
+{
+  "vocabulary_size": 100,
+  "vocabulary_hash": "50a15ecd4abb546fe0e4859713ed6a6c34e4a35caddec1ddc9fdf79c41d19975",
+  "total_manifest_samples": 21083,
+  "total_wlasl100_manifest_samples": 2038,
+  "total_local_npz_landmarks": 21083,
+  "wlasl100_splits": {
+    "train": {
+      "manifest_count": 1444,
+      "available_landmark_count": 1444,
+      "missing_landmark_count": 0
+    },
+    "validation": {
+      "manifest_count": 337,
+      "available_landmark_count": 337,
+      "missing_landmark_count": 0
+    },
+    "test": {
+      "manifest_count": 257,
+      "available_landmark_count": 257,
+      "missing_landmark_count": 0
+    }
+  },
+  "missing_samples_count": 0
+}

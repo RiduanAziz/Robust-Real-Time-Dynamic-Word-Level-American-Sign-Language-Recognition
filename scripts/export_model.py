@@ -88,7 +88,7 @@ def export_bundle(
         with eval_report_path.open("r", encoding="utf-8") as f:
             eval_data = json.load(f)
 
-    metrics = eval_data.get("metrics", {})
+    metrics = eval_data.get("metrics") or eval_data.get("ensemble", {})
     out_metrics_path = output_dir / "metrics.json"
     with out_metrics_path.open("w", encoding="utf-8") as f:
         json.dump(
@@ -153,10 +153,32 @@ def export_bundle(
             samples,
         ])
 
+    # Export preprocessing_schema.json
+    out_schema_path = output_dir / "preprocessing_schema.json"
+    with out_schema_path.open("w", encoding="utf-8") as f:
+        json.dump(
+            {
+                "schema_version": "1.0.0",
+                "total_points": 553,
+                "input_coordinates": config.model.input_dim,
+                "sequence_length": config.dataset.sequence_length,
+                "modality_coordinates": {
+                    "left_hand": [0, 63],
+                    "right_hand": [63, 126],
+                    "pose": [126, 225],
+                    "face": [225, 1659],
+                },
+                "feature_representation": getattr(config.dataset, "feature_representation", "holistic"),
+                "normalization": "center_scale",
+            },
+            f,
+            indent=2,
+        )
+
     # Copy Model Card
     card_source = Path("docs/MODEL_CARD.md")
     if card_source.is_file():
-        shutil.copy2(card_source, output_dir / "model_card.md")
+        shutil.copy2(card_source, output_dir / "MODEL_CARD.md")
 
     # 6. Verification Test
     if verify:
@@ -192,8 +214,8 @@ def export_bundle(
 def main() -> None:
     parser = argparse.ArgumentParser(description="Export and package model bundle for deployment.")
     parser.add_argument("--checkpoint", default="models/robust_holistic_fusion_best.pt", help="Path to trained checkpoint")
-    parser.add_argument("--config", default="configs/experiments/wlasl100_proposed.yaml", help="Path to config file")
-    parser.add_argument("--eval-report", default="results/wlasl100_evaluation_report.json", help="Path to eval report JSON")
+    parser.add_argument("--config", default="configs/colab/wlasl100_baseline_colab.yaml", help="Path to config file")
+    parser.add_argument("--eval-report", default="results/baseline_reproduced_report.json", help="Path to eval report JSON")
     parser.add_argument("--output-dir", default="outputs/final", help="Destination export directory")
     parser.add_argument("--no-verify", action="store_true", help="Skip reload verification")
     args = parser.parse_args()

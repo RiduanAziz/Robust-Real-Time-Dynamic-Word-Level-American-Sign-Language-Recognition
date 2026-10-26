@@ -107,6 +107,8 @@ def main() -> None:
     parser.add_argument("--model1-config", required=True, help="Path to Model 1 config (.yaml)")
     parser.add_argument("--model2-ckpt", required=True, help="Path to Model 2 checkpoint (.pt)")
     parser.add_argument("--model2-config", required=True, help="Path to Model 2 config (.yaml)")
+    parser.add_argument("--model3-ckpt", default=None, help="Optional path to Model 3 checkpoint (.pt)")
+    parser.add_argument("--model3-config", default=None, help="Optional path to Model 3 config (.yaml)")
     parser.add_argument("--val-manifest", default="data/manifests/validation_manifest.json")
     parser.add_argument("--test-manifest", default="data/manifests/test_manifest.json")
     parser.add_argument("--landmarks-dir", default="data/landmarks")
@@ -120,6 +122,7 @@ def main() -> None:
     # Load configs
     cfg1 = load_experiment_config(args.model1_config)
     cfg2 = load_experiment_config(args.model2_config)
+    cfg3 = load_experiment_config(args.model3_config) if args.model3_config else None
 
     class_names = list(cfg1.dataset.labels)
     canonical_vocab = CanonicalVocabulary(classes=class_names)
@@ -145,6 +148,18 @@ def main() -> None:
     raw_dim2 = cfg2.model.input_dim // 3 if cfg2.model.input_dim >= 4977 else cfg2.model.input_dim
     pipe2 = LandmarkPipeline(feature_dim=raw_dim2, sequence_length=cfg2.dataset.sequence_length)
 
+    # Optional Build Model 3
+    model3, pipe3 = None, None
+    if cfg3 and args.model3_ckpt:
+        cfg3.model.num_classes = len(class_names)
+        model3 = build_model(cfg3)
+        ckpt3 = torch.load(args.model3_ckpt, map_location=device)
+        sd3 = ckpt3.get("model_state_dict", ckpt3.get("state_dict", ckpt3))
+        model3.load_state_dict(sd3)
+        model3.to(device)
+        raw_dim3 = cfg3.model.input_dim // 3 if cfg3.model.input_dim >= 4977 else cfg3.model.input_dim
+        pipe3 = LandmarkPipeline(feature_dim=raw_dim3, sequence_length=cfg3.dataset.sequence_length)
+
     # Load Validation Data
     val_samples = build_dataset_from_manifest(args.val_manifest, args.landmarks_dir, allowed_classes=class_names)
     test_samples = build_dataset_from_manifest(args.test_manifest, args.landmarks_dir, allowed_classes=class_names)
@@ -156,36 +171,67 @@ def main() -> None:
     logger.info("Computing validation probabilities (N=%d)...", len(val_samples))
     val_p1, val_targets = get_model_probabilities(model1, val_samples, pipe1, label_to_index, cfg1.model.input_dim, device)
     val_p2, _ = get_model_probabilities(model2, val_samples, pipe2, label_to_index, cfg2.model.input_dim, device)
+    val_p3 = None
+    if model3:
+        val_p3, _ = get_model_probabilities(model3, val_samples, pipe3, label_to_index, cfg3.model.input_dim, device)
 
-    # Validation Grid Search for optimal alpha
-    best_alpha = 0.5
+    # Validation Grid Search for optimal weights
+    best_weights = (0.5, 0.5, 0.0) if model3 else (0.5, 0.5)
     best_val_top1 = -1.0
     val_results = {}
 
-    for alpha in np.linspace(0.0, 1.0, 21):
-        alpha = float(round(alpha, 2))
-        fused_val = alpha * val_p1 + (1.0 - alpha) * val_p2
-        top1 = pure_accuracy_score(val_targets, np.argmax(fused_val, axis=-1))
-        val_results[str(alpha)] = float(top1)
-        if top1 > best_val_top1:
-            best_val_top1 = top1
-            best_alpha = alpha
-
-    logger.info("Validation grid search optimal alpha: %.2f (Val Top-1: %.4f)", best_alpha, best_val_top1)
+    if model3 and val_p3 is not None:
+        for w1 in np.linspace(0.0, 1.0, 21):
+            for w2 in np.linspace(0.0, 1.0 - w1, int(round((1.0 - w1) * 20)) + 1):
+                w3 = max(0.0, round(1.0 - w1 - w2, 4))
+                w1_r = round(float(w1), 2)
+                w2_r = round(float(w2), 2)
+                w3_r = round(float(w3), 2)
+                fused_val = w1_r * val_p1 + w2_r * val_p2 + w3_r * val_p3
+                top1 = pure_accuracy_score(val_targets, np.argmax(fused_val, axis=-1))
+                val_key = f"{w1_r:.2f}_{w2_r:.2f}_{w3_r:.2f}"
+                val_results[val_key] = float(top1)
+                if top1 > best_val_top1:
+                    best_val_top1 = top1
+                    best_weights = (w1_r, w2_r, w3_r)
+        logger.info("Validation grid search optimal weights (w1, w2, w3): %s (Val Top-1: %.4f)", best_weights, best_val_top1)
+    else:
+        for alpha in np.linspace(0.0, 1.0, 21):
+            alpha = float(round(alpha, 2))
+            fused_val = alpha * val_p1 + (1.0 - alpha) * val_p2
+            top1 = pure_accuracy_score(val_targets, np.argmax(fused_val, axis=-1))
+            val_results[str(alpha)] = float(top1)
+            if top1 > best_val_top1:
+                best_val_top1 = top1
+                best_weights = (alpha, round(1.0 - alpha, 2))
+        logger.info("Validation grid search optimal weights (w1, w2): %s (Val Top-1: %.4f)", best_weights, best_val_top1)
 
     # Evaluate Test Split
     logger.info("Computing test probabilities (N=%d)...", len(test_samples))
     test_p1, test_targets = get_model_probabilities(model1, test_samples, pipe1, label_to_index, cfg1.model.input_dim, device)
     test_p2, _ = get_model_probabilities(model2, test_samples, pipe2, label_to_index, cfg2.model.input_dim, device)
+    test_p3 = None
+    if model3:
+        test_p3, _ = get_model_probabilities(model3, test_samples, pipe3, label_to_index, cfg3.model.input_dim, device)
 
     # Individual metrics
     m1_top1 = pure_accuracy_score(test_targets, np.argmax(test_p1, axis=-1))
     m1_top5 = pure_top_k_accuracy_score(test_targets, test_p1, k=5)
     m2_top1 = pure_accuracy_score(test_targets, np.argmax(test_p2, axis=-1))
     m2_top5 = pure_top_k_accuracy_score(test_targets, test_p2, k=5)
+    m3_top1, m3_top5 = 0.0, 0.0
+    if model3 and test_p3 is not None:
+        m3_top1 = pure_accuracy_score(test_targets, np.argmax(test_p3, axis=-1))
+        m3_top5 = pure_top_k_accuracy_score(test_targets, test_p3, k=5)
 
-    # Fused metrics with validation-tuned alpha
-    fused_test = best_alpha * test_p1 + (1.0 - best_alpha) * test_p2
+    # Fused metrics with validation-tuned weights
+    if model3 and test_p3 is not None:
+        w1, w2, w3 = best_weights
+        fused_test = w1 * test_p1 + w2 * test_p2 + w3 * test_p3
+    else:
+        w1, w2 = best_weights
+        fused_test = w1 * test_p1 + w2 * test_p2
+
     fused_preds = np.argmax(fused_test, axis=-1)
 
     ens_top1 = pure_accuracy_score(test_targets, fused_preds)
@@ -200,7 +246,7 @@ def main() -> None:
         "model1": {"name": cfg1.model.name, "checkpoint": args.model1_ckpt, "top1": float(m1_top1), "top5": float(m1_top5)},
         "model2": {"name": cfg2.model.name, "checkpoint": args.model2_ckpt, "top1": float(m2_top1), "top5": float(m2_top5)},
         "ensemble": {
-            "optimal_alpha": float(best_alpha),
+            "optimal_weights": [float(w) for w in best_weights],
             "validation_top1": float(best_val_top1),
             "test_top1": float(ens_top1),
             "test_top5": float(ens_top5),
@@ -211,8 +257,10 @@ def main() -> None:
             "ece": float(ens_ece),
             "evaluated_samples": len(test_targets),
         },
-        "alpha_grid_search": val_results,
+        "grid_search": val_results,
     }
+    if model3 and cfg3:
+        report["model3"] = {"name": cfg3.model.name, "checkpoint": args.model3_ckpt, "top1": float(m3_top1), "top5": float(m3_top5)}
 
     out_p = Path(args.output)
     out_p.parent.mkdir(parents=True, exist_ok=True)
@@ -224,7 +272,9 @@ def main() -> None:
     print("=" * 60)
     print(f"Model 1 ({cfg1.model.name}):       Top-1: {m1_top1:.4f} ({m1_top1*100:.2f}%), Top-5: {m1_top5:.4f}")
     print(f"Model 2 ({cfg2.model.name}):       Top-1: {m2_top1:.4f} ({m2_top1*100:.2f}%), Top-5: {m2_top5:.4f}")
-    print(f"Optimal Alpha (Model 1 Weight):    {best_alpha:.2f} (tuned on validation split)")
+    if model3 and cfg3:
+        print(f"Model 3 ({cfg3.model.name}):       Top-1: {m3_top1:.4f} ({m3_top1*100:.2f}%), Top-5: {m3_top5:.4f}")
+    print(f"Optimal Weights:                   {best_weights} (tuned on validation split)")
     print("-" * 60)
     print(f"Ensemble Top-1 Accuracy:           {ens_top1:.4f} ({ens_top1*100:.2f}%)")
     print(f"Ensemble Top-5 Accuracy:           {ens_top5:.4f} ({ens_top5*100:.2f}%)")

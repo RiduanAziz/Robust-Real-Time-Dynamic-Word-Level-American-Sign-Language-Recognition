@@ -81,6 +81,26 @@ describe('SignFlow Frontend Suite', () => {
         onModeChange={vi.fn()}
         onOpenSettings={vi.fn()}
         onOpenHelp={vi.fn()}
+        availableModels={[
+          {
+            id: 'ensemble_3way',
+            name: '3-Way Probability Ensemble',
+            accuracy: '76.65% Top-1 / 91.44% Top-5',
+            top1: 76.65,
+            top5: 91.44,
+            ece: 0.0838,
+            description: 'Optimal ensemble',
+            badge: 'SOTA Benchmark',
+            active: true,
+            available: true,
+          },
+        ]}
+        selectedModelId="ensemble_3way"
+        onSelectModel={vi.fn()}
+        isSwitchingModel={false}
+        videoDevices={[]}
+        selectedDeviceId=""
+        onSelectDevice={vi.fn()}
       />
     );
 

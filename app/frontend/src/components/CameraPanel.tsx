@@ -43,6 +43,10 @@ interface CameraPanelProps {
   targetFps: number;
   mirrorCamera: boolean;
   onToggleMirror: () => void;
+  videoDevices?: MediaDeviceInfo[];
+  selectedDeviceId?: string;
+  onSelectDevice?: (deviceId: string) => void;
+  onDevicesEnumerated?: (devices: MediaDeviceInfo[]) => void;
 }
 
 const HAND_CONNECTIONS = [
@@ -93,6 +97,10 @@ export const CameraPanel: React.FC<CameraPanelProps> = ({
   targetFps,
   mirrorCamera,
   onToggleMirror,
+  videoDevices,
+  selectedDeviceId: controlledDeviceId,
+  onSelectDevice,
+  onDevicesEnumerated,
 }) => {
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const captureCanvasRef = useRef<HTMLCanvasElement | null>(null);
@@ -102,12 +110,22 @@ export const CameraPanel: React.FC<CameraPanelProps> = ({
   const streamRef = useRef<MediaStream | null>(null);
   const intervalRef = useRef<number | null>(null);
 
-  const [devices, setDevices] = useState<MediaDeviceInfo[]>([]);
-  const [selectedDeviceId, setSelectedDeviceId] = useState<string>('');
+  const [localDevices, setLocalDevices] = useState<MediaDeviceInfo[]>([]);
+  const [localSelectedId, setLocalSelectedId] = useState<string>('');
   const [cameraActive, setCameraActive] = useState<boolean>(false);
   const [permissionError, setPermissionError] = useState<string | null>(null);
   const [showOverlay, setShowOverlay] = useState<boolean>(true);
   const [viewMode, setViewMode] = useState<CameraViewMode>('full');
+
+  const devices = videoDevices && videoDevices.length > 0 ? videoDevices : localDevices;
+  const currentDeviceId = controlledDeviceId !== undefined ? controlledDeviceId : localSelectedId;
+
+  const handleDeviceChange = (deviceId: string) => {
+    setLocalSelectedId(deviceId);
+    if (onSelectDevice) {
+      onSelectDevice(deviceId);
+    }
+  };
 
   // Smoothed bounding box for Hand Focus inset
   const smoothBoxRef = useRef<BoundingBox | null>(null);
@@ -116,30 +134,35 @@ export const CameraPanel: React.FC<CameraPanelProps> = ({
   useEffect(() => {
     const getDevices = async () => {
       try {
+        if (!navigator.mediaDevices?.enumerateDevices) return;
         const devs = await navigator.mediaDevices.enumerateDevices();
         const videoDevs = devs.filter((d) => d.kind === 'videoinput');
-        setDevices(videoDevs);
-        if (videoDevs.length > 0 && !selectedDeviceId) {
-          setSelectedDeviceId(videoDevs[0].deviceId);
+        setLocalDevices(videoDevs);
+        if (onDevicesEnumerated) {
+          onDevicesEnumerated(videoDevs);
+        }
+        if (videoDevs.length > 0 && !currentDeviceId) {
+          handleDeviceChange(videoDevs[0].deviceId);
         }
       } catch (err) {
         console.warn('Could not enumerate video devices:', err);
       }
     };
     getDevices();
-  }, [selectedDeviceId]);
+  }, [currentDeviceId]);
 
   // Start Camera Stream
-  const startCamera = async () => {
+  const startCamera = async (targetDeviceId?: string) => {
     setPermissionError(null);
+    const devId = targetDeviceId !== undefined ? targetDeviceId : currentDeviceId;
     try {
       if (streamRef.current) {
         streamRef.current.getTracks().forEach((track) => track.stop());
       }
 
       const constraints: MediaStreamConstraints = {
-        video: selectedDeviceId
-          ? { deviceId: { exact: selectedDeviceId }, width: { ideal: 640 }, height: { ideal: 480 } }
+        video: devId
+          ? { deviceId: { exact: devId }, width: { ideal: 640 }, height: { ideal: 480 } }
           : { width: { ideal: 640 }, height: { ideal: 480 } },
         audio: false,
       };
@@ -154,6 +177,18 @@ export const CameraPanel: React.FC<CameraPanelProps> = ({
 
       setCameraActive(true);
       setIsStreaming(true);
+
+      // Re-enumerate devices after permission granted so device labels appear
+      try {
+        const devs = await navigator.mediaDevices.enumerateDevices();
+        const videoDevs = devs.filter((d) => d.kind === 'videoinput');
+        setLocalDevices(videoDevs);
+        if (onDevicesEnumerated) {
+          onDevicesEnumerated(videoDevs);
+        }
+      } catch (e) {
+        // ignore
+      }
     } catch (err: any) {
       console.error('Camera access error:', err);
       setCameraActive(false);
@@ -165,6 +200,17 @@ export const CameraPanel: React.FC<CameraPanelProps> = ({
       }
     }
   };
+
+  // Auto switch camera if active and selected device changes
+  const prevDeviceIdRef = useRef<string>(currentDeviceId);
+  useEffect(() => {
+    if (cameraActive && currentDeviceId && currentDeviceId !== prevDeviceIdRef.current) {
+      prevDeviceIdRef.current = currentDeviceId;
+      startCamera(currentDeviceId);
+    } else {
+      prevDeviceIdRef.current = currentDeviceId;
+    }
+  }, [currentDeviceId, cameraActive]);
 
   // Stop Camera Stream
   const stopCamera = () => {
@@ -534,21 +580,28 @@ export const CameraPanel: React.FC<CameraPanelProps> = ({
   };
 
   return (
-    <div className="bg-white rounded-2xl border border-slate-200/80 shadow-xs p-4 sm:p-5 flex flex-col space-y-4">
+    <div className="bg-slate-900/90 backdrop-blur-md rounded-2xl border border-slate-800 shadow-2xl p-4 sm:p-5 flex flex-col space-y-4 text-slate-100">
       {/* Panel Header */}
       <div className="flex items-center justify-between">
-        <div className="flex items-center space-x-2">
-          <Camera className="w-5 h-5 text-teal-600" />
-          <h2 className="text-base font-semibold text-slate-800">Live Camera Workspace</h2>
+        <div className="flex items-center space-x-2.5">
+          <div className="w-8 h-8 rounded-lg bg-teal-500/15 border border-teal-500/30 flex items-center justify-center text-teal-400">
+            <Camera className="w-4 h-4" />
+          </div>
+          <div>
+            <h2 className="text-sm sm:text-base font-bold text-white tracking-tight">Live Camera Workspace</h2>
+            <p className="text-[11px] text-slate-400">Holistic 553 landmarks tracking & 21-pt hand pose</p>
+          </div>
         </div>
 
         {/* View Mode & Overlay Controls */}
-        <div className="flex items-center space-x-1.5">
-          <div className="bg-slate-100 p-0.5 rounded-lg flex items-center text-xs">
+        <div className="flex items-center space-x-2">
+          <div className="bg-slate-800/90 p-0.5 rounded-xl border border-slate-700 flex items-center text-xs">
             <button
               onClick={() => setViewMode('full')}
-              className={`px-2 py-1 rounded-md transition-colors ${
-                viewMode === 'full' ? 'bg-white text-slate-800 shadow-xs font-semibold' : 'text-slate-600'
+              className={`px-2.5 py-1 rounded-lg font-medium transition-all ${
+                viewMode === 'full'
+                  ? 'bg-teal-500 text-slate-950 shadow-md font-bold'
+                  : 'text-slate-400 hover:text-slate-200'
               }`}
               title="Full Camera View"
             >
@@ -556,8 +609,10 @@ export const CameraPanel: React.FC<CameraPanelProps> = ({
             </button>
             <button
               onClick={() => setViewMode('focus')}
-              className={`px-2 py-1 rounded-md transition-colors ${
-                viewMode === 'focus' ? 'bg-white text-slate-800 shadow-xs font-semibold' : 'text-slate-600'
+              className={`px-2.5 py-1 rounded-lg font-medium transition-all ${
+                viewMode === 'focus'
+                  ? 'bg-teal-500 text-slate-950 shadow-md font-bold'
+                  : 'text-slate-400 hover:text-slate-200'
               }`}
               title="Hand Focus Zoom"
             >
@@ -565,8 +620,10 @@ export const CameraPanel: React.FC<CameraPanelProps> = ({
             </button>
             <button
               onClick={() => setViewMode('split')}
-              className={`px-2 py-1 rounded-md transition-colors ${
-                viewMode === 'split' ? 'bg-white text-slate-800 shadow-xs font-semibold' : 'text-slate-600'
+              className={`px-2.5 py-1 rounded-lg font-medium transition-all ${
+                viewMode === 'split'
+                  ? 'bg-teal-500 text-slate-950 shadow-md font-bold'
+                  : 'text-slate-400 hover:text-slate-200'
               }`}
               title="Split View"
             >
@@ -576,8 +633,10 @@ export const CameraPanel: React.FC<CameraPanelProps> = ({
 
           <button
             onClick={() => setShowOverlay(!showOverlay)}
-            className={`p-1.5 rounded-lg border transition-colors ${
-              showOverlay ? 'bg-teal-50 border-teal-200 text-teal-700' : 'bg-white border-slate-200 text-slate-400'
+            className={`p-2 rounded-xl border transition-all ${
+              showOverlay
+                ? 'bg-teal-500/20 border-teal-500/50 text-teal-300 shadow-sm'
+                : 'bg-slate-800 border-slate-700 text-slate-500 hover:text-slate-300'
             }`}
             title={showOverlay ? 'Hide 21-pt Skeleton' : 'Show 21-pt Skeleton'}
           >
@@ -614,19 +673,19 @@ export const CameraPanel: React.FC<CameraPanelProps> = ({
 
             {/* Camera Inactive State */}
             {!cameraActive && (
-              <div className="absolute inset-0 flex flex-col items-center justify-center bg-slate-900/90 text-slate-400 p-6 text-center space-y-3">
-                <div className="w-14 h-14 rounded-2xl bg-slate-800 flex items-center justify-center text-slate-300 ring-4 ring-slate-800/60">
+              <div className="absolute inset-0 flex flex-col items-center justify-center bg-slate-950/85 text-slate-400 p-6 text-center space-y-3 backdrop-blur-xs">
+                <div className="w-14 h-14 rounded-2xl bg-slate-800/80 border border-slate-700 flex items-center justify-center text-teal-400 shadow-xl">
                   <Video className="w-7 h-7" />
                 </div>
                 <div>
-                  <p className="font-semibold text-slate-200 text-sm">Camera is Inactive</p>
+                  <p className="font-bold text-white text-sm">Camera is Standby</p>
                   <p className="text-xs text-slate-400 mt-1 max-w-xs">
-                    Click "Start Camera" to begin real-time sign detection, hand tracking, and recognition.
+                    Click "Start Camera" to initiate live video capture, 553-point tracking, and word-level recognition.
                   </p>
                 </div>
                 <button
-                  onClick={startCamera}
-                  className="mt-2 inline-flex items-center space-x-2 px-4 py-2 rounded-xl bg-teal-600 hover:bg-teal-700 text-white text-xs font-semibold shadow-xs transition-colors"
+                  onClick={() => startCamera()}
+                  className="mt-2 inline-flex items-center space-x-2 px-5 py-2.5 rounded-xl bg-gradient-to-r from-teal-500 to-emerald-500 hover:from-teal-400 hover:to-emerald-400 text-slate-950 text-xs font-bold shadow-lg shadow-teal-500/20 active:scale-95 transition-all"
                 >
                   <Camera className="w-4 h-4" />
                   <span>Start Camera</span>
@@ -640,15 +699,15 @@ export const CameraPanel: React.FC<CameraPanelProps> = ({
                 <div className="flex justify-between items-start gap-2">
                   {renderStateBanner()}
                   {performance && (
-                    <div className="bg-slate-900/75 backdrop-blur-xs text-slate-300 text-[11px] px-2.5 py-1 rounded-md border border-slate-700/60 font-mono">
-                      {performance.fps} FPS | {performance.total_latency_ms}ms
+                    <div className="bg-slate-900/85 backdrop-blur-md text-slate-300 text-[11px] px-2.5 py-1 rounded-lg border border-slate-700/80 font-mono shadow-md">
+                      <span className="text-teal-400 font-bold">{performance.fps} FPS</span> | {performance.total_latency_ms}ms
                     </div>
                   )}
                 </div>
 
                 {/* Posture Framing Area Box */}
-                <div className="self-center w-3/4 h-3/4 border-2 border-dashed border-teal-400/25 rounded-2xl flex items-center justify-center">
-                  <span className="text-[10px] text-teal-300/40 font-mono uppercase tracking-widest">
+                <div className="self-center w-3/4 h-3/4 border-2 border-dashed border-teal-500/30 rounded-2xl flex items-center justify-center pointer-events-none">
+                  <span className="text-[10px] text-teal-400/40 font-mono uppercase tracking-widest">
                     Sign Framing Guide
                   </span>
                 </div>
@@ -656,15 +715,19 @@ export const CameraPanel: React.FC<CameraPanelProps> = ({
                 {/* Bottom Modality Status Chips */}
                 <div className="flex items-center space-x-2">
                   <span
-                    className={`text-[10px] px-2 py-0.5 rounded font-mono ${
-                      landmarksStatus?.left_hand ? 'bg-indigo-500/80 text-white' : 'bg-slate-800/80 text-slate-400'
+                    className={`text-[10px] px-2 py-0.5 rounded-md font-mono border ${
+                      landmarksStatus?.left_hand
+                        ? 'bg-indigo-500/20 border-indigo-500/50 text-indigo-300'
+                        : 'bg-slate-900/80 border-slate-800 text-slate-500'
                     }`}
                   >
                     L-Hand: {landmarksStatus?.left_hand ? 'Tracking' : 'None'}
                   </span>
                   <span
-                    className={`text-[10px] px-2 py-0.5 rounded font-mono ${
-                      landmarksStatus?.right_hand ? 'bg-teal-500/80 text-white' : 'bg-slate-800/80 text-slate-400'
+                    className={`text-[10px] px-2 py-0.5 rounded-md font-mono border ${
+                      landmarksStatus?.right_hand
+                        ? 'bg-teal-500/20 border-teal-500/50 text-teal-300'
+                        : 'bg-slate-900/80 border-slate-800 text-slate-500'
                     }`}
                   >
                     R-Hand: {landmarksStatus?.right_hand ? 'Tracking' : 'None'}
@@ -679,7 +742,7 @@ export const CameraPanel: React.FC<CameraPanelProps> = ({
         {(viewMode === 'focus' || viewMode === 'split') && (
           <div className="relative aspect-[4/3] bg-slate-950 rounded-xl overflow-hidden flex flex-col items-center justify-center border border-slate-800 shadow-inner">
             <canvas ref={focusCanvasRef} width={480} height={360} className="w-full h-full object-contain" />
-            <div className="absolute top-2 left-2 bg-slate-900/80 backdrop-blur-xs text-slate-300 text-[10px] px-2 py-1 rounded font-mono border border-slate-700/60 flex items-center space-x-1.5">
+            <div className="absolute top-2 left-2 bg-slate-900/85 backdrop-blur-md text-slate-300 text-[10px] px-2.5 py-1 rounded-lg font-mono border border-slate-700/80 flex items-center space-x-1.5 shadow-md">
               <ZoomIn className="w-3.5 h-3.5 text-teal-400" />
               <span>Hand Focus Close-Up</span>
             </div>
@@ -689,22 +752,22 @@ export const CameraPanel: React.FC<CameraPanelProps> = ({
 
       {/* Permission Error Banner */}
       {permissionError && (
-        <div className="p-3 rounded-xl bg-rose-50 border border-rose-200 text-rose-700 text-xs flex items-start space-x-2">
-          <AlertCircle className="w-4 h-4 text-rose-600 shrink-0 mt-0.5" />
+        <div className="p-3 rounded-xl bg-rose-500/10 border border-rose-500/30 text-rose-300 text-xs flex items-start space-x-2">
+          <AlertCircle className="w-4 h-4 text-rose-400 shrink-0 mt-0.5" />
           <div>
-            <p className="font-semibold">Camera Access Error</p>
+            <p className="font-semibold text-rose-200">Camera Access Error</p>
             <p className="mt-0.5">{permissionError}</p>
           </div>
         </div>
       )}
 
       {/* Bottom Controls Bar */}
-      <div className="flex flex-wrap items-center justify-between gap-2 pt-1 border-t border-slate-100">
+      <div className="flex flex-wrap items-center justify-between gap-2 pt-2 border-t border-slate-800/80">
         <div className="flex items-center space-x-2">
           {!cameraActive ? (
             <button
-              onClick={startCamera}
-              className="inline-flex items-center space-x-2 px-4 py-2 rounded-xl bg-teal-600 hover:bg-teal-700 text-white text-xs font-semibold shadow-xs transition-colors"
+              onClick={() => startCamera()}
+              className="inline-flex items-center space-x-2 px-4 py-2 rounded-xl bg-gradient-to-r from-teal-500 to-emerald-500 hover:from-teal-400 hover:to-emerald-400 text-slate-950 text-xs font-bold shadow-lg shadow-teal-500/20 active:scale-95 transition-all"
             >
               <Camera className="w-4 h-4" />
               <span>Start Camera</span>
@@ -712,7 +775,7 @@ export const CameraPanel: React.FC<CameraPanelProps> = ({
           ) : (
             <button
               onClick={stopCamera}
-              className="inline-flex items-center space-x-2 px-4 py-2 rounded-xl bg-rose-600 hover:bg-rose-700 text-white text-xs font-semibold shadow-xs transition-colors"
+              className="inline-flex items-center space-x-2 px-4 py-2 rounded-xl bg-gradient-to-r from-rose-600 to-rose-700 hover:from-rose-500 hover:to-rose-600 text-white text-xs font-bold shadow-lg shadow-rose-500/20 active:scale-95 transition-all"
             >
               <CameraOff className="w-4 h-4" />
               <span>Stop Camera</span>
@@ -722,14 +785,14 @@ export const CameraPanel: React.FC<CameraPanelProps> = ({
           {cameraActive && (
             <button
               onClick={() => setIsStreaming(!isStreaming)}
-              className={`inline-flex items-center space-x-1.5 px-3 py-2 rounded-xl border text-xs font-semibold transition-colors ${
+              className={`inline-flex items-center space-x-1.5 px-3 py-2 rounded-xl border text-xs font-semibold transition-all ${
                 isStreaming
-                  ? 'bg-amber-50 border-amber-200 text-amber-700 hover:bg-amber-100'
-                  : 'bg-teal-50 border-teal-200 text-teal-700 hover:bg-teal-100'
+                  ? 'bg-amber-500/15 border-amber-500/40 text-amber-300 hover:bg-amber-500/25'
+                  : 'bg-teal-500/15 border-teal-500/40 text-teal-300 hover:bg-teal-500/25'
               }`}
             >
               <Activity className="w-3.5 h-3.5" />
-              <span>{isStreaming ? 'Pause Transmission' : 'Resume'}</span>
+              <span>{isStreaming ? 'Pause Stream' : 'Resume'}</span>
             </button>
           )}
         </div>
@@ -738,8 +801,10 @@ export const CameraPanel: React.FC<CameraPanelProps> = ({
         <div className="flex items-center space-x-2">
           <button
             onClick={onToggleMirror}
-            className={`p-2 rounded-xl border text-xs font-semibold transition-colors flex items-center space-x-1.5 ${
-              mirrorCamera ? 'bg-teal-50 border-teal-200 text-teal-700' : 'bg-white border-slate-200 text-slate-600'
+            className={`p-2 rounded-xl border text-xs font-semibold transition-all flex items-center space-x-1.5 ${
+              mirrorCamera
+                ? 'bg-teal-500/15 border-teal-500/40 text-teal-300'
+                : 'bg-slate-800 border-slate-700 text-slate-400 hover:text-slate-200'
             }`}
             title="Toggle Mirror Camera"
           >
@@ -747,20 +812,26 @@ export const CameraPanel: React.FC<CameraPanelProps> = ({
             <span className="hidden sm:inline">Mirror</span>
           </button>
 
-          {devices.length > 1 && (
+          {/* Camera Selection Dropdown */}
+          <div className="relative flex items-center">
+            <Video className="w-3.5 h-3.5 text-cyan-400 absolute left-2.5 pointer-events-none" />
             <select
-              value={selectedDeviceId}
-              onChange={(e) => setSelectedDeviceId(e.target.value)}
-              disabled={cameraActive}
-              className="text-xs bg-slate-50 border border-slate-200 rounded-lg px-2 py-1.5 text-slate-700 focus:outline-none focus:ring-1 focus:ring-teal-500"
+              value={currentDeviceId}
+              onChange={(e) => handleDeviceChange(e.target.value)}
+              className="text-xs bg-slate-800/90 hover:bg-slate-800 border border-slate-700 rounded-xl pl-8 pr-3 py-2 text-slate-200 focus:outline-none focus:ring-2 focus:ring-teal-500/50 cursor-pointer transition-all max-w-[180px] sm:max-w-[220px] truncate"
+              title="Switch Camera Input Device"
             >
-              {devices.map((d, idx) => (
-                <option key={d.deviceId || idx} value={d.deviceId}>
-                  {d.label || `Camera ${idx + 1}`}
-                </option>
-              ))}
+              {devices.length === 0 ? (
+                <option value="">Default Camera</option>
+              ) : (
+                devices.map((d, idx) => (
+                  <option key={d.deviceId || idx} value={d.deviceId} className="bg-slate-900 text-slate-200">
+                    {d.label || `Camera ${idx + 1}`}
+                  </option>
+                ))
+              )}
             </select>
-          )}
+          </div>
         </div>
       </div>
     </div>

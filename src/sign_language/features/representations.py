@@ -21,7 +21,7 @@ _FEATURES: dict[str, FeatureSpecification] = {
     "hands_pose": FeatureSpecification("hands_pose", ("hands", "pose"), 225, "Hands + 33 pose landmarks"),
     "holistic": FeatureSpecification("holistic", ("hands", "pose", "face"), 1659, "Full holistic landmarks"),
     "holistic_dynamics": FeatureSpecification("holistic_dynamics", ("hands", "pose", "face"), 4977, "Full holistic + velocity + acceleration"),
-    "engineered": FeatureSpecification("engineered", ("hands", "pose"), 280, "Hands + Pose + relative distances & joint angles"),
+    "engineered": FeatureSpecification("engineered", ("hands", "pose"), 365, "Hands + Pose (225) + Wrist-rel (126) + Inter-hand (4) + Fingertip extensions (10)"),
 }
 
 
@@ -122,22 +122,30 @@ def extract_engineered_spatial_features(
     rh_wrist = rh_coords[:, 0:1, :]
     lh_rel = (lh_coords - lh_wrist).reshape(t, 63)
     rh_rel = (rh_coords - rh_wrist).reshape(t, 63)
+    lh_rel_m = (lh_m * lh_m[:, 0:1, :]).reshape(t, 63)
+    rh_rel_m = (rh_m * rh_m[:, 0:1, :]).reshape(t, 63)
+    lh_rel = np.where(lh_rel_m > 0.5, lh_rel, 0.0)
+    rh_rel = np.where(rh_rel_m > 0.5, rh_rel, 0.0)
 
     # Inter-hand distance (left wrist to right wrist)
     hand_disp = (rh_wrist - lh_wrist).squeeze(1)  # [T, 3]
     hand_dist = np.linalg.norm(hand_disp, axis=-1, keepdims=True)  # [T, 1]
     hand_rel = np.concatenate([hand_disp, hand_dist], axis=-1)  # [T, 4]
-    hand_rel_m = (lh_m[:, 0, 0:1] * rh_m[:, 0, 0:1]).repeat(4, axis=-1)
+    hand_rel_m = (lh_m[:, 0:1, 0] * rh_m[:, 0:1, 0]).repeat(4, axis=-1)
+    hand_rel = np.where(hand_rel_m > 0.5, hand_rel, 0.0)
 
     # Finger extensions (tips to wrist: indices 4, 8, 12, 16, 20)
     tip_indices = [4, 8, 12, 16, 20]
     lh_tips_dist = np.linalg.norm(lh_coords[:, tip_indices, :] - lh_wrist, axis=-1)  # [T, 5]
     rh_tips_dist = np.linalg.norm(rh_coords[:, tip_indices, :] - rh_wrist, axis=-1)  # [T, 5]
     tips_dist = np.concatenate([lh_tips_dist, rh_tips_dist], axis=-1)  # [T, 10]
-    tips_m = np.ones_like(tips_dist)
+    lh_tips_m = lh_m[:, tip_indices, 0] * lh_m[:, 0:1, 0]  # [T, 5]
+    rh_tips_m = rh_m[:, tip_indices, 0] * rh_m[:, 0:1, 0]  # [T, 5]
+    tips_m = np.concatenate([lh_tips_m, rh_tips_m], axis=-1)  # [T, 10]
+    tips_dist = np.where(tips_m > 0.5, tips_dist, 0.0)
 
     # Concatenate: base hands+pose (225) + wrist_rel (126) + inter_hand (4) + tips (10) = 365
     engineered = np.concatenate([base_coords, lh_rel, rh_rel, hand_rel, tips_dist], axis=-1)
-    engineered_m = np.concatenate([base_mask, base_mask[:, 0:63], base_mask[:, 63:126], hand_rel_m, tips_m], axis=-1)
+    engineered_m = np.concatenate([base_mask, lh_rel_m, rh_rel_m, hand_rel_m, tips_m], axis=-1)
 
     return engineered, engineered_m

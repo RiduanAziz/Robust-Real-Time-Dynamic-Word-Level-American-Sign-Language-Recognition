@@ -11,6 +11,7 @@ from .lstm import LSTMClassifier
 from .reliability_fusion import ReliabilityAwareIsolatedFusionClassifier
 from .tcn import TCNClassifier
 from .transformer import TemporalTransformerClassifier
+from .unisign_pgf import UniSignPGFClassifier
 
 
 def build_model(config: ExperimentConfig) -> torch.nn.Module:
@@ -55,6 +56,15 @@ def build_model(config: ExperimentConfig) -> torch.nn.Module:
             emb_dim=getattr(params, "embedding_dim", 64),
             hidden_dim=getattr(params, "hidden_dim", 64),
             num_layers=getattr(params, "num_layers", 1),
+            dropout=params.dropout,
+        )
+    if name in {"unisign_pgf", "unisign", "uni_sign", "pgf", "prior_guided_fusion"}:
+        return UniSignPGFClassifier(
+            input_dim=params.input_dim,
+            num_classes=params.num_classes,
+            emb_dim=getattr(params, "embedding_dim", 96),
+            hidden_dim=getattr(params, "hidden_dim", 96),
+            num_layers=getattr(params, "num_layers", 2),
             dropout=params.dropout,
         )
     if name in {"robust_holistic_fusion", "fusion", "proposed"}:

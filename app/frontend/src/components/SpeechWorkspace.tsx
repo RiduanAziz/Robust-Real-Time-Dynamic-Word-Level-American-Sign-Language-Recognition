@@ -122,26 +122,31 @@ export const SpeechWorkspace: React.FC<SpeechWorkspaceProps> = ({
   };
 
   return (
-    <div className="bg-white rounded-2xl border border-slate-200/80 shadow-xs p-4 sm:p-5 flex flex-col space-y-4">
+    <div className="bg-slate-900/90 backdrop-blur-md rounded-2xl border border-slate-800 shadow-2xl p-4 sm:p-5 flex flex-col space-y-4 text-slate-100">
       {/* Header */}
       <div className="flex items-center justify-between">
-        <div className="flex items-center space-x-2">
-          <Volume2 className="w-5 h-5 text-teal-600" />
-          <h2 className="text-base font-semibold text-slate-800">Text-to-Speech (TTS)</h2>
+        <div className="flex items-center space-x-2.5">
+          <div className="w-8 h-8 rounded-lg bg-teal-500/15 border border-teal-500/30 flex items-center justify-center text-teal-400">
+            <Volume2 className="w-4 h-4" />
+          </div>
+          <div>
+            <h2 className="text-sm sm:text-base font-bold text-white tracking-tight">Text-to-Speech (TTS)</h2>
+            <p className="text-[11px] text-slate-400">Instant accessibility voice synthesis</p>
+          </div>
         </div>
 
         {/* Active Speaking Indicator */}
         {isSpeaking && (
-          <div className="flex items-center space-x-1.5 px-2.5 py-1 rounded-full bg-teal-50 border border-teal-200 text-teal-700 text-xs font-semibold animate-pulse">
-            <span className="w-2 h-2 rounded-full bg-teal-500 animate-ping" />
-            <span>Speaking...</span>
+          <div className="flex items-center space-x-2 px-3 py-1 rounded-full bg-teal-500/15 border border-teal-500/30 text-teal-300 text-xs font-semibold animate-pulse">
+            <span className="w-2 h-2 rounded-full bg-teal-400 animate-ping" />
+            <span>Voice Synthesizing...</span>
           </div>
         )}
       </div>
 
       {!speechSupported ? (
-        <div className="p-3 bg-amber-50 border border-amber-200 text-amber-800 rounded-xl text-xs flex items-center space-x-2">
-          <AlertCircle className="w-4 h-4 text-amber-600 shrink-0" />
+        <div className="p-3 bg-amber-500/10 border border-amber-500/30 text-amber-300 rounded-xl text-xs flex items-center space-x-2">
+          <AlertCircle className="w-4 h-4 text-amber-400 shrink-0" />
           <span>Web Speech API is not supported by this browser.</span>
         </div>
       ) : (
@@ -151,10 +156,10 @@ export const SpeechWorkspace: React.FC<SpeechWorkspaceProps> = ({
             <button
               onClick={handleSpeak}
               disabled={!textToSpeak.trim()}
-              className={`inline-flex items-center space-x-2 px-4 py-2 rounded-xl text-xs font-semibold shadow-xs transition-all ${
+              className={`inline-flex items-center space-x-2 px-4 py-2.5 rounded-xl text-xs font-bold transition-all ${
                 textToSpeak.trim()
-                  ? 'bg-gradient-to-r from-teal-600 to-indigo-600 hover:from-teal-700 hover:to-indigo-700 text-white cursor-pointer active:scale-98'
-                  : 'bg-slate-100 text-slate-400 cursor-not-allowed'
+                  ? 'bg-gradient-to-r from-teal-500 to-indigo-600 hover:from-teal-400 hover:to-indigo-500 text-slate-950 shadow-lg shadow-teal-500/20 active:scale-95 cursor-pointer'
+                  : 'bg-slate-800/40 border border-slate-800 text-slate-600 cursor-not-allowed'
               }`}
             >
               <Volume2 className="w-4 h-4" />
@@ -164,7 +169,7 @@ export const SpeechWorkspace: React.FC<SpeechWorkspaceProps> = ({
             {isSpeaking && (
               <button
                 onClick={handleTogglePause}
-                className="inline-flex items-center space-x-1.5 px-3 py-2 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 text-xs font-semibold transition-all"
+                className="inline-flex items-center space-x-1.5 px-3 py-2 rounded-xl border border-slate-700 bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-semibold transition-all active:scale-95"
               >
                 {isPaused ? <Play className="w-3.5 h-3.5" /> : <Pause className="w-3.5 h-3.5" />}
                 <span>{isPaused ? 'Resume' : 'Pause'}</span>
@@ -174,7 +179,7 @@ export const SpeechWorkspace: React.FC<SpeechWorkspaceProps> = ({
             {isSpeaking && (
               <button
                 onClick={handleStop}
-                className="inline-flex items-center space-x-1.5 px-3 py-2 rounded-xl border border-rose-200 bg-rose-50 hover:bg-rose-100 text-rose-700 text-xs font-semibold transition-all"
+                className="inline-flex items-center space-x-1.5 px-3 py-2 rounded-xl border border-rose-500/30 bg-rose-500/15 hover:bg-rose-500/25 text-rose-300 text-xs font-semibold transition-all active:scale-95"
               >
                 <Square className="w-3.5 h-3.5" />
                 <span>Stop</span>
@@ -183,17 +188,17 @@ export const SpeechWorkspace: React.FC<SpeechWorkspaceProps> = ({
           </div>
 
           {/* Voice, Rate, and Pitch Controls */}
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-2 border-t border-slate-100 text-xs">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-2 border-t border-slate-800 text-xs">
             {/* Voice Dropdown */}
             <div className="space-y-1">
-              <label className="text-slate-500 font-medium">Voice</label>
+              <label className="text-slate-400 font-medium">Synthesizer Voice</label>
               <select
                 value={voiceName}
                 onChange={(e) => onVoiceChange(e.target.value)}
-                className="w-full bg-slate-50 border border-slate-200 rounded-lg p-1.5 text-slate-800 text-xs focus:ring-1 focus:ring-teal-500 focus:outline-none"
+                className="w-full bg-slate-800 border border-slate-700 rounded-xl p-2 text-slate-200 text-xs focus:ring-1 focus:ring-teal-500 focus:outline-none"
               >
                 {voices.map((v, idx) => (
-                  <option key={idx} value={v.name}>
+                  <option key={idx} value={v.name} className="bg-slate-900 text-slate-200">
                     {v.name} ({v.lang})
                   </option>
                 ))}
@@ -202,9 +207,9 @@ export const SpeechWorkspace: React.FC<SpeechWorkspaceProps> = ({
 
             {/* Rate Slider */}
             <div className="space-y-1">
-              <div className="flex justify-between text-slate-500 font-medium">
-                <span>Speed</span>
-                <span className="font-mono">{rate.toFixed(1)}x</span>
+              <div className="flex justify-between text-slate-400 font-medium">
+                <span>Speech Speed</span>
+                <span className="font-mono text-teal-400">{rate.toFixed(1)}x</span>
               </div>
               <input
                 type="range"
@@ -213,15 +218,15 @@ export const SpeechWorkspace: React.FC<SpeechWorkspaceProps> = ({
                 step="0.1"
                 value={rate}
                 onChange={(e) => onRateChange(parseFloat(e.target.value))}
-                className="w-full accent-teal-600 cursor-pointer"
+                className="w-full accent-teal-400 cursor-pointer"
               />
             </div>
 
             {/* Pitch Slider */}
             <div className="space-y-1">
-              <div className="flex justify-between text-slate-500 font-medium">
-                <span>Pitch</span>
-                <span className="font-mono">{pitch.toFixed(1)}</span>
+              <div className="flex justify-between text-slate-400 font-medium">
+                <span>Vocal Pitch</span>
+                <span className="font-mono text-teal-400">{pitch.toFixed(1)}</span>
               </div>
               <input
                 type="range"
@@ -230,7 +235,7 @@ export const SpeechWorkspace: React.FC<SpeechWorkspaceProps> = ({
                 step="0.1"
                 value={pitch}
                 onChange={(e) => onPitchChange(parseFloat(e.target.value))}
-                className="w-full accent-teal-600 cursor-pointer"
+                className="w-full accent-teal-400 cursor-pointer"
               />
             </div>
           </div>

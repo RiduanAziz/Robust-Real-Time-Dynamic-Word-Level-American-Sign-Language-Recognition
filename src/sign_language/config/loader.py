@@ -45,6 +45,7 @@ class TrainingConfig:
     gradient_clip: float | None = 1.0
     num_workers: int = 0
     val_interval: int = 1
+    label_smoothing: float = 0.0
 
 
 @dataclass
@@ -115,16 +116,22 @@ def _build_config(data: dict[str, Any]) -> ExperimentConfig:
     if "sequence_length" in model_data and "max_sequence_length" not in model_data:
         model_data["max_sequence_length"] = model_data["sequence_length"]
 
+    import dataclasses
+
+    def _filter_kwargs(cls: type, d: dict[str, Any]) -> dict[str, Any]:
+        valid_keys = {f.name for f in dataclasses.fields(cls)}
+        return {k: v for k, v in d.items() if k in valid_keys}
+
     config = ExperimentConfig(
         project_name=str(data.get("project_name", ExperimentConfig.project_name)),
         seed=int(data.get("seed", 42)),
         device=str(data.get("device", "auto")),
         checkpoint_dir=str(data.get("checkpoint_dir", "checkpoints")),
         results_dir=str(data.get("results_dir", "results")),
-        dataset=DatasetConfig(**dataset_data),
-        model=ModelConfig(**model_data),
-        training=TrainingConfig(**training_data),
-        evaluation=EvaluationConfig(**evaluation_data),
+        dataset=DatasetConfig(**_filter_kwargs(DatasetConfig, dataset_data)),
+        model=ModelConfig(**_filter_kwargs(ModelConfig, model_data)),
+        training=TrainingConfig(**_filter_kwargs(TrainingConfig, training_data)),
+        evaluation=EvaluationConfig(**_filter_kwargs(EvaluationConfig, evaluation_data)),
     )
     _validate_config(config)
     return config
@@ -144,6 +151,11 @@ def _validate_config(config: ExperimentConfig) -> None:
         "reliability_fusion",
         "reliability_aware",
         "proposed_v2",
+        "unisign_pgf",
+        "unisign",
+        "uni_sign",
+        "pgf",
+        "prior_guided_fusion",
     }
     if config.model.name not in valid_models:
         raise ValueError(f"Unsupported model name: {config.model.name}")

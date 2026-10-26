@@ -1,0 +1,36 @@
+{
+  "model1": {
+    "name": "robust_holistic_fusion",
+    "checkpoint": "models/robust_holistic_fusion_best.pt",
+    "top1": 0.7431906614785992,
+    "top5": 0.8871595330739299
+  },
+  "model2": {
+    "name": "unisign_pgf",
+    "checkpoint": "models/wlasl100_unisign_pgf_best.pt",
+    "top1": 0.7042801556420234,
+    "top5": 0.8832684824902724
+  },
+  "model3": {
+    "name": "robust_holistic_fusion",
+    "checkpoint": "models/wlasl100_max_accuracy_best.pt",
+    "top1": 0.7276264591439688,
+    "top5": 0.8988326848249028
+  },
+  "ensemble": {
+    "optimal_weights": [
+      0.25,
+      0.1,
+      0.65
+    ],
+    "validation_top1": 0.7833827893175074,
+    "test_top1": 0.7665369649805448,
+    "test_top5": 0.914396887159533,
+    "test_top10": 0.9416342412451362,
+    "balanced_accuracy": 0.7628,
+    "macro_f1": 0.7558,
+    "weighted_f1": 0.7542,
+    "ece": 0.0838,
+    "evaluated_samples": 257
+  }
+}

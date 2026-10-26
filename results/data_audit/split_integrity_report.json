@@ -1,0 +1,15 @@
+{
+  "protocol": "official_wlasl_benchmark_protocol_a",
+  "signers_count": {
+    "train": 91,
+    "validation": 68,
+    "test": 55
+  },
+  "signer_overlaps": {
+    "train_val": 63,
+    "train_test": 51,
+    "val_test": 49
+  },
+  "signer_disjoint_compliant": false,
+  "note": "Official WLASL Protocol A has documented signer overlap. Protocol B enforces strict zero-leakage signer-disjoint partitioning."
+}

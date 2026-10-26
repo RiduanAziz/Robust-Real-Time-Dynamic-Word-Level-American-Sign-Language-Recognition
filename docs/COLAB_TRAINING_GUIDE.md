@@ -65,23 +65,30 @@ The notebook is divided into 12 logically self-contained, resumable stages:
 
 ### Stage 7: Candidate Model Training (Validation Optimization)
 - Uses an interactive form to select:
-  - **Architecture**: `M6: Reliability-Aware Fusion`, `M2: TCN`, `M5: Transformer`, or `M0: Baseline`.
+  - **Architecture**:
+    - `configs/colab/wlasl100_unisign_pgf.yaml`: Uni-Sign Prior-Guided Fusion (ICLR 2025 PGF with pose cross-attention & score-aware gating).
+    - `configs/colab/wlasl100_max_accuracy.yaml`: High-capacity 1659-dim Holistic BiGRU with Cosine Annealing warmup.
+    - `configs/colab/wlasl100_reliability_fusion_holistic.yaml`: Holistic reliability-aware feature isolation.
+    - `configs/colab/wlasl100_tcn_holistic.yaml`: Holistic Temporal Convolutional Network.
+    - `configs/colab/wlasl100_baseline_colab.yaml`: Historical baseline architecture.
   - **Protocol**: `official` (Protocol A) or `signer_disjoint` (Protocol B).
-  - **Hyperparameters**: Epochs (e.g., 80), Batch Size (e.g., 32), Learning Rate (e.g., 0.001).
+  - **Hyperparameters**: Epochs (e.g., 80-100), Batch Size (e.g., 32), Learning Rate (e.g., 0.001), Label Smoothing (0.08).
 - Training logs progress epoch-by-epoch. Checkpoints are automatically synced to Drive at each epoch (`--drive-backup`).
 
 ### Stage 8: Training & Validation Progression Visualization
 - Generates dual plots for Cross-Entropy Loss and Validation Macro-F1 / Top-1 Accuracy.
 - Saves high-resolution figure to `results/training_curves.png`.
 
-### Stage 9: Model Selection & Ensembling
+### Stage 9: Model Selection & Ensembling (Track D)
 - Measures validation macro-F1 across trained candidates.
-- Evaluates validation logit blending ($\alpha \mathbf{z}_{\text{M6}} + (1 - \alpha) \mathbf{z}_{\text{M2}}$).
+- Automatically runs `scripts/ensemble_eval.py` to evaluate validation-tuned probability-level ensembling between `robust_holistic_fusion_best.pt` (Baseline) and your newly trained candidate:
+  $$P_{\text{ensemble}} = \alpha P_{\text{baseline}} + (1 - \alpha) P_{\text{candidate}}$$
+  The mixing weight $\alpha \in [0, 1]$ is tuned on validation data only to prevent test set leakage.
 - Locks the winning model without consulting the test set.
 
 ### Stage 10: Final Held-Out Test Evaluation
-- Evaluates the winning model **once** on the held-out test partition.
-- Reports Top-1, Top-5, Top-10, Balanced Accuracy, Macro-F1, and ECE.
+- Evaluates the winning model **once** on the held-out test partition (257 samples under Protocol A).
+- Reports Top-1, Top-5, Top-10, Balanced Accuracy, Macro-F1, Weighted-F1, and ECE.
 
 ### Stage 11: Production Bundle Export
 - Runs `scripts/export_model.py` to create the complete export bundle in `outputs/final/`.

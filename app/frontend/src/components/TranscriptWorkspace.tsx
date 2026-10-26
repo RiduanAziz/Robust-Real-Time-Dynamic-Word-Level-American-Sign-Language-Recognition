@@ -101,38 +101,42 @@ export const TranscriptWorkspace: React.FC<TranscriptWorkspaceProps> = ({
   const charCount = transcriptText.length;
 
   return (
-    <div className="bg-white rounded-2xl border border-slate-200/80 shadow-xs p-4 sm:p-6 flex flex-col space-y-4">
+    <div className="bg-slate-900/90 backdrop-blur-md rounded-2xl border border-slate-800 shadow-2xl p-4 sm:p-6 flex flex-col space-y-4 text-slate-100">
       {/* Workspace Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 border-b border-slate-100 pb-3">
-        <div className="flex items-center space-x-2">
-          <FileText className="w-5 h-5 text-indigo-600" />
-          <h2 className="text-base font-semibold text-slate-800">Transcript Workspace</h2>
-          <span className="text-xs bg-slate-100 text-slate-600 px-2 py-0.5 rounded-full font-mono">
-            {tokens.length} {tokens.length === 1 ? 'word' : 'words'}
-          </span>
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 border-b border-slate-800 pb-3">
+        <div className="flex items-center space-x-2.5">
+          <div className="w-8 h-8 rounded-lg bg-indigo-500/15 border border-indigo-500/30 flex items-center justify-center text-indigo-400">
+            <FileText className="w-4 h-4" />
+          </div>
+          <div className="flex items-center space-x-2">
+            <h2 className="text-sm sm:text-base font-bold text-white tracking-tight">Transcript Workspace</h2>
+            <span className="text-[11px] bg-slate-800 text-teal-300 border border-slate-700 px-2.5 py-0.5 rounded-full font-mono">
+              {tokens.length} {tokens.length === 1 ? 'word' : 'words'}
+            </span>
+          </div>
         </div>
 
         {/* View Tabs: Gloss Tokens vs English Draft */}
-        <div className="flex items-center bg-slate-100 p-1 rounded-lg border border-slate-200 text-xs">
+        <div className="flex items-center bg-slate-800/90 p-1 rounded-xl border border-slate-700 text-xs">
           <button
             onClick={() => setActiveTab('gloss')}
-            className={`px-3 py-1 rounded-md font-medium transition-all ${
+            className={`px-3 py-1 rounded-lg font-medium transition-all ${
               activeTab === 'gloss'
-                ? 'bg-white text-slate-900 shadow-xs'
-                : 'text-slate-600 hover:text-slate-900'
+                ? 'bg-teal-500 text-slate-950 font-bold shadow-md'
+                : 'text-slate-400 hover:text-slate-200'
             }`}
           >
             Recognized Glosses
           </button>
           <button
             onClick={() => setActiveTab('draft')}
-            className={`px-3 py-1 rounded-md font-medium transition-all flex items-center space-x-1 ${
+            className={`px-3 py-1 rounded-lg font-medium transition-all flex items-center space-x-1.5 ${
               activeTab === 'draft'
-                ? 'bg-white text-indigo-900 shadow-xs'
-                : 'text-slate-600 hover:text-slate-900'
+                ? 'bg-indigo-600 text-white font-bold shadow-md'
+                : 'text-slate-400 hover:text-slate-200'
             }`}
           >
-            <Sparkles className="w-3.5 h-3.5 text-indigo-500" />
+            <Sparkles className="w-3.5 h-3.5 text-indigo-400" />
             <span>English Draft</span>
           </button>
         </div>
@@ -141,14 +145,14 @@ export const TranscriptWorkspace: React.FC<TranscriptWorkspaceProps> = ({
       {/* Gloss Chips View */}
       {activeTab === 'gloss' ? (
         <div className="space-y-3">
-          <div className="min-h-[52px] p-3 bg-slate-50 border border-slate-200/80 rounded-xl flex flex-wrap gap-2 items-center">
+          <div className="min-h-[56px] p-3 bg-slate-950/80 border border-slate-800/80 rounded-xl flex flex-wrap gap-2 items-center">
             {tokens.length > 0 ? (
               tokens.map((token, index) => (
                 <div
                   key={token.id || index}
-                  className="inline-flex items-center space-x-1.5 px-3 py-1.5 rounded-lg bg-white border border-slate-200 shadow-2xs text-xs font-semibold text-slate-800 animate-in fade-in zoom-in-95 duration-150"
+                  className="inline-flex items-center space-x-1.5 px-3 py-1.5 rounded-lg bg-slate-800 border border-slate-700 shadow-xs text-xs font-semibold text-slate-200 animate-in fade-in zoom-in-95 duration-150"
                 >
-                  <span className="uppercase tracking-wide text-indigo-900">{token.word}</span>
+                  <span className="uppercase tracking-wide text-teal-300 font-bold">{token.word}</span>
                   {token.confidence > 0 && (
                     <span className="text-[10px] text-slate-400 font-mono">
                       {Math.round(token.confidence * 100)}%
@@ -156,7 +160,7 @@ export const TranscriptWorkspace: React.FC<TranscriptWorkspaceProps> = ({
                   )}
                   <button
                     onClick={() => onRemoveToken(token.id)}
-                    className="p-0.5 text-slate-400 hover:text-rose-600 rounded-full hover:bg-slate-100 transition-colors"
+                    className="p-0.5 text-slate-400 hover:text-rose-400 rounded-full hover:bg-slate-700 transition-colors"
                     title="Delete word"
                   >
                     <X className="w-3 h-3" />
@@ -164,21 +168,21 @@ export const TranscriptWorkspace: React.FC<TranscriptWorkspaceProps> = ({
                 </div>
               ))
             ) : (
-              <span className="text-xs text-slate-400 italic">
-                Confirmed words will accumulate here as chips...
+              <span className="text-xs text-slate-500 italic">
+                Confirmed sign words accumulate here in real-time as vocabulary chips...
               </span>
             )}
           </div>
         </div>
       ) : (
         /* Formatted Gloss Draft View Notice */
-        <div className="p-3 bg-indigo-50/60 border border-indigo-100 rounded-xl text-xs text-indigo-900 space-y-1">
-          <div className="font-semibold flex items-center space-x-1.5">
-            <Sparkles className="w-4 h-4 text-indigo-600" />
+        <div className="p-3.5 bg-indigo-500/10 border border-indigo-500/30 rounded-xl text-xs text-indigo-200 space-y-1">
+          <div className="font-semibold flex items-center space-x-1.5 text-indigo-300">
+            <Sparkles className="w-4 h-4 text-indigo-400" />
             <span>Formatted Gloss Draft (Assisted Formatting)</span>
           </div>
-          <p className="text-[11px] text-indigo-700/80 leading-relaxed">
-            Formatted Draft: <em>"{generateEnglishDraft(tokens.map((t) => t.word)) || 'No words accumulated yet.'}"</em>
+          <p className="text-[11px] text-indigo-200/80 leading-relaxed">
+            Formatted Draft: <em className="text-white">"{generateEnglishDraft(tokens.map((t) => t.word)) || 'No words accumulated yet.'}"</em>
             <br />
             (Note: Formats recognized glosses with standard sentence capitalization and punctuation. ASL glosses do not have a 1:1 syntax with English sentences.)
           </p>
@@ -190,21 +194,21 @@ export const TranscriptWorkspace: React.FC<TranscriptWorkspaceProps> = ({
         <textarea
           value={transcriptText}
           onChange={(e) => setTranscriptText(e.target.value)}
-          placeholder="Recognized words will accumulate here. You can also click to type, correct, or format the text directly..."
+          placeholder="Recognized words will accumulate here. You can also type, correct, or format the text directly..."
           rows={3}
-          className="w-full p-3.5 text-sm bg-white border border-slate-200 rounded-xl text-slate-800 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent transition-all shadow-inner leading-relaxed resize-y"
+          className="w-full p-3.5 text-sm bg-slate-950/90 border border-slate-800 rounded-xl text-slate-100 placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-teal-500/50 focus:border-teal-500 transition-all shadow-inner leading-relaxed resize-y"
         />
 
         {/* Counts & Punctuation Bar */}
         <div className="flex flex-wrap items-center justify-between gap-2 text-xs">
           {/* Quick Punctuation Buttons */}
-          <div className="flex items-center space-x-1 bg-slate-100 p-1 rounded-lg border border-slate-200">
-            <span className="text-[11px] font-medium text-slate-500 px-1.5">Insert:</span>
+          <div className="flex items-center space-x-1 bg-slate-800/90 p-1 rounded-xl border border-slate-700">
+            <span className="text-[11px] font-medium text-slate-400 px-1.5">Insert:</span>
             {['.', ',', '?', '!', ' '].map((p, idx) => (
               <button
                 key={idx}
                 onClick={() => insertPunctuation(p)}
-                className="w-6 h-6 rounded bg-white border border-slate-200 text-slate-700 font-mono text-xs hover:bg-slate-50 transition-colors flex items-center justify-center font-bold"
+                className="w-6 h-6 rounded-lg bg-slate-700 hover:bg-slate-600 border border-slate-600 text-slate-200 font-mono text-xs transition-colors flex items-center justify-center font-bold"
                 title={`Insert ${p === ' ' ? 'Space' : p}`}
               >
                 {p === ' ' ? '␣' : p}
@@ -212,22 +216,22 @@ export const TranscriptWorkspace: React.FC<TranscriptWorkspaceProps> = ({
             ))}
           </div>
 
-          <div className="text-slate-400 font-mono text-[11px]">
+          <div className="text-slate-500 font-mono text-[11px]">
             {wordCount} words | {charCount} chars
           </div>
         </div>
       </div>
 
       {/* Transcript Action Controls */}
-      <div className="flex flex-wrap items-center justify-between gap-2 pt-2 border-t border-slate-100">
+      <div className="flex flex-wrap items-center justify-between gap-2 pt-2 border-t border-slate-800">
         <div className="flex items-center space-x-2">
           <button
             onClick={onUndo}
             disabled={tokens.length === 0}
             className={`inline-flex items-center space-x-1.5 px-3 py-1.5 rounded-xl border text-xs font-semibold transition-all ${
               tokens.length > 0
-                ? 'bg-slate-50 border-slate-200 text-slate-700 hover:bg-slate-100 cursor-pointer'
-                : 'bg-slate-50 border-slate-100 text-slate-300 cursor-not-allowed'
+                ? 'bg-slate-800 border-slate-700 text-slate-200 hover:bg-slate-700 cursor-pointer active:scale-95'
+                : 'bg-slate-800/40 border-slate-800 text-slate-600 cursor-not-allowed'
             }`}
             title="Undo most recent committed word"
           >
@@ -241,8 +245,8 @@ export const TranscriptWorkspace: React.FC<TranscriptWorkspaceProps> = ({
               disabled={tokens.length === 0 && !transcriptText}
               className={`inline-flex items-center space-x-1.5 px-3 py-1.5 rounded-xl border text-xs font-semibold transition-all ${
                 tokens.length > 0 || transcriptText
-                  ? 'bg-slate-50 border-slate-200 text-rose-600 hover:bg-rose-50 cursor-pointer'
-                  : 'bg-slate-50 border-slate-100 text-slate-300 cursor-not-allowed'
+                  ? 'bg-slate-800 border-slate-700 text-rose-400 hover:bg-rose-500/10 cursor-pointer active:scale-95'
+                  : 'bg-slate-800/40 border-slate-800 text-slate-600 cursor-not-allowed'
               }`}
               title="Clear transcript"
             >
@@ -250,20 +254,20 @@ export const TranscriptWorkspace: React.FC<TranscriptWorkspaceProps> = ({
               <span>Clear</span>
             </button>
           ) : (
-            <div className="flex items-center space-x-1 bg-rose-50 p-1 rounded-xl border border-rose-200 text-xs">
-              <span className="text-rose-700 text-[11px] font-medium px-1">Clear all?</span>
+            <div className="flex items-center space-x-1.5 bg-rose-500/15 p-1 rounded-xl border border-rose-500/30 text-xs">
+              <span className="text-rose-300 text-[11px] font-medium px-1">Clear all?</span>
               <button
                 onClick={() => {
                   onClearTranscript();
                   setConfirmClearOpen(false);
                 }}
-                className="px-2 py-0.5 rounded bg-rose-600 text-white font-bold text-[11px] hover:bg-rose-700"
+                className="px-2 py-0.5 rounded-lg bg-rose-600 text-white font-bold text-[11px] hover:bg-rose-700 active:scale-95"
               >
                 Yes
               </button>
               <button
                 onClick={() => setConfirmClearOpen(false)}
-                className="px-2 py-0.5 rounded bg-slate-200 text-slate-700 font-medium text-[11px] hover:bg-slate-300"
+                className="px-2 py-0.5 rounded-lg bg-slate-700 text-slate-300 font-medium text-[11px] hover:bg-slate-600"
               >
                 No
               </button>
@@ -272,7 +276,7 @@ export const TranscriptWorkspace: React.FC<TranscriptWorkspaceProps> = ({
 
           <button
             onClick={onNewSession}
-            className="inline-flex items-center space-x-1.5 px-3 py-1.5 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 text-xs font-semibold transition-all"
+            className="inline-flex items-center space-x-1.5 px-3 py-1.5 rounded-xl border border-slate-700 bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-semibold transition-all active:scale-95"
             title="Reset session and start new conversation"
           >
             <span>New Session</span>
@@ -285,22 +289,22 @@ export const TranscriptWorkspace: React.FC<TranscriptWorkspaceProps> = ({
             disabled={!transcriptText}
             className={`inline-flex items-center space-x-1.5 px-3 py-1.5 rounded-xl border text-xs font-semibold transition-all ${
               transcriptText
-                ? 'bg-white border-slate-200 text-slate-700 hover:bg-slate-50 cursor-pointer'
-                : 'bg-slate-50 border-slate-100 text-slate-300 cursor-not-allowed'
+                ? 'bg-slate-800 border-slate-700 text-slate-200 hover:bg-slate-700 cursor-pointer active:scale-95'
+                : 'bg-slate-800/40 border-slate-800 text-slate-600 cursor-not-allowed'
             }`}
             title="Copy transcript to clipboard"
           >
-            {copied ? <Check className="w-3.5 h-3.5 text-emerald-600" /> : <Copy className="w-3.5 h-3.5" />}
+            {copied ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
             <span>{copied ? 'Copied!' : 'Copy'}</span>
           </button>
 
           <button
             onClick={handleDownload}
             disabled={!transcriptText}
-            className={`inline-flex items-center space-x-1.5 px-3 py-1.5 rounded-xl border text-xs font-semibold transition-all ${
+            className={`inline-flex items-center space-x-1.5 px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all ${
               transcriptText
-                ? 'bg-white border-slate-200 text-slate-700 hover:bg-slate-50 cursor-pointer'
-                : 'bg-slate-50 border-slate-100 text-slate-300 cursor-not-allowed'
+                ? 'bg-gradient-to-r from-teal-500 to-indigo-600 hover:from-teal-400 hover:to-indigo-500 text-slate-950 shadow-md shadow-teal-500/20 active:scale-95 cursor-pointer'
+                : 'bg-slate-800/40 text-slate-600 cursor-not-allowed'
             }`}
             title="Download transcript as text file"
           >

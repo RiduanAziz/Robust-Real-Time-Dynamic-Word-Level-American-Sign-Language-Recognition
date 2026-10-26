@@ -213,3 +213,17 @@ export interface CalibrationData {
   handRequirement: 'single' | 'both';
   calibrated: boolean;
 }
+
+export interface AvailableModelItem {
+  id: string;
+  name: string;
+  accuracy: string;
+  top1: number;
+  top5: number;
+  ece: number;
+  description: string;
+  badge: string;
+  active: boolean;
+  available: boolean;
+}
+
