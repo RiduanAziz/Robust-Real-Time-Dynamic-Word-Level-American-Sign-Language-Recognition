@@ -91,8 +91,7 @@ class RealTimePredictor:
         self.num_classes = len(self.class_names)
 
         # Preprocessing pipeline
-        raw_dim = self.input_dim // 3 if self.input_dim >= 4977 else self.input_dim
-        self.pipeline = LandmarkPipeline(feature_dim=raw_dim, sequence_length=self.sequence_length)
+        self.pipeline = LandmarkPipeline(feature_dim=self.input_dim, sequence_length=self.sequence_length)
 
         # Check calibration artifact matching the specific model checkpoint
         self.prior_logits = None
@@ -121,9 +120,9 @@ class RealTimePredictor:
         mask_arr = np.asarray(mask, dtype=np.float32) if mask is not None else None
 
         # Normalize and resample if needed
-        if arr.shape[1] == self.pipeline.feature_dim:
+        if arr.shape[1] >= 225 or arr.shape[1] == self.pipeline.feature_dim:
             arr, mask_arr = self.pipeline.normalize_sequence_with_mask(
-                arr, mask=mask_arr, include_dynamics=(self.input_dim >= 4977)
+                arr, mask=mask_arr
             )
 
         if arr.shape[1] != self.input_dim:

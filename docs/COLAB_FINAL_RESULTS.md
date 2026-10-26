@@ -31,14 +31,14 @@ Excluded Samples:                   0 (0.00%)
 Evaluated Samples:                  257
 Top-1 Categorical Accuracy:         74.32% (191 / 257)
 Top-5 Categorical Accuracy:         88.72% (228 / 257)
-Top-10 Categorical Accuracy:        94.16% (242 / 257)
+Top-10 Categorical Accuracy:        93.39% (240 / 257)
 Balanced Accuracy:                  73.92%
 Macro Precision:                    0.7628
 Macro Recall:                       0.7392
 Macro-F1 Score:                     0.7213
 Weighted-F1 Score:                  0.7257
 Expected Calibration Error (ECE):   0.1598
-Vocabulary SHA256 Hash:             5b4e7a89277f...
+Vocabulary SHA256 Hash:             50a15ecd4abb546fe0e4859713ed6a6c34e4a35caddec1ddc9fdf79c41d19975
 ```
 
 ---

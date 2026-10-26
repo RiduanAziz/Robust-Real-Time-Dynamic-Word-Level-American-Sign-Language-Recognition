@@ -5,26 +5,41 @@
   "passed": true,
   "errors": [],
   "warnings": [
-    "Protocol A (Official WLASL) has documented signer overlap: train-test=51 shared signers. Not signer-independent."
+    "Protocol A (Official WLASL) has documented signer overlap: train-test=51 shared signers (train-val=63, val-test=49). This protocol is NOT signer-independent."
   ],
+  "manifest_hashes": {
+    "train_manifest.json": "44b021dcfb79ae13f212f5c020a6c9fc4de8505c00a38a657d6e985754ce92cb",
+    "validation_manifest.json": "e775799460a8ada03943a1ba3c1e236dfc4cd44291a0c7b5764f6278e2f08153",
+    "test_manifest.json": "9c8e3bba763a02dcaed84f82ecdcfa716fadde8226b3a10a44e41b2feeeca3e2"
+  },
   "summary": {
+    "vocabulary_hash": "0eb04d1cd4bf6d913dcea525caae274cbd2584063af4745160a9acd9c74b890c",
     "target_subset": "wlasl100",
     "whitelist_classes": 100,
     "splits": {
       "train": {
         "samples": 1444,
         "unique_signers": 91,
-        "unique_classes": 100
+        "unique_classes": 100,
+        "missing_classes_count": 0,
+        "missing_classes": [],
+        "class_coverage_pct": 100.0
       },
       "validation": {
         "samples": 337,
         "unique_signers": 68,
-        "unique_classes": 100
+        "unique_classes": 100,
+        "missing_classes_count": 0,
+        "missing_classes": [],
+        "class_coverage_pct": 100.0
       },
       "test": {
         "samples": 257,
         "unique_signers": 55,
-        "unique_classes": 100
+        "unique_classes": 100,
+        "missing_classes_count": 0,
+        "missing_classes": [],
+        "class_coverage_pct": 100.0
       }
     },
     "sample_id_leakage": 0,
@@ -34,9 +49,11 @@
       "validation_test": 49
     },
     "missing_landmark_files": 0,
-    "features_checked": 150,
+    "features_checked": 2038,
+    "full_scan": true,
     "nan_count": 0,
     "inf_count": 0,
-    "corrupted_count": 0
+    "corrupted_count": 0,
+    "shape_mismatches_count": 0
   }
 }

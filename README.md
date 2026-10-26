@@ -25,7 +25,7 @@ SignFlow features a verified, independently reproduced WLASL-100 evaluation base
 
 | Evaluation Track / Model | Top-1 Accuracy | Top-5 Accuracy | Top-10 Accuracy | Macro-F1 | ECE | Model Basis / Provenance |
 | :--- | :---: | :---: | :---: | :---: | :---: | :--- |
-| **Historical Baseline (`robust_holistic_fusion`)** | 74.32% | 88.72% | 94.16% | 0.7213 | 0.1598 | Exact reproduction (`models/robust_holistic_fusion_best.pt`) |
+| **Historical Baseline (`robust_holistic_fusion`)** | 74.32% | 88.72% | 93.39% | 0.7213 | 0.1598 | Exact reproduction (`models/robust_holistic_fusion_best.pt`) |
 | **Uni-Sign PGF (`unisign_pgf`) Solo** | 70.43% | 88.33% | 92.61% | 0.6863 | **0.0561** | Hand-to-pose cross-attention (`arXiv:2501.15187`) |
 | **Deep Holistic BiGRU Solo** | 72.76% | 89.88% | 93.77% | 0.7180 | 0.0912 | 2-layer BiGRU with label smoothing ($\epsilon=0.08$) |
 | **Track D: 2-Way Ensemble** | 76.26% | 90.66% | 93.77% | 0.7459 | **0.0551** | Baseline + Uni-Sign PGF ($\alpha=0.55$) |

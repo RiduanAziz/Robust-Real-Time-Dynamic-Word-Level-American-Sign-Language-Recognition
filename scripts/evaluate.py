@@ -149,8 +149,7 @@ def main() -> None:
 
     logger.info("Evaluating %d held-out test samples under protocol: %s...", len(test_samples), args.protocol)
 
-    raw_feature_dim = input_dim // 3 if input_dim >= 4977 else input_dim
-    pipeline = LandmarkPipeline(feature_dim=raw_feature_dim, sequence_length=seq_len)
+    pipeline = LandmarkPipeline(feature_dim=input_dim, sequence_length=seq_len)
     test_dataset = SignLanguageDataset(test_samples, label_to_index=label_to_index)
 
     targets: list[int] = []
@@ -164,7 +163,7 @@ def main() -> None:
             seq = item["landmarks"]
             mask = item.get("mask")
             norm_seq, norm_mask = pipeline.normalize_sequence_with_mask(
-                seq, mask=mask, include_dynamics=(input_dim >= 4977)
+                seq, mask=mask
             )
             tensor_in = torch.tensor(norm_seq, dtype=torch.float32).unsqueeze(0).to(device)
             mask_in = torch.tensor(norm_mask, dtype=torch.float32).unsqueeze(0).to(device)

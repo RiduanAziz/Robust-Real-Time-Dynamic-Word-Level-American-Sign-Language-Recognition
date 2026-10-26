@@ -1,5 +1,5 @@
 modality,num_points,num_coords,mean_detection_rate,min_detection_rate,max_detection_rate
-left_hand,21,63,0.325,0.0,1.0
-right_hand,21,63,0.636,0.0,1.0
+left_hand,21,63,0.337,0.0,1.0
+right_hand,21,63,0.627,0.0,1.0
 pose,33,99,0.994,0.05,1.0
-face,478,1434,0.973,0.0,1.0
+face,478,1434,0.975,0.0,1.0

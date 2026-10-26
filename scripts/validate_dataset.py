@@ -19,6 +19,14 @@ if hasattr(sys.stdout, "reconfigure"):
 if hasattr(sys.stderr, "reconfigure"):
     sys.stderr.reconfigure(line_buffering=True, encoding="utf-8")
 
+def compute_file_sha256(path: Path) -> str:
+    import hashlib
+    hasher = hashlib.sha256()
+    with open(path, "rb") as f:
+        while chunk := f.read(65536):
+            hasher.update(chunk)
+    return hasher.hexdigest()
+
 def validate_dataset(
     repo_root: Path,
     protocol: str = "official",
@@ -26,8 +34,11 @@ def validate_dataset(
     config_path: str | Path | None = None,
     strict: bool = False,
     check_features: bool = True,
-    max_feature_samples: int = 100,
+    full_scan: bool = False,
+    max_feature_samples: int = 150,
 ) -> tuple[bool, dict[str, Any]]:
+    import hashlib
+
     report: dict[str, Any] = {
         "protocol": protocol,
         "subset": subset,
@@ -35,6 +46,7 @@ def validate_dataset(
         "passed": True,
         "errors": [],
         "warnings": [],
+        "manifest_hashes": {},
         "summary": {},
     }
 
@@ -55,6 +67,8 @@ def validate_dataset(
         if not p.is_file():
             report["passed"] = False
             report["errors"].append(f"Missing required manifest: {p}")
+        else:
+            report["manifest_hashes"][p.name] = compute_file_sha256(p)
 
     if not report["passed"]:
         return False, report
@@ -95,16 +109,17 @@ def validate_dataset(
         allowed_classes = None
 
     if allowed_classes is not None:
+        vocab_hash = hashlib.sha256(json.dumps(allowed_classes).encode("utf-8")).hexdigest()
+        report["summary"]["vocabulary_hash"] = vocab_hash
+        report["summary"]["target_subset"] = subset
+        report["summary"]["whitelist_classes"] = len(allowed_classes)
         allowed_set = set(allowed_classes)
         train_data = [d for d in train_data if d["class_name"] in allowed_set]
         val_data = [d for d in val_data if d["class_name"] in allowed_set]
         test_data = [d for d in test_data if d["class_name"] in allowed_set]
-        report["summary"]["target_subset"] = subset
-        report["summary"]["whitelist_classes"] = len(allowed_classes)
 
     splits = {"train": train_data, "validation": val_data, "test": test_data}
     split_stats = {}
-    all_sample_ids = set()
 
     for name, data in splits.items():
         sample_ids = [d["sample_id"] for d in data]
@@ -115,19 +130,30 @@ def validate_dataset(
         unique_signers = set(signer_ids)
         unique_classes = set(class_names)
 
+        # Per-class support
+        from collections import Counter
+        class_support = dict(Counter(class_names))
+
         dup_samples = len(data) - len(unique_samples)
         if dup_samples > 0:
             msg = f"{name} split has {dup_samples} duplicate sample IDs!"
             report["errors"].append(msg)
             report["passed"] = False
 
+        missing_from_split = []
+        if allowed_classes is not None:
+            missing_from_split = sorted(list(allowed_set - unique_classes))
+
         split_stats[name] = {
             "count": len(data),
             "unique_samples": len(unique_samples),
             "unique_signers": len(unique_signers),
             "unique_classes": len(unique_classes),
+            "missing_classes": missing_from_split,
+            "class_coverage_pct": round(len(unique_classes) / len(allowed_classes) * 100.0, 2) if allowed_classes else 100.0,
             "signers": sorted(list(unique_signers)),
             "sample_ids": unique_samples,
+            "class_support": class_support,
         }
 
     report["summary"]["splits"] = {
@@ -135,6 +161,9 @@ def validate_dataset(
             "samples": s["count"],
             "unique_signers": s["unique_signers"],
             "unique_classes": s["unique_classes"],
+            "missing_classes_count": len(s["missing_classes"]),
+            "missing_classes": s["missing_classes"],
+            "class_coverage_pct": s["class_coverage_pct"],
         }
         for name, s in split_stats.items()
     }
@@ -175,11 +204,29 @@ def validate_dataset(
                 f"Protocol B signer overlap violation! Shared signers: "
                 f"train-val={len(tv_signers)}, train-test={len(tt_signers)}, val-test={len(vt_signers)}"
             )
+        
+        # Report incomplete class coverage in Protocol B
+        val_missing = split_stats["validation"]["missing_classes"]
+        test_missing = split_stats["test"]["missing_classes"]
+        if test_missing or val_missing:
+            msg = (
+                f"Protocol B signer-disjoint partitioning has incomplete class coverage for {subset}: "
+                f"Validation is missing {len(val_missing)} classes ({val_missing}); "
+                f"Test is missing {len(test_missing)} classes ({test_missing}). "
+                f"Held-out test evaluates on {split_stats['test']['unique_classes']} classes, NOT 100 classes."
+            )
+            report["warnings"].append(msg)
+            report["summary"]["protocol_b_class_limitation"] = {
+                "val_missing": val_missing,
+                "test_missing": test_missing,
+                "evaluated_test_classes": split_stats["test"]["unique_classes"],
+            }
     else:
         # Protocol A has known signer overlap, document as warning
         report["warnings"].append(
             f"Protocol A (Official WLASL) has documented signer overlap: "
-            f"train-test={len(tt_signers)} shared signers. Not signer-independent."
+            f"train-test={len(tt_signers)} shared signers (train-val={len(tv_signers)}, val-test={len(vt_signers)}). "
+            f"This protocol is NOT signer-independent."
         )
 
     # File existence check on data/landmarks/
@@ -213,11 +260,16 @@ def validate_dataset(
         corrupted_files = []
         nan_files = []
         inf_files = []
+        shape_mismatches = []
 
-        # Sample across train, val, test
-        sample_subset = []
-        for name, data in splits.items():
-            sample_subset.extend(data[:max_feature_samples // 3])
+        if full_scan:
+            sample_subset = []
+            for name, data in splits.items():
+                sample_subset.extend(data)
+        else:
+            sample_subset = []
+            for name, data in splits.items():
+                sample_subset.extend(data[:max_feature_samples // 3])
 
         for item in sample_subset:
             sid = item["sample_id"]
@@ -227,30 +279,38 @@ def validate_dataset(
             checked_count += 1
             try:
                 with np.load(npz_path, allow_pickle=True) as npz:
-                    # Look for feature array or landmarks
                     arr = None
                     for key in ("landmarks", "features", "arr_0", "data"):
                         if key in npz:
                             arr = npz[key]
                             break
                     if arr is None:
-                        # Inspect first key
                         first_key = list(npz.keys())[0]
                         arr = npz[first_key]
 
                     if not isinstance(arr, np.ndarray):
                         corrupted_files.append((sid, "Not a numpy array"))
+                    elif arr.ndim < 2:
+                        shape_mismatches.append((sid, f"Unexpected ndim: {arr.ndim}"))
                     elif np.isnan(arr).any():
                         nan_files.append(sid)
                     elif np.isinf(arr).any():
                         inf_files.append(sid)
+
+                    # Check mask if present
+                    if "mask" in npz:
+                        mask = npz["mask"]
+                        if mask.shape[0] != arr.shape[0]:
+                            shape_mismatches.append((sid, f"Mask length {mask.shape[0]} != features {arr.shape[0]}"))
             except Exception as exc:
                 corrupted_files.append((sid, str(exc)))
 
         report["summary"]["features_checked"] = checked_count
+        report["summary"]["full_scan"] = full_scan
         report["summary"]["nan_count"] = len(nan_files)
         report["summary"]["inf_count"] = len(inf_files)
         report["summary"]["corrupted_count"] = len(corrupted_files)
+        report["summary"]["shape_mismatches_count"] = len(shape_mismatches)
 
         if nan_files:
             msg = f"{len(nan_files)} feature arrays contain NaN values."
@@ -273,6 +333,11 @@ def validate_dataset(
             report["passed"] = False
             report["errors"].append(msg)
 
+        if shape_mismatches:
+            msg = f"{len(shape_mismatches)} feature files have shape or mask mismatches."
+            report["passed"] = False
+            report["errors"].append(msg)
+
     return report["passed"], report
 
 
@@ -282,8 +347,9 @@ def main() -> None:
     parser.add_argument("--subset", choices=["wlasl100", "wlasl20", "all"], default="wlasl100", help="Subset to validate (default: wlasl100)")
     parser.add_argument("--config", type=str, default=None, help="Path to config YAML to filter allowed classes")
     parser.add_argument("--strict", action="store_true", help="Fail with non-zero exit code on any integrity warning")
-    parser.add_argument("--no-features", action="store_true", help="Skip deep feature array inspection")
-    parser.add_argument("--max-feature-samples", type=int, default=150, help="Max feature files to deeply inspect")
+    parser.add_argument("--no-features", action="store_true", help="Skip feature array inspection")
+    parser.add_argument("--full-scan", action="store_true", help="Perform complete 100 percent census of all landmark feature files")
+    parser.add_argument("--max-feature-samples", type=int, default=150, help="Max feature files to deeply inspect if not full-scan")
     parser.add_argument("--output", type=str, default=None, help="Path to save JSON validation report")
 
     args = parser.parse_args()
@@ -296,6 +362,7 @@ def main() -> None:
         config_path=args.config,
         strict=args.strict,
         check_features=not args.no_features,
+        full_scan=args.full_scan,
         max_feature_samples=args.max_feature_samples,
     )
 
@@ -313,13 +380,22 @@ def main() -> None:
     print(f"Report written to: {out_path}")
     print("\nSplit Statistics:")
     for split_name, stats in report["summary"].get("splits", {}).items():
-        print(f"  - {split_name.capitalize():<12}: {stats['samples']} samples, {stats['unique_signers']} signers, {stats['unique_classes']} classes")
+        missing_str = f", missing {stats['missing_classes_count']} classes" if stats['missing_classes_count'] > 0 else ""
+        print(f"  - {split_name.capitalize():<12}: {stats['samples']} samples, {stats['unique_signers']} signers, {stats['unique_classes']} classes ({stats['class_coverage_pct']}% coverage{missing_str})")
 
     overlap = report["summary"].get("signer_overlap", {})
     print("\nSigner Overlap:")
     print(f"  - Train & Val : {overlap.get('train_validation', 0)}")
     print(f"  - Train & Test: {overlap.get('train_test', 0)}")
     print(f"  - Val & Test  : {overlap.get('validation_test', 0)}")
+
+    if "features_checked" in report["summary"]:
+        print(f"\nFeature Archive Inspection ({'FULL 100% SCAN' if report['summary'].get('full_scan') else 'sampled'}):")
+        print(f"  - Files checked     : {report['summary']['features_checked']}")
+        print(f"  - Corrupted files   : {report['summary']['corrupted_count']}")
+        print(f"  - NaN files         : {report['summary']['nan_count']}")
+        print(f"  - Inf files         : {report['summary']['inf_count']}")
+        print(f"  - Shape mismatches  : {report['summary']['shape_mismatches_count']}")
 
     if report["errors"]:
         print("\nErrors:")
@@ -339,3 +415,4 @@ def main() -> None:
 
 if __name__ == "__main__":
     main()
+

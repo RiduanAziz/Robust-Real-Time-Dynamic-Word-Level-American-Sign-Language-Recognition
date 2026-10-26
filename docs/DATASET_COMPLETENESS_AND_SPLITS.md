@@ -58,6 +58,16 @@ graph TD
   $$\text{Signers}(\text{Train}) \cap \text{Signers}(\text{Test}) = \emptyset, \quad \text{Signers}(\text{Train}) \cap \text{Signers}(\text{Val}) = \emptyset$$
 - **Purpose**: Measures true zero-shot signer generalization in clinical, educational, or consumer deployment scenarios.
 
+| Split | Manifest Samples | Unique Signers | Classes Present | Missing Classes | Coverage (%) |
+| :--- | :---: | :---: | :---: | :--- | :---: |
+| **Train** | 1,433 | 71 | 100 / 100 | None | **100.0%** |
+| **Validation** | 370 | 14 | 98 / 100 | `['help', 'short']` | **98.0%** |
+| **Test (Held-Out)** | 235 | 12 | 94 / 100 | `['cousin', 'drink', 'fine', 'like', 'medicine', 'play']` | **94.0%** |
+| **Total** | **2,038** | **97** | **100 / 100** | — | — |
+
+> [!NOTE]
+> **Class Coverage Limitation**: 100% test class coverage cannot be achieved under strict signer-disjoint constraints on WLASL-100 because several signs were performed by only 1–2 unique signers who were assigned to train/val. Consequently, Protocol B held-out evaluation is conducted on **94 classes**, which is explicitly reported rather than artificially relaxed.
+
 ---
 
 ## 3. Canonical Vocabulary Specification

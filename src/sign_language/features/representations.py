@@ -11,25 +11,104 @@ class FeatureSpecification:
     name: str
     modalities: tuple[str, ...]
     feature_dim: int
+    schema_version: str = "2.0.0"
+    source_landmark_indices: tuple[int, ...] | str = "all"
+    coordinate_order: str = "(x, y, z)"
+    mask_semantics: str = "1.0=valid landmark, 0.0=missing/occluded"
+    normalization_method: str = "per-frame center-scale on visible points"
+    temporal_processing_policy: str = "linear temporal interpolation with causal padding"
     description: str = ""
 
 
 _POINTS_PER_MODALITY = {"hands": 42, "pose": 33, "face": 478}
 
 _FEATURES: dict[str, FeatureSpecification] = {
-    "hands": FeatureSpecification("hands", ("hands",), 126, "Left and right hand 21 3D landmarks"),
-    "hands_pose": FeatureSpecification("hands_pose", ("hands", "pose"), 225, "Hands + 33 pose landmarks"),
-    "holistic": FeatureSpecification("holistic", ("hands", "pose", "face"), 1659, "Full holistic landmarks"),
-    "holistic_dynamics": FeatureSpecification("holistic_dynamics", ("hands", "pose", "face"), 4977, "Full holistic + velocity + acceleration"),
-    "engineered": FeatureSpecification("engineered", ("hands", "pose"), 365, "Hands + Pose (225) + Wrist-rel (126) + Inter-hand (4) + Fingertip extensions (10)"),
+    "hands": FeatureSpecification(
+        name="hands",
+        modalities=("hands",),
+        feature_dim=126,
+        source_landmark_indices=tuple(range(0, 42)),
+        coordinate_order="(x, y, z)",
+        description="Left (0..20) and Right (21..41) hand 3D landmarks (126 dims)",
+    ),
+    "hands_pose": FeatureSpecification(
+        name="hands_pose",
+        modalities=("hands", "pose"),
+        feature_dim=225,
+        source_landmark_indices=tuple(range(0, 75)),
+        coordinate_order="(x, y, z)",
+        description="Hands (42) + Pose (33) 3D landmarks (225 dims)",
+    ),
+    "holistic": FeatureSpecification(
+        name="holistic",
+        modalities=("hands", "pose", "face"),
+        feature_dim=1659,
+        source_landmark_indices=tuple(range(0, 553)),
+        coordinate_order="(x, y, z)",
+        description="Full 553 MediaPipe holistic 3D landmarks (1659 dims)",
+    ),
+    "holistic_dynamics": FeatureSpecification(
+        name="holistic_dynamics",
+        modalities=("hands", "pose", "face"),
+        feature_dim=4977,
+        source_landmark_indices=tuple(range(0, 553)),
+        coordinate_order="Position (1659) + Velocity (1659) + Acceleration (1659)",
+        description="Full holistic landmarks with first and second temporal derivatives (4977 dims)",
+    ),
+    "engineered": FeatureSpecification(
+        name="engineered",
+        modalities=("hands", "pose"),
+        feature_dim=365,
+        source_landmark_indices=tuple(range(0, 75)),
+        coordinate_order="Base hands+pose (225) + Left wrist-rel (63) + Right wrist-rel (63) + Inter-wrist (4) + Fingertip extensions (10)",
+        description="Kinematic interaction features from hands and pose (365 dims)",
+    ),
 }
 
 
 def get_feature_specification(name: str) -> FeatureSpecification:
-    try:
-        return _FEATURES[name]
-    except KeyError as error:
-        raise ValueError(f"Unsupported feature representation: '{name}'. Choose from {list(_FEATURES.keys())}") from error
+    return resolve_feature_representation(name)
+
+
+def resolve_feature_representation(identifier: str | int | None) -> FeatureSpecification:
+    """Resolve a feature specification from representation name, dimension int, or config string."""
+    if identifier is None:
+        return _FEATURES["holistic"]
+    if isinstance(identifier, int):
+        dim_map = {
+            126: "hands",
+            225: "hands_pose",
+            365: "engineered",
+            1659: "holistic",
+            4977: "holistic_dynamics",
+        }
+        if identifier in dim_map:
+            return _FEATURES[dim_map[identifier]]
+        pts = max(1, identifier // 3)
+        return FeatureSpecification(
+            name=f"custom_{identifier}",
+            modalities=("custom",),
+            feature_dim=identifier,
+            source_landmark_indices=tuple(range(pts)),
+            coordinate_order="(x, y, z)",
+            mask_semantics="1.0=valid landmark, 0.0=missing/occluded",
+            normalization_method="per-frame center-scale on visible points",
+            temporal_processing_policy="linear temporal interpolation with causal padding",
+            schema_version="2.0.0",
+            description="Custom/test dimension representation",
+        )
+    key = str(identifier).strip().lower()
+    if key in _FEATURES:
+        return _FEATURES[key]
+    if key.startswith("custom_"):
+        parts = key.split("_")
+        if len(parts) == 2 and parts[1].isdigit():
+            return resolve_feature_representation(int(parts[1]))
+    if key.isdigit():
+        return resolve_feature_representation(int(key))
+    raise ValueError(
+        f"Unsupported feature representation: '{identifier}'. Choose from {list(_FEATURES.keys())}"
+    )
 
 
 def select_feature_representation(
@@ -50,31 +129,45 @@ def select_feature_representation(
     t = values.shape[0]
     m = np.asarray(mask, dtype=np.float32) if mask is not None else np.ones_like(values, dtype=np.float32)
 
-    if name in ("hands", "hands_pose", "holistic"):
+    if name in ("hands", "hands_pose", "holistic") or name.startswith("custom_"):
         dim = specification.feature_dim
         if values.shape[1] < dim:
-            raise ValueError(f"Representation {name} requires {dim} features, got {values.shape[1]}")
-        return values[:, :dim].copy(), m[:, :dim].copy()
+            pad_width = dim - values.shape[1]
+            feat = np.pad(values, ((0, 0), (0, pad_width)), mode="constant", constant_values=0.0)
+            feat_m = np.pad(m, ((0, 0), (0, pad_width)), mode="constant", constant_values=0.0)
+        else:
+            feat = values[:, :dim].copy()
+            feat_m = m[:, :dim].copy()
+        feat = np.where(feat_m > 0.5, feat, 0.0)
+        return feat, feat_m
 
     elif name == "holistic_dynamics":
-        if values.shape[1] == 4977:
-            return values.copy(), m.copy()
         raw_dim = 1659
-        raw_vals = values[:, :raw_dim]
-        raw_m = m[:, :raw_dim]
-        # compute vel and acc
+        if values.shape[1] < raw_dim:
+            raise ValueError(f"holistic_dynamics requires at least {raw_dim} features, got {values.shape[1]}")
+        raw_vals = values[:, :raw_dim].copy()
+        raw_m = (m[:, :raw_dim] > 0.5).astype(np.float32)
+        raw_vals = np.where(raw_m > 0.5, raw_vals, 0.0)
+
+        # Compute velocity and acceleration with boundary masks
         vel = np.zeros_like(raw_vals)
         acc = np.zeros_like(raw_vals)
         vel_m = np.zeros_like(raw_m)
         acc_m = np.zeros_like(raw_m)
         if t > 1:
             vel[1:] = raw_vals[1:] - raw_vals[:-1]
-            vel_m[1:] = raw_m[1:] * raw_m[:-1]
-            vel = vel * vel_m
+            vel_m[1:] = ((raw_m[1:] > 0.5) & (raw_m[:-1] > 0.5)).astype(np.float32)
+            vel = np.where(vel_m > 0.5, vel, 0.0)
         if t > 2:
             acc[2:] = vel[2:] - vel[1:-1]
-            acc_m[2:] = vel_m[2:] * vel_m[1:-1]
-            acc = acc * acc_m
+            acc_m[2:] = ((vel_m[2:] > 0.5) & (vel_m[1:-1] > 0.5)).astype(np.float32)
+            acc = np.where(acc_m > 0.5, acc, 0.0)
+
+        # Ensure no non-finite values reach the model
+        raw_vals = np.nan_to_num(raw_vals, nan=0.0, posinf=0.0, neginf=0.0)
+        vel = np.nan_to_num(vel, nan=0.0, posinf=0.0, neginf=0.0)
+        acc = np.nan_to_num(acc, nan=0.0, posinf=0.0, neginf=0.0)
+
         full_feat = np.concatenate([raw_vals, vel, acc], axis=-1)
         full_mask = np.concatenate([raw_m, vel_m, acc_m], axis=-1)
         return full_feat, full_mask
@@ -92,22 +185,25 @@ def extract_engineered_spatial_features(
     """Compute anatomically grounded spatial and interaction features.
 
     Features include:
-      - Raw Hands + Pose (225 values)
-      - Left hand wrist-relative coordinates (63 values)
-      - Right hand wrist-relative coordinates (63 values)
-      - Left-wrist to Right-wrist 3D displacement & distance (4 values)
-      - Left/Right wrist to nose/chest distance (4 values)
-      - Finger tip-to-wrist extension distances (5 left + 5 right = 10 values)
-    Total dimension: 225 + 63 + 63 + 4 + 4 + 10 = 369 (or padded/projected to 280)
+      - Raw Hands + Pose: 225 values (42 hands + 33 pose * 3)
+      - Left hand wrist-relative coordinates: 63 values (21 * 3)
+      - Right hand wrist-relative coordinates: 63 values (21 * 3)
+      - Inter-wrist 3D displacement & distance: 4 values (3 vector + 1 norm)
+      - Finger tip-to-wrist extension distances: 10 values (5 left + 5 right)
+    Total dimension: 225 + 63 + 63 + 4 + 10 = 365.
     """
     arr = np.asarray(sequence, dtype=np.float32)
     t = arr.shape[0]
     m = np.asarray(mask, dtype=np.float32) if mask is not None else np.ones_like(arr, dtype=np.float32)
 
-    # Need at least hands + pose (225 dims)
-    base_dim = min(225, arr.shape[-1])
-    base_coords = arr[:, :base_dim]
-    base_mask = m[:, :base_dim]
+    if arr.shape[-1] < 225:
+        raise ValueError(
+            f"extract_engineered_spatial_features requires at least 225 features (hands+pose), got {arr.shape[-1]}"
+        )
+
+    base_coords = arr[:, :225]
+    base_mask = (m[:, :225] > 0.5).astype(np.float32)
+    base_coords = np.where(base_mask > 0.5, base_coords, 0.0)
 
     # Parse keypoints: Left hand 0..20, Right hand 21..41, Pose 42..74
     # Left hand [T, 21, 3]

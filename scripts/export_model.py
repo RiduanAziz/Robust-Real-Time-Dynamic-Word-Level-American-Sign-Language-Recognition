@@ -88,6 +88,21 @@ def export_bundle(
         with eval_report_path.open("r", encoding="utf-8") as f:
             eval_data = json.load(f)
 
+    # Compute checkpoint SHA-256
+    import hashlib
+    ckpt_hasher = hashlib.sha256()
+    with open(out_ckpt_path, "rb") as f:
+        while chunk := f.read(65536):
+            ckpt_hasher.update(chunk)
+    ckpt_sha256 = ckpt_hasher.hexdigest()
+
+    # Get git commit
+    import subprocess
+    try:
+        git_commit = subprocess.check_output(["git", "rev-parse", "HEAD"], text=True).strip()
+    except Exception:
+        git_commit = "unknown"
+
     metrics = eval_data.get("metrics") or eval_data.get("ensemble", {})
     out_metrics_path = output_dir / "metrics.json"
     with out_metrics_path.open("w", encoding="utf-8") as f:
@@ -98,7 +113,30 @@ def export_bundle(
                 "evaluated_samples": eval_data.get("evaluated_samples", 257),
                 "num_classes": len(class_names),
                 "vocabulary_hash": canonical_vocab.vocabulary_hash,
+                "checkpoint_sha256": ckpt_sha256,
+                "git_commit": git_commit,
                 "metrics": metrics,
+            },
+            f,
+            indent=2,
+        )
+
+    # Provenance manifest
+    out_provenance_path = output_dir / "provenance.json"
+    with out_provenance_path.open("w", encoding="utf-8") as f:
+        json.dump(
+            {
+                "model_name": config.model.name,
+                "checkpoint_file": out_ckpt_path.name,
+                "checkpoint_sha256": ckpt_sha256,
+                "vocabulary_hash": canonical_vocab.vocabulary_hash,
+                "num_classes": len(class_names),
+                "schema_version": "2.0.0",
+                "feature_representation": getattr(config.dataset, "feature_representation", "holistic"),
+                "input_dim": config.model.input_dim,
+                "sequence_length": config.dataset.sequence_length,
+                "git_commit": git_commit,
+                "evaluation_report": str(eval_report_path) if eval_report_path else None,
             },
             f,
             indent=2,
@@ -158,7 +196,7 @@ def export_bundle(
     with out_schema_path.open("w", encoding="utf-8") as f:
         json.dump(
             {
-                "schema_version": "1.0.0",
+                "schema_version": "2.0.0",
                 "total_points": 553,
                 "input_coordinates": config.model.input_dim,
                 "sequence_length": config.dataset.sequence_length,

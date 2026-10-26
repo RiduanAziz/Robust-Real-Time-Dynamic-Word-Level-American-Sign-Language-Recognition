@@ -1,28 +1,55 @@
 {
   "protocol": "signer_disjoint",
   "subset": "wlasl100",
-  "strict": true,
+  "strict": false,
   "passed": true,
   "errors": [],
-  "warnings": [],
+  "warnings": [
+    "Protocol B signer-disjoint partitioning has incomplete class coverage for wlasl100: Validation is missing 2 classes (['help', 'short']); Test is missing 6 classes (['cousin', 'drink', 'fine', 'like', 'medicine', 'play']). Held-out test evaluates on 94 classes, NOT 100 classes."
+  ],
+  "manifest_hashes": {
+    "train_manifest.json": "0657f943cbf172443c465e27aec37b0e26d275b5127aa810afaddb1af897d39e",
+    "validation_manifest.json": "4fdd997d196da1f913f4fad64e9ba12a3341a68fe87bf546824a014151db3f73",
+    "test_manifest.json": "66aff071817b8fdee07bd3424ec079941d2143ad120786fe928bd866705e140d"
+  },
   "summary": {
+    "vocabulary_hash": "0eb04d1cd4bf6d913dcea525caae274cbd2584063af4745160a9acd9c74b890c",
     "target_subset": "wlasl100",
     "whitelist_classes": 100,
     "splits": {
       "train": {
         "samples": 1433,
         "unique_signers": 71,
-        "unique_classes": 100
+        "unique_classes": 100,
+        "missing_classes_count": 0,
+        "missing_classes": [],
+        "class_coverage_pct": 100.0
       },
       "validation": {
         "samples": 370,
         "unique_signers": 14,
-        "unique_classes": 98
+        "unique_classes": 98,
+        "missing_classes_count": 2,
+        "missing_classes": [
+          "help",
+          "short"
+        ],
+        "class_coverage_pct": 98.0
       },
       "test": {
         "samples": 235,
         "unique_signers": 12,
-        "unique_classes": 94
+        "unique_classes": 94,
+        "missing_classes_count": 6,
+        "missing_classes": [
+          "cousin",
+          "drink",
+          "fine",
+          "like",
+          "medicine",
+          "play"
+        ],
+        "class_coverage_pct": 94.0
       }
     },
     "sample_id_leakage": 0,
@@ -31,10 +58,27 @@
       "train_test": 0,
       "validation_test": 0
     },
+    "protocol_b_class_limitation": {
+      "val_missing": [
+        "help",
+        "short"
+      ],
+      "test_missing": [
+        "cousin",
+        "drink",
+        "fine",
+        "like",
+        "medicine",
+        "play"
+      ],
+      "evaluated_test_classes": 94
+    },
     "missing_landmark_files": 0,
-    "features_checked": 150,
+    "features_checked": 2038,
+    "full_scan": true,
     "nan_count": 0,
     "inf_count": 0,
-    "corrupted_count": 0
+    "corrupted_count": 0,
+    "shape_mismatches_count": 0
   }
 }

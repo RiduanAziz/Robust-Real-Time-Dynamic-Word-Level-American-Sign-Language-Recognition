@@ -24,8 +24,12 @@ def pure_top_k_accuracy_score(
     """Compute Top-K accuracy from scores/logits matrix."""
     y_true = np.asarray(y_true)
     y_score = np.asarray(y_score)
-    if len(y_true) == 0:
+    if len(y_true) == 0 or y_score.size == 0:
         return 0.0
+    if y_score.ndim != 2:
+        return 0.0
+    if not np.isfinite(y_score).all():
+        y_score = np.nan_to_num(y_score, nan=-1e9, posinf=1e9, neginf=-1e9)
 
     k = min(k, y_score.shape[1])
     hits = 0
@@ -120,3 +124,40 @@ def pure_balanced_accuracy_score(
         return 0.0
     _, rec, _, _ = pure_precision_recall_fscore_support(y_true, y_pred, labels=labels)
     return float(np.mean(rec))
+
+
+def pure_expected_calibration_error(
+    probabilities: np.ndarray,
+    targets: np.ndarray,
+    num_bins: int = 15,
+) -> float:
+    """Compute Expected Calibration Error (ECE) from probabilities and ground-truth targets."""
+    probabilities = np.asarray(probabilities, dtype=np.float64)
+    targets = np.asarray(targets, dtype=np.int64)
+    if len(probabilities) == 0 or len(targets) == 0:
+        return 0.0
+    if probabilities.ndim != 2:
+        return 0.0
+    if not np.isfinite(probabilities).all():
+        probabilities = np.nan_to_num(probabilities, nan=0.0, posinf=1.0, neginf=0.0)
+
+    confidences = np.max(probabilities, axis=1)
+    predictions = np.argmax(probabilities, axis=1)
+    accuracies = (predictions == targets)
+
+    bin_boundaries = np.linspace(0.0, 1.0, num_bins + 1)
+    ece = 0.0
+
+    for i in range(num_bins):
+        bin_lower = bin_boundaries[i]
+        bin_upper = bin_boundaries[i + 1]
+        in_bin = (confidences > bin_lower) & (confidences <= bin_upper)
+        prop_in_bin = np.mean(in_bin)
+
+        if prop_in_bin > 0:
+            accuracy_in_bin = np.mean(accuracies[in_bin])
+            avg_confidence_in_bin = np.mean(confidences[in_bin])
+            ece += np.abs(avg_confidence_in_bin - accuracy_in_bin) * prop_in_bin
+
+    return float(ece)
+

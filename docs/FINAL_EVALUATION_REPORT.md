@@ -18,7 +18,7 @@ SignFlow has established a new defensible benchmark on WLASL-100 using a validat
 
 | Model / Ensemble Configuration | Top-1 Accuracy | Top-5 Accuracy | Top-10 Accuracy | Macro-F1 | Weighted-F1 | ECE | Status / Provenance |
 | :--- | :---: | :---: | :---: | :---: | :---: | :---: | :--- |
-| **Historical Baseline (`robust_holistic_fusion`)** | 74.32% | 88.72% | 94.16% | 0.7213 | 0.7257 | 0.1598 | Exact reproduction (`models/robust_holistic_fusion_best.pt`) |
+| **Historical Baseline (`robust_holistic_fusion`)** | 74.32% | 88.72% | 93.39% | 0.7213 | 0.7257 | 0.1598 | Exact reproduction (`models/robust_holistic_fusion_best.pt`) |
 | **Candidate 1 (`unisign_pgf`) Solo** | 70.43% | 88.33% | 92.61% | 0.6863 | 0.6900 | **0.0561** | Outstanding calibration; hand-to-pose cross-attention |
 | **Candidate 2 (`wlasl100_max_accuracy`) Solo** | 72.76% | 89.88% | 93.77% | 0.7180 | 0.7215 | 0.0912 | Deep BiGRU (hidden 128, emb 96, 200 epochs) |
 | **Track D: 2-Way Ensemble ($\alpha=0.55$)** | 76.26% | 90.66% | 93.77% | 0.7459 | 0.7490 | **0.0551** | Model 1 + Model 2 (tuned on validation split) |

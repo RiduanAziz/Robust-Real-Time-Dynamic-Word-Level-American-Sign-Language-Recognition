@@ -33,37 +33,11 @@ from sign_language.training.metrics import (
     pure_top_k_accuracy_score,
     pure_precision_recall_fscore_support,
     pure_balanced_accuracy_score,
+    pure_expected_calibration_error,
 )
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(message)s")
 logger = logging.getLogger("signflow.ensemble")
-
-
-def compute_expected_calibration_error(
-    probabilities: np.ndarray,
-    targets: np.ndarray,
-    num_bins: int = 15,
-) -> float:
-    """Compute Expected Calibration Error (ECE)."""
-    confidences = np.max(probabilities, axis=1)
-    predictions = np.argmax(probabilities, axis=1)
-    accuracies = (predictions == targets)
-
-    bin_boundaries = np.linspace(0.0, 1.0, num_bins + 1)
-    ece = 0.0
-
-    for i in range(num_bins):
-        bin_lower = bin_boundaries[i]
-        bin_upper = bin_boundaries[i + 1]
-        in_bin = (confidences > bin_lower) & (confidences <= bin_upper)
-        prop_in_bin = np.mean(in_bin)
-
-        if prop_in_bin > 0:
-            accuracy_in_bin = np.mean(accuracies[in_bin])
-            avg_confidence_in_bin = np.mean(confidences[in_bin])
-            ece += np.abs(avg_confidence_in_bin - accuracy_in_bin) * prop_in_bin
-
-    return float(ece)
 
 
 def get_model_probabilities(
@@ -73,11 +47,12 @@ def get_model_probabilities(
     label_to_index: dict[str, int],
     input_dim: int,
     device: torch.device,
-) -> tuple[np.ndarray, np.ndarray]:
-    """Infers softmax probability distributions and target labels for a dataset."""
+) -> tuple[np.ndarray, np.ndarray, list[str]]:
+    """Infers softmax probability distributions, target labels, and sample IDs for a dataset."""
     dataset = SignLanguageDataset(samples, label_to_index=label_to_index)
     all_probs = []
     all_targets = []
+    all_sample_ids = []
 
     model.eval()
     with torch.no_grad():
@@ -85,9 +60,10 @@ def get_model_probabilities(
             target_idx = item["label"]
             seq = item["landmarks"]
             mask = item.get("mask")
+            sid = item.get("sample_id", "")
 
             norm_seq, norm_mask = pipeline.normalize_sequence_with_mask(
-                seq, mask=mask, include_dynamics=(input_dim >= 4977)
+                seq, mask=mask
             )
             t_in = torch.tensor(norm_seq, dtype=torch.float32).unsqueeze(0).to(device)
             m_in = torch.tensor(norm_mask, dtype=torch.float32).unsqueeze(0).to(device)
@@ -97,8 +73,13 @@ def get_model_probabilities(
 
             all_probs.append(probs)
             all_targets.append(target_idx)
+            all_sample_ids.append(str(sid))
 
-    return np.array(all_probs, dtype=np.float32), np.array(all_targets, dtype=np.int64)
+    return (
+        np.array(all_probs, dtype=np.float32),
+        np.array(all_targets, dtype=np.int64),
+        all_sample_ids,
+    )
 
 
 def main() -> None:
@@ -115,6 +96,7 @@ def main() -> None:
     parser.add_argument("--output", default="results/ensemble_evaluation_report.json")
     parser.add_argument("--device", default="cuda" if torch.cuda.is_available() else "cpu")
     parser.add_argument("--max-samples", type=int, default=None)
+    parser.add_argument("--validation-only", action="store_true", help="Select weights strictly on validation set without running test evaluation")
 
     args = parser.parse_args()
     device = torch.device(args.device)
@@ -135,8 +117,7 @@ def main() -> None:
     sd1 = ckpt1.get("model_state_dict", ckpt1.get("state_dict", ckpt1))
     model1.load_state_dict(sd1)
     model1.to(device)
-    raw_dim1 = cfg1.model.input_dim // 3 if cfg1.model.input_dim >= 4977 else cfg1.model.input_dim
-    pipe1 = LandmarkPipeline(feature_dim=raw_dim1, sequence_length=cfg1.dataset.sequence_length)
+    pipe1 = LandmarkPipeline(feature_dim=cfg1.model.input_dim, sequence_length=cfg1.dataset.sequence_length)
 
     # Build Model 2
     cfg2.model.num_classes = len(class_names)
@@ -145,8 +126,7 @@ def main() -> None:
     sd2 = ckpt2.get("model_state_dict", ckpt2.get("state_dict", ckpt2))
     model2.load_state_dict(sd2)
     model2.to(device)
-    raw_dim2 = cfg2.model.input_dim // 3 if cfg2.model.input_dim >= 4977 else cfg2.model.input_dim
-    pipe2 = LandmarkPipeline(feature_dim=raw_dim2, sequence_length=cfg2.dataset.sequence_length)
+    pipe2 = LandmarkPipeline(feature_dim=cfg2.model.input_dim, sequence_length=cfg2.dataset.sequence_length)
 
     # Optional Build Model 3
     model3, pipe3 = None, None
@@ -157,23 +137,24 @@ def main() -> None:
         sd3 = ckpt3.get("model_state_dict", ckpt3.get("state_dict", ckpt3))
         model3.load_state_dict(sd3)
         model3.to(device)
-        raw_dim3 = cfg3.model.input_dim // 3 if cfg3.model.input_dim >= 4977 else cfg3.model.input_dim
-        pipe3 = LandmarkPipeline(feature_dim=raw_dim3, sequence_length=cfg3.dataset.sequence_length)
+        pipe3 = LandmarkPipeline(feature_dim=cfg3.model.input_dim, sequence_length=cfg3.dataset.sequence_length)
 
     # Load Validation Data
     val_samples = build_dataset_from_manifest(args.val_manifest, args.landmarks_dir, allowed_classes=class_names)
-    test_samples = build_dataset_from_manifest(args.test_manifest, args.landmarks_dir, allowed_classes=class_names)
 
     if args.max_samples:
         val_samples = val_samples[: args.max_samples]
-        test_samples = test_samples[: args.max_samples]
 
     logger.info("Computing validation probabilities (N=%d)...", len(val_samples))
-    val_p1, val_targets = get_model_probabilities(model1, val_samples, pipe1, label_to_index, cfg1.model.input_dim, device)
-    val_p2, _ = get_model_probabilities(model2, val_samples, pipe2, label_to_index, cfg2.model.input_dim, device)
+    val_p1, val_targets, val_ids1 = get_model_probabilities(model1, val_samples, pipe1, label_to_index, cfg1.model.input_dim, device)
+    val_p2, val_targets2, val_ids2 = get_model_probabilities(model2, val_samples, pipe2, label_to_index, cfg2.model.input_dim, device)
+    assert val_ids1 == val_ids2, "Validation sample IDs out of alignment between Model 1 and Model 2!"
+    assert (val_targets == val_targets2).all(), "Validation target mismatch between Model 1 and Model 2!"
+
     val_p3 = None
     if model3:
-        val_p3, _ = get_model_probabilities(model3, val_samples, pipe3, label_to_index, cfg3.model.input_dim, device)
+        val_p3, val_targets3, val_ids3 = get_model_probabilities(model3, val_samples, pipe3, label_to_index, cfg3.model.input_dim, device)
+        assert val_ids1 == val_ids3, "Validation sample IDs out of alignment between Model 1 and Model 3!"
 
     # Validation Grid Search for optimal weights
     best_weights = (0.5, 0.5, 0.0) if model3 else (0.5, 0.5)
@@ -206,13 +187,35 @@ def main() -> None:
                 best_weights = (alpha, round(1.0 - alpha, 2))
         logger.info("Validation grid search optimal weights (w1, w2): %s (Val Top-1: %.4f)", best_weights, best_val_top1)
 
+    if args.validation_only:
+        out_p = Path(args.output)
+        out_p.parent.mkdir(parents=True, exist_ok=True)
+        report = {
+            "mode": "validation_only",
+            "optimal_weights": [float(w) for w in best_weights],
+            "validation_top1": float(best_val_top1),
+            "grid_search": val_results,
+        }
+        with open(out_p, "w", encoding="utf-8") as f:
+            json.dump(report, f, indent=2)
+        print(f"Validation-only weight tuning complete. Report written to: {out_p}")
+        return
+
     # Evaluate Test Split
+    test_samples = build_dataset_from_manifest(args.test_manifest, args.landmarks_dir, allowed_classes=class_names)
+    if args.max_samples:
+        test_samples = test_samples[: args.max_samples]
+
     logger.info("Computing test probabilities (N=%d)...", len(test_samples))
-    test_p1, test_targets = get_model_probabilities(model1, test_samples, pipe1, label_to_index, cfg1.model.input_dim, device)
-    test_p2, _ = get_model_probabilities(model2, test_samples, pipe2, label_to_index, cfg2.model.input_dim, device)
+    test_p1, test_targets, test_ids1 = get_model_probabilities(model1, test_samples, pipe1, label_to_index, cfg1.model.input_dim, device)
+    test_p2, test_targets2, test_ids2 = get_model_probabilities(model2, test_samples, pipe2, label_to_index, cfg2.model.input_dim, device)
+    assert test_ids1 == test_ids2, "Test sample IDs out of alignment between Model 1 and Model 2!"
+    assert (test_targets == test_targets2).all(), "Test target mismatch between Model 1 and Model 2!"
+
     test_p3 = None
     if model3:
-        test_p3, _ = get_model_probabilities(model3, test_samples, pipe3, label_to_index, cfg3.model.input_dim, device)
+        test_p3, test_targets3, test_ids3 = get_model_probabilities(model3, test_samples, pipe3, label_to_index, cfg3.model.input_dim, device)
+        assert test_ids1 == test_ids3, "Test sample IDs out of alignment between Model 1 and Model 3!"
 
     # Individual metrics
     m1_top1 = pure_accuracy_score(test_targets, np.argmax(test_p1, axis=-1))
@@ -240,7 +243,7 @@ def main() -> None:
     ens_bal_acc = pure_balanced_accuracy_score(test_targets, fused_preds)
     ens_p_mac, ens_r_mac, ens_f1_mac, _ = pure_precision_recall_fscore_support(test_targets, fused_preds, average="macro")
     ens_p_wt, ens_r_wt, ens_f1_wt, _ = pure_precision_recall_fscore_support(test_targets, fused_preds, average="weighted")
-    ens_ece = compute_expected_calibration_error(fused_test, test_targets)
+    ens_ece = pure_expected_calibration_error(fused_test, test_targets)
 
     report = {
         "model1": {"name": cfg1.model.name, "checkpoint": args.model1_ckpt, "top1": float(m1_top1), "top5": float(m1_top5)},
@@ -266,6 +269,25 @@ def main() -> None:
     out_p.parent.mkdir(parents=True, exist_ok=True)
     with open(out_p, "w", encoding="utf-8") as f:
         json.dump(report, f, indent=2)
+
+    pred_path = out_p.parent / f"{out_p.stem}_predictions.npz"
+    np.savez_compressed(
+        pred_path,
+        val_sample_ids=np.array(val_ids1),
+        val_targets=val_targets,
+        val_p1=val_p1,
+        val_p2=val_p2,
+        val_p3=val_p3 if val_p3 is not None else np.array([]),
+        test_sample_ids=np.array(test_ids1),
+        test_targets=test_targets,
+        test_p1=test_p1,
+        test_p2=test_p2,
+        test_p3=test_p3 if test_p3 is not None else np.array([]),
+        fused_test=fused_test,
+        fused_preds=fused_preds,
+        is_correct=(fused_preds == test_targets),
+    )
+    print(f"Prediction arrays saved to: {pred_path}")
 
     print("\n" + "=" * 60)
     print("SIGNFLOW PROBABILITY ENSEMBLE EVALUATION REPORT")

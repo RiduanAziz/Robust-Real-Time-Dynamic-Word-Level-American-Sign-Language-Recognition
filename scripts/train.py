@@ -30,6 +30,10 @@ logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(me
 logger = logging.getLogger(__name__)
 
 
+from sign_language.landmarks.pipeline import LandmarkPipeline, canonical_preprocess_sequence
+from sign_language.features.representations import resolve_feature_representation
+
+
 class PipelineCollator:
     """Picklable, high-speed vectorized collate function for PyTorch multi-process DataLoader."""
 
@@ -37,74 +41,38 @@ class PipelineCollator:
         self,
         sequence_length: int = 64,
         feature_dim: int | None = None,
+        feature_representation: str | None = None,
         augment: bool = False,
+        seed: int | None = None,
     ) -> None:
         self.sequence_length = sequence_length
-        self.feature_dim = feature_dim
+        if feature_representation:
+            spec = resolve_feature_representation(feature_representation)
+        elif feature_dim is not None:
+            spec = resolve_feature_representation(feature_dim)
+        else:
+            spec = resolve_feature_representation("holistic")
+        self.feature_representation = spec.name
+        self.feature_dim = spec.feature_dim
         self.augment = augment
+        self.seed = seed
 
     def __call__(self, batch: list[dict]) -> dict[str, torch.Tensor | list[str]]:
         features, masks, labels, sample_ids = [], [], [], []
-        target_len = self.sequence_length
 
         for item in batch:
-            seq = np.asarray(item["landmarks"], dtype=np.float32)
-            if seq.ndim == 1:
-                seq = seq.reshape(1, -1)
+            seq = item["landmarks"]
             raw_mask = item.get("mask")
-            mask = np.asarray(raw_mask, dtype=np.float32) if raw_mask is not None else np.ones_like(seq, dtype=np.float32)
-            if mask.ndim == 1:
-                mask = mask.reshape(1, -1)
-
-            if self.feature_dim is not None and seq.shape[-1] > self.feature_dim:
-                seq = seq[:, : self.feature_dim]
-                if mask.shape[-1] >= self.feature_dim:
-                    mask = mask[:, : self.feature_dim]
-
-            t_frames = seq.shape[0]
-            num_points = seq.shape[1] // 3
-            coords = seq.reshape(t_frames, num_points, 3).copy()
-            pt_valid = (mask.reshape(t_frames, num_points, 3) > 0.5).any(axis=-1)
-            pt_mask = pt_valid[:, :, None]
-
-            # Training-only geometrically valid augmentations
-            if self.augment:
-                # 1. Subtle spatial Gaussian coordinate jitter on visible landmarks
-                jitter = np.random.normal(0.0, 0.006, size=coords.shape).astype(np.float32)
-                coords = coords + np.where(pt_mask, jitter, np.float32(0.0))
-
-                # 2. Random spatial uniform scaling (simulating signer distance/size variation)
-                scale_factor = np.float32(np.random.uniform(0.94, 1.06))
-                coords = coords * scale_factor
-
-                # 3. Random landmark dropout (simulate intermittent MediaPipe tracking dropouts)
-                if np.random.rand() < 0.25:
-                    drop_pts = (np.random.rand(num_points) > 0.04).reshape(1, num_points, 1).astype(np.float32)
-                    coords = coords * drop_pts
-                    pt_mask = (pt_mask * drop_pts > 0.5)
-
-            n_valid = pt_mask.sum(axis=1, keepdims=True)
-            has_valid = (n_valid > 0)
-            safe_n = np.maximum(n_valid, 1)
-
-            # Vectorized spatial centering & scaling with strict float32
-            center = np.where(has_valid, (coords * pt_mask).sum(axis=1, keepdims=True) / safe_n, np.float32(0.0)).astype(np.float32)
-            centered = np.where(pt_mask, coords - center, np.float32(0.0)).astype(np.float32)
-            scale = np.sqrt(np.where(has_valid, np.sum(np.square(centered), axis=(1, 2), keepdims=True) / (safe_n * np.float32(3.0)), np.float32(1.0))).astype(np.float32)
-            norm_coords = np.where(scale >= 1e-6, centered / np.maximum(scale, np.float32(1e-6)), centered)
-            norm_coords = np.where(pt_mask, norm_coords, np.float32(0.0)).astype(np.float32)
-            norm_seq = norm_coords.reshape(t_frames, -1)
-
-            # Vectorized PyTorch linear interpolation across time
-            t_tensor = torch.from_numpy(norm_seq).permute(1, 0).unsqueeze(0).float()
-            res_t = torch.nn.functional.interpolate(t_tensor, size=target_len, mode="linear", align_corners=True).squeeze(0).permute(1, 0).float()
-
-            m_tensor = torch.from_numpy(mask).permute(1, 0).unsqueeze(0).float()
-            res_m = torch.nn.functional.interpolate(m_tensor, size=target_len, mode="linear", align_corners=True).squeeze(0).permute(1, 0).float()
-            res_mask = (res_m >= 0.5).to(torch.float32)
-
-            features.append(res_t)
-            masks.append(res_mask)
+            feat, mask = canonical_preprocess_sequence(
+                sequence=seq,
+                mask=raw_mask,
+                target_length=self.sequence_length,
+                feature_representation=self.feature_representation,
+                augment=self.augment,
+                seed=self.seed,
+            )
+            features.append(torch.from_numpy(feat).float())
+            masks.append(torch.from_numpy(mask).float())
             labels.append(item["label"])
             sample_ids.append(item.get("sample_id", ""))
 
@@ -196,15 +164,25 @@ def main() -> None:
 
     train_dataset = SignLanguageDataset(train_samples, label_to_index=label_to_index)
 
-    raw_feature_dim = config.model.input_dim // 3 if config.model.input_dim >= 4977 else config.model.input_dim
+    feature_rep = getattr(config.dataset, "feature_representation", None)
+    if not feature_rep or feature_rep == "hands":
+        feature_rep = resolve_feature_representation(config.model.input_dim).name
+    else:
+        spec = resolve_feature_representation(feature_rep)
+        if config.model.input_dim != spec.feature_dim:
+            raise ValueError(
+                f"Configuration dimension mismatch: model.input_dim={config.model.input_dim} "
+                f"does not match dataset feature_representation '{feature_rep}' (expected {spec.feature_dim})."
+            )
+
     train_collator = PipelineCollator(
         sequence_length=config.dataset.sequence_length,
-        feature_dim=raw_feature_dim,
+        feature_representation=feature_rep,
         augment=True,
     )
     val_collator = PipelineCollator(
         sequence_length=config.dataset.sequence_length,
-        feature_dim=raw_feature_dim,
+        feature_representation=feature_rep,
         augment=False,
     )
 
