@@ -32,6 +32,16 @@ class CanonicalVocabulary:
         self.index_to_label = {idx: cls_name for idx, cls_name in enumerate(self.classes)}
         self.vocabulary_hash = compute_vocabulary_hash(self.classes)
 
+    @property
+    def num_classes(self) -> int:
+        return len(self.classes)
+
+    def get_index(self, label: str) -> int | None:
+        return self.label_to_index.get(label)
+
+    def get_label(self, index: int) -> str | None:
+        return self.index_to_label.get(index)
+
     def __len__(self) -> int:
         return len(self.classes)
 

@@ -22,12 +22,15 @@ if hasattr(sys.stderr, "reconfigure"):
 def validate_dataset(
     repo_root: Path,
     protocol: str = "official",
+    subset: str = "wlasl100",
+    config_path: str | Path | None = None,
     strict: bool = False,
     check_features: bool = True,
     max_feature_samples: int = 100,
 ) -> tuple[bool, dict[str, Any]]:
     report: dict[str, Any] = {
         "protocol": protocol,
+        "subset": subset,
         "strict": strict,
         "passed": True,
         "errors": [],
@@ -62,6 +65,42 @@ def validate_dataset(
         val_data = json.load(f)
     with open(test_path, "r", encoding="utf-8") as f:
         test_data = json.load(f)
+
+    # Filter by target subset / vocabulary whitelist
+    allowed_classes: list[str] | None = None
+    if config_path is not None:
+        import yaml
+        with open(config_path, "r", encoding="utf-8") as f:
+            cfg = yaml.safe_load(f)
+            allowed_classes = cfg.get("dataset", {}).get("labels")
+    elif subset == "wlasl100":
+        cfg_path = repo_root / "configs" / "experiments" / "wlasl100_proposed.yaml"
+        if cfg_path.is_file():
+            import yaml
+            with open(cfg_path, "r", encoding="utf-8") as f:
+                allowed_classes = yaml.safe_load(f).get("dataset", {}).get("labels")
+        else:
+            class_file = repo_root / "data" / "wlasl_class_list.txt"
+            if class_file.is_file():
+                with open(class_file, "r", encoding="utf-8") as f:
+                    lines = [line.strip().split("\t")[-1] for line in f if line.strip()]
+                    allowed_classes = lines[:100]
+    elif subset == "wlasl20":
+        cfg_path = repo_root / "configs" / "experiments" / "wlasl20_proposed.yaml"
+        if cfg_path.is_file():
+            import yaml
+            with open(cfg_path, "r", encoding="utf-8") as f:
+                allowed_classes = yaml.safe_load(f).get("dataset", {}).get("labels")
+    elif subset in ("all", "wlasl2000"):
+        allowed_classes = None
+
+    if allowed_classes is not None:
+        allowed_set = set(allowed_classes)
+        train_data = [d for d in train_data if d["class_name"] in allowed_set]
+        val_data = [d for d in val_data if d["class_name"] in allowed_set]
+        test_data = [d for d in test_data if d["class_name"] in allowed_set]
+        report["summary"]["target_subset"] = subset
+        report["summary"]["whitelist_classes"] = len(allowed_classes)
 
     splits = {"train": train_data, "validation": val_data, "test": test_data}
     split_stats = {}
@@ -240,6 +279,8 @@ def validate_dataset(
 def main() -> None:
     parser = argparse.ArgumentParser(description="SignFlow Dataset & Manifest Integrity Validator")
     parser.add_argument("--protocol", choices=["official", "signer_disjoint"], default="official", help="Split protocol to validate")
+    parser.add_argument("--subset", choices=["wlasl100", "wlasl20", "all"], default="wlasl100", help="Subset to validate (default: wlasl100)")
+    parser.add_argument("--config", type=str, default=None, help="Path to config YAML to filter allowed classes")
     parser.add_argument("--strict", action="store_true", help="Fail with non-zero exit code on any integrity warning")
     parser.add_argument("--no-features", action="store_true", help="Skip deep feature array inspection")
     parser.add_argument("--max-feature-samples", type=int, default=150, help="Max feature files to deeply inspect")
@@ -251,6 +292,8 @@ def main() -> None:
     passed, report = validate_dataset(
         repo_root=repo_root,
         protocol=args.protocol,
+        subset=args.subset,
+        config_path=args.config,
         strict=args.strict,
         check_features=not args.no_features,
         max_feature_samples=args.max_feature_samples,
@@ -263,7 +306,7 @@ def main() -> None:
 
     # Terminal summary
     print("=" * 60)
-    print(f"SIGNFLOW DATASET INTEGRITY VALIDATOR - Protocol: {args.protocol.upper()}")
+    print(f"SIGNFLOW DATASET INTEGRITY VALIDATOR - Protocol: {args.protocol.upper()} | Subset: {args.subset.upper()}")
     print("=" * 60)
     status_str = "PASSED" if passed else "FAILED"
     print(f"Status: {status_str} (strict={args.strict})")

@@ -33,8 +33,15 @@ logger = logging.getLogger(__name__)
 class PipelineCollator:
     """Picklable, high-speed vectorized collate function for PyTorch multi-process DataLoader."""
 
-    def __init__(self, sequence_length: int = 64) -> None:
+    def __init__(
+        self,
+        sequence_length: int = 64,
+        feature_dim: int | None = None,
+        augment: bool = False,
+    ) -> None:
         self.sequence_length = sequence_length
+        self.feature_dim = feature_dim
+        self.augment = augment
 
     def __call__(self, batch: list[dict]) -> dict[str, torch.Tensor | list[str]]:
         features, masks, labels, sample_ids = [], [], [], []
@@ -49,11 +56,33 @@ class PipelineCollator:
             if mask.ndim == 1:
                 mask = mask.reshape(1, -1)
 
+            if self.feature_dim is not None and seq.shape[-1] > self.feature_dim:
+                seq = seq[:, : self.feature_dim]
+                if mask.shape[-1] >= self.feature_dim:
+                    mask = mask[:, : self.feature_dim]
+
             t_frames = seq.shape[0]
             num_points = seq.shape[1] // 3
-            coords = seq.reshape(t_frames, num_points, 3)
+            coords = seq.reshape(t_frames, num_points, 3).copy()
             pt_valid = (mask.reshape(t_frames, num_points, 3) > 0.5).any(axis=-1)
             pt_mask = pt_valid[:, :, None]
+
+            # Training-only geometrically valid augmentations
+            if self.augment:
+                # 1. Subtle spatial Gaussian coordinate jitter on visible landmarks
+                jitter = np.random.normal(0.0, 0.006, size=coords.shape).astype(np.float32)
+                coords = coords + np.where(pt_mask, jitter, np.float32(0.0))
+
+                # 2. Random spatial uniform scaling (simulating signer distance/size variation)
+                scale_factor = np.float32(np.random.uniform(0.94, 1.06))
+                coords = coords * scale_factor
+
+                # 3. Random landmark dropout (simulate intermittent MediaPipe tracking dropouts)
+                if np.random.rand() < 0.25:
+                    drop_pts = (np.random.rand(num_points) > 0.04).reshape(1, num_points, 1).astype(np.float32)
+                    coords = coords * drop_pts
+                    pt_mask = (pt_mask * drop_pts > 0.5)
+
             n_valid = pt_mask.sum(axis=1, keepdims=True)
             has_valid = (n_valid > 0)
             safe_n = np.maximum(n_valid, 1)
@@ -165,13 +194,23 @@ def main() -> None:
 
     train_dataset = SignLanguageDataset(train_samples, label_to_index=label_to_index)
 
-    collator = PipelineCollator(sequence_length=config.dataset.sequence_length)
+    raw_feature_dim = config.model.input_dim // 3 if config.model.input_dim >= 4977 else config.model.input_dim
+    train_collator = PipelineCollator(
+        sequence_length=config.dataset.sequence_length,
+        feature_dim=raw_feature_dim,
+        augment=True,
+    )
+    val_collator = PipelineCollator(
+        sequence_length=config.dataset.sequence_length,
+        feature_dim=raw_feature_dim,
+        augment=False,
+    )
 
     train_loader = DataLoader(
         train_dataset,
         batch_size=min(config.training.batch_size, len(train_dataset)),
         shuffle=True,
-        collate_fn=collator,
+        collate_fn=train_collator,
         num_workers=num_workers,
         pin_memory=pin_memory,
         persistent_workers=(num_workers > 0),
@@ -195,7 +234,7 @@ def main() -> None:
                 val_dataset,
                 batch_size=min(config.training.batch_size, len(val_dataset)),
                 shuffle=False,
-                collate_fn=collator,
+                collate_fn=val_collator,
                 num_workers=num_workers,
                 pin_memory=pin_memory,
                 persistent_workers=(num_workers > 0),
@@ -210,7 +249,21 @@ def main() -> None:
         lr=config.training.learning_rate,
         weight_decay=config.training.weight_decay,
     )
-    criterion = torch.nn.CrossEntropyLoss()
+
+    # Cosine Annealing with Linear Warmup learning rate schedule
+    total_epochs = config.training.epochs
+    warmup_epochs = max(2, total_epochs // 10)
+
+    def lr_lambda(current_epoch: int) -> float:
+        if current_epoch < warmup_epochs:
+            return float(current_epoch + 1) / float(max(1, warmup_epochs))
+        progress = float(current_epoch - warmup_epochs) / float(max(1, total_epochs - warmup_epochs))
+        return float(0.5 * (1.0 + np.cos(np.pi * progress)) * 0.99 + 0.01)
+
+    scheduler = torch.optim.lr_scheduler.LambdaLR(optimizer, lr_lambda)
+
+    # Regularized CrossEntropy with label smoothing to prevent overconfidence on small vocab
+    criterion = torch.nn.CrossEntropyLoss(label_smoothing=0.08)
 
     start_epoch = 0
     best_macro_f1 = -1.0
@@ -222,6 +275,8 @@ def main() -> None:
             model.load_state_dict(ckpt["model_state_dict"])
             if "optimizer_state_dict" in ckpt:
                 optimizer.load_state_dict(ckpt["optimizer_state_dict"])
+            if "scheduler_state_dict" in ckpt:
+                scheduler.load_state_dict(ckpt["scheduler_state_dict"])
             start_epoch = ckpt.get("epoch", 0) + 1
             best_macro_f1 = ckpt.get("best_macro_f1", -1.0)
         else:
@@ -323,19 +378,24 @@ def main() -> None:
                 val_macro_f1 = float(val_metrics.get("macro_f1", 0.0))
                 val_history.append(val_metrics)
 
+        scheduler.step()
+        current_lr = scheduler.get_last_lr()[0]
+
         logger.info(
-            "Epoch %02d/%02d - Train Loss: %.4f | Val Acc: %.4f | Val Macro-F1: %.4f",
+            "Epoch %02d/%02d - Train Loss: %.4f | Val Acc: %.4f | Val Macro-F1: %.4f | LR: %.6f",
             epoch + 1,
             config.training.epochs,
             epoch_loss,
             val_metrics.get("accuracy", 0.0),
             val_macro_f1,
+            current_lr,
         )
 
         # Build checkpoint metadata payload
         checkpoint_payload = {
             "model_state_dict": model.state_dict(),
             "optimizer_state_dict": optimizer.state_dict(),
+            "scheduler_state_dict": scheduler.state_dict(),
             "epoch": epoch,
             "best_macro_f1": max(best_macro_f1, val_macro_f1),
             "config": config.to_dict(),

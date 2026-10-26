@@ -130,7 +130,13 @@ class ReliabilityAwareIsolatedFusionClassifier(nn.Module):
         mask: torch.Tensor | None = None,
     ) -> torch.Tensor:
         b, t, d = x.shape
-        m = mask if mask is not None else torch.ones_like(x)
+        if mask is not None:
+            if mask.ndim == 2:
+                m = mask.unsqueeze(-1).expand(-1, -1, d)
+            else:
+                m = mask
+        else:
+            m = torch.ones_like(x)
 
         # 1. Slice streams
         lh_x = x[:, :, :63]

@@ -16,13 +16,22 @@ if hasattr(sys.stdout, "reconfigure"):
 import numpy as np
 import torch
 import torch.nn.functional as F
-from sklearn.metrics import (
-    accuracy_score,
-    balanced_accuracy_score,
-    confusion_matrix,
-    precision_recall_fscore_support,
-    top_k_accuracy_score,
-)
+try:
+    from sklearn.metrics import (
+        accuracy_score,
+        balanced_accuracy_score,
+        confusion_matrix,
+        precision_recall_fscore_support,
+        top_k_accuracy_score,
+    )
+except Exception:
+    from sign_language.training.metrics import (
+        pure_accuracy_score as accuracy_score,
+        pure_balanced_accuracy_score as balanced_accuracy_score,
+        pure_confusion_matrix as confusion_matrix,
+        pure_precision_recall_fscore_support as precision_recall_fscore_support,
+        pure_top_k_accuracy_score as top_k_accuracy_score,
+    )
 
 from sign_language.config import load_experiment_config
 from sign_language.data import SignLanguageDataset, build_dataset_from_manifest, CanonicalVocabulary

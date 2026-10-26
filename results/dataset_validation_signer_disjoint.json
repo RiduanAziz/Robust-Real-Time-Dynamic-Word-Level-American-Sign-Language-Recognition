@@ -1,25 +1,28 @@
 {
   "protocol": "signer_disjoint",
+  "subset": "wlasl100",
   "strict": true,
   "passed": true,
   "errors": [],
   "warnings": [],
   "summary": {
+    "target_subset": "wlasl100",
+    "whitelist_classes": 100,
     "splits": {
       "train": {
-        "samples": 14757,
-        "unique_signers": 87,
-        "unique_classes": 2000
+        "samples": 1433,
+        "unique_signers": 71,
+        "unique_classes": 100
       },
       "validation": {
-        "samples": 3163,
-        "unique_signers": 16,
-        "unique_classes": 1576
+        "samples": 370,
+        "unique_signers": 14,
+        "unique_classes": 98
       },
       "test": {
-        "samples": 3163,
-        "unique_signers": 16,
-        "unique_classes": 1783
+        "samples": 235,
+        "unique_signers": 12,
+        "unique_classes": 94
       }
     },
     "sample_id_leakage": 0,

@@ -44,6 +44,7 @@ class TrainingConfig:
     weight_decay: float = 1e-4
     gradient_clip: float | None = 1.0
     num_workers: int = 0
+    val_interval: int = 1
 
 
 @dataclass
@@ -139,6 +140,10 @@ def _validate_config(config: ExperimentConfig) -> None:
         "robust_holistic_fusion",
         "fusion",
         "proposed",
+        "tcn",
+        "reliability_fusion",
+        "reliability_aware",
+        "proposed_v2",
     }
     if config.model.name not in valid_models:
         raise ValueError(f"Unsupported model name: {config.model.name}")

@@ -181,10 +181,20 @@ class LandmarkPipeline:
         arr = np.asarray(sequence, dtype=np.float32)
         if arr.ndim == 1:
             arr = arr.reshape(1, -1)
+        if mask is not None:
+            mask = np.asarray(mask, dtype=np.float32)
+            if mask.ndim == 1:
+                mask = mask.reshape(1, -1)
+
         if arr.shape[-1] != self.feature_dim:
-            raise ValueError(
-                f"Expected raw landmark feature_dim={self.feature_dim}, got {arr.shape[-1]}"
-            )
+            if arr.shape[-1] > self.feature_dim:
+                arr = arr[:, : self.feature_dim]
+                if mask is not None and mask.shape[-1] >= self.feature_dim:
+                    mask = mask[:, : self.feature_dim]
+            else:
+                raise ValueError(
+                    f"Expected raw landmark feature_dim={self.feature_dim}, got {arr.shape[-1]}"
+                )
 
         # 1. Normalize geometric coordinates per frame
         normalized = normalize_landmarks(arr, mask=mask)

@@ -30,9 +30,12 @@ def interpolate_short_gaps(
     if was_3d:
         t, n, c = seq.shape
         seq = seq.reshape(t, n * c)
-        m = m.reshape(t, n * c)
+        if m.ndim == 3:
+            m = m.reshape(t, n * c)
 
     t, d = seq.shape
+    if m.ndim == 1:
+        m = np.repeat(m[:, np.newaxis], d, axis=1)
     if t <= 2 or max_gap <= 0:
         if was_3d:
             seq = seq.reshape(t, n, c)

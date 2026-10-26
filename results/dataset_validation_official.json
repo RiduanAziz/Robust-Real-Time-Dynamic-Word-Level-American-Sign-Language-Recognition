@@ -1,34 +1,37 @@
 {
   "protocol": "official",
+  "subset": "wlasl100",
   "strict": false,
   "passed": true,
   "errors": [],
   "warnings": [
-    "Protocol A (Official WLASL) has documented signer overlap: train-test=104 shared signers. Not signer-independent."
+    "Protocol A (Official WLASL) has documented signer overlap: train-test=51 shared signers. Not signer-independent."
   ],
   "summary": {
+    "target_subset": "wlasl100",
+    "whitelist_classes": 100,
     "splits": {
       "train": {
-        "samples": 14289,
-        "unique_signers": 117,
-        "unique_classes": 2000
+        "samples": 1444,
+        "unique_signers": 91,
+        "unique_classes": 100
       },
       "validation": {
-        "samples": 3916,
-        "unique_signers": 109,
-        "unique_classes": 2000
+        "samples": 337,
+        "unique_signers": 68,
+        "unique_classes": 100
       },
       "test": {
-        "samples": 2878,
-        "unique_signers": 105,
-        "unique_classes": 1999
+        "samples": 257,
+        "unique_signers": 55,
+        "unique_classes": 100
       }
     },
     "sample_id_leakage": 0,
     "signer_overlap": {
-      "train_validation": 108,
-      "train_test": 104,
-      "validation_test": 98
+      "train_validation": 63,
+      "train_test": 51,
+      "validation_test": 49
     },
     "missing_landmark_files": 0,
     "features_checked": 150,

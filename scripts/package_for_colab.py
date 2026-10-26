@@ -28,6 +28,7 @@ def package_code(repo_root: Path, out_dir: Path) -> Path:
         "data/manifests",
         "data/wlasl_class_list.txt",
         "data/word_embeddings.npz",
+        "models/robust_holistic_fusion_best.pt",
         "requirements.txt",
         "pyproject.toml",
     ]
@@ -103,15 +104,21 @@ def main() -> None:
         package_landmarks_subset(repo_root, out_dir, "wlasl20", w20_classes)
 
     elif args.subset == "wlasl100":
-        with open(repo_root / "configs" / "experiments" / "wlasl100_v1.json", "r", encoding="utf-8") as f:
-            w100_classes = set(json.load(f)["vocabulary"])
+        config_yaml = repo_root / "configs" / "experiments" / "wlasl100_proposed.yaml"
+        if config_yaml.is_file():
+            import yaml
+            with open(config_yaml, "r", encoding="utf-8") as f:
+                w100_classes = set(yaml.safe_load(f)["dataset"]["labels"])
+        else:
+            with open(repo_root / "configs" / "experiments" / "wlasl100_v1.json", "r", encoding="utf-8") as f:
+                w100_classes = set(json.load(f)["vocabulary"])
         package_landmarks_subset(repo_root, out_dir, "wlasl100", w100_classes)
 
     elif args.subset == "all":
         package_landmarks_subset(repo_root, out_dir, "all", None)
 
     print(f"\nAll packages are ready in '{out_dir}/'!")
-    print("Upload them to your Google Drive in a folder named 'ASL_Colab'.")
+    print("Upload them to your Google Drive in: 'SignFlow_Colab/archives/'")
 
 
 if __name__ == "__main__":

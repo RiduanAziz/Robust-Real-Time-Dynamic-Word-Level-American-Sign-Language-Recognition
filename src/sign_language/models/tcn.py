@@ -106,8 +106,12 @@ class TCNClassifier(nn.Module):
 
         # Global temporal pooling (mean across time)
         if mask is not None:
-            # Mask along time: [B, T]
-            time_mask = (mask.sum(dim=-1) > 0).float().unsqueeze(1)  # [B, 1, T]
+            if mask.ndim == 2:
+                time_mask = mask.unsqueeze(1).float()  # [B, 1, T]
+            elif mask.ndim == 3:
+                time_mask = (mask.sum(dim=-1) > 0).float().unsqueeze(1)  # [B, 1, T]
+            else:
+                time_mask = mask.float()
             h_masked = h * time_mask
             pooled = h_masked.sum(dim=-1) / torch.clamp(time_mask.sum(dim=-1), min=1.0)
         else:
