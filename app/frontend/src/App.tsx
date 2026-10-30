@@ -140,6 +140,8 @@ export const App: React.FC = () => {
   // Advanced Visuals & Quality States
   const [leftLandmarks, setLeftLandmarks] = useState<LandmarkPoint[]>([]);
   const [rightLandmarks, setRightLandmarks] = useState<LandmarkPoint[]>([]);
+  const [poseLandmarks, setPoseLandmarks] = useState<LandmarkPoint[]>([]);
+  const [faceLandmarks, setFaceLandmarks] = useState<LandmarkPoint[]>([]);
   const [leftBox, setLeftBox] = useState<BoundingBox | null>(null);
   const [rightBox, setRightBox] = useState<BoundingBox | null>(null);
   const [quality, setQuality] = useState<QualityCoachMetrics | null>(null);
@@ -375,6 +377,8 @@ export const App: React.FC = () => {
             case 'hand_landmarks':
               if (msg.left_landmarks) setLeftLandmarks(msg.left_landmarks);
               if (msg.right_landmarks) setRightLandmarks(msg.right_landmarks);
+              if (msg.pose_landmarks) setPoseLandmarks(msg.pose_landmarks);
+              if (msg.face_landmarks) setFaceLandmarks(msg.face_landmarks);
               setLeftBox(msg.left_box || null);
               setRightBox(msg.right_box || null);
               if (msg.quality) setQuality(msg.quality);
@@ -598,6 +602,8 @@ export const App: React.FC = () => {
               landmarksStatus={landmarksStatus}
               leftLandmarks={leftLandmarks}
               rightLandmarks={rightLandmarks}
+              poseLandmarks={poseLandmarks}
+              faceLandmarks={faceLandmarks}
               leftBox={leftBox}
               rightBox={rightBox}
               quality={quality}

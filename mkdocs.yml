@@ -1,0 +1,115 @@
+site_name: SignFlow Documentation
+site_description: Robust Real-Time Dynamic Word-Level American Sign Language Recognition
+site_author: Riduan Aziz
+site_url: https://riduanaziz.github.io/Robust-Real-Time-Dynamic-Word-Level-American-Sign-Language-Recognition/
+repo_url: https://github.com/RiduanAziz/Robust-Real-Time-Dynamic-Word-Level-American-Sign-Language-Recognition
+repo_name: RiduanAziz/SignFlow
+
+theme:
+  name: material
+  language: en
+  palette:
+    - scheme: slate
+      primary: teal
+      accent: cyan
+      toggle:
+        icon: material/brightness-4
+        name: Switch to light mode
+    - scheme: default
+      primary: teal
+      accent: cyan
+      toggle:
+        icon: material/brightness-7
+        name: Switch to dark mode
+  font:
+    text: Inter
+    code: JetBrains Mono
+  features:
+    - navigation.instant
+    - navigation.tracking
+    - navigation.tabs
+    - navigation.sections
+    - navigation.expand
+    - navigation.top
+    - search.suggest
+    - search.highlight
+    - search.share
+    - content.code.copy
+    - content.tabs.link
+
+plugins:
+  - search
+
+markdown_extensions:
+  - admonition
+  - pymdownx.details
+  - pymdownx.superfences:
+      custom_fences:
+        - name: mermaid
+          class: mermaid
+          format: !!python/name:pymdownx.superfences.fence_code_format
+  - pymdownx.highlight:
+      anchor_linenums: true
+      line_spans: __span
+      pygments_lang_class: true
+  - pymdownx.inlinehilite
+  - pymdownx.snippets
+  - pymdownx.tabbed:
+      alternate_style: true
+  - pymdownx.arithmatex:
+      generic: true
+  - tables
+  - attr_list
+  - def_list
+  - toc:
+      permalink: true
+
+extra_javascript:
+  - https://polyfill.io/v3/polyfill.min.js?features=es6
+  - https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js
+
+nav:
+  - Home: index.md
+  - Architecture:
+      - System Architecture: architecture.md
+      - Camera & Visual Integration: CAMERA_VISUALIZATION_INTEGRATION.md
+      - Master Pipeline Audit: MASTER_PIPELINE_AUDIT.md
+      - Implementation Plan: IMPLEMENTATION_PLAN.md
+      - Implementation Log: IMPLEMENTATION_LOG.md
+  - Dataset & Landmarks:
+      - Dataset Specifications: dataset.md
+      - Completeness & Splits: DATASET_COMPLETENESS_AND_SPLITS.md
+      - Landmark Quality: LANDMARK_QUALITY_REPORT.md
+      - Exploratory Data Analysis: EDA_FINDINGS.md
+      - Dataset Integrity: DATASET_INTEGRITY_REPORT.md
+      - Dataset Audit: research/DATASET_AUDIT.md
+      - Dataset Protocols: research/DATASET_PROTOCOLS.md
+  - Models & Experiments:
+      - Model Card: MODEL_CARD.md
+      - Model Architectures: research/MODEL_ARCHITECTURES.md
+      - Accuracy Experiments: ACCURACY_EXPERIMENTS.md
+      - Accuracy Optimization Audit: ACCURACY_OPTIMIZATION_AUDIT.md
+      - Final Evaluation Report: FINAL_EVALUATION_REPORT.md
+      - WLASL Reproduction Guide: WLASL100_REPRODUCTION_GUIDE.md
+      - Feature Engineering: research/FEATURE_ENGINEERING.md
+      - Evaluation Protocol: research/EVALUATION_PROTOCOL.md
+      - Colab Training Guide: COLAB_TRAINING_GUIDE.md
+      - Colab Training Plan: COLAB_TRAINING_PLAN.md
+      - Colab Final Results: COLAB_FINAL_RESULTS.md
+      - Colab Upload Checklist: COLAB_DATA_UPLOAD_CHECKLIST.md
+  - Deployment & Real-Time:
+      - Deployment Guide: DEPLOYMENT.md
+      - Deployment Readiness: DEPLOYMENT_READINESS_AUDIT.md
+      - Real-Time Benchmark: REALTIME_BENCHMARK_REPORT.md
+      - Benchmark Protocol: research/REALTIME_BENCHMARK.md
+      - Local Development: LOCAL_DEVELOPMENT.md
+      - Local Integration: LOCAL_INTEGRATION_GUIDE.md
+  - Research & Thesis Defense:
+      - Final Project Report: INTERNSHIP_FINAL_PROJECT_REPORT.md
+      - Project Defense & Viva Guide: PROJECT_DEFENSE_AND_VIVA_GUIDE.md
+      - Thesis Results & Limitations: THESIS_RESULTS_AND_LIMITATIONS.md
+      - Thesis Evidence Package: THESIS_EVIDENCE_PACKAGE.md
+      - Known Limitations: research/KNOWN_LIMITATIONS.md
+      - Reproducibility: research/REPRODUCIBILITY.md
+      - Remediation Audit: REMEDIATION_AUDIT.md
+      - Project Audit: PROJECT_AUDIT.md

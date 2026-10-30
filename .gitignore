@@ -249,11 +249,13 @@ artifacts/
 mlruns/
 
 # Model files and checkpoints
-*.pt
+# *.pt
+models/*.pt
 *.pth
 *.ckpt
 *.onnx
-*.task
+# *.task
+models/**/*.task
 *.tflite
 
 # Results artifacts (keep lightweight summaries)
@@ -270,7 +272,11 @@ lightning_logs/
 tensorboard_logs/
 
 # Large numpy/pickle caches
-*.npy
+# *.npy
+models/*.npy
 *.npz
 *.pkl
 *.pickle
+
+site/
+

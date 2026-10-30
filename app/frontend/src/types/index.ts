@@ -42,6 +42,8 @@ export interface QualityCoachMetrics {
 export interface HandLandmarksPayload {
   left_landmarks: LandmarkPoint[];
   right_landmarks: LandmarkPoint[];
+  pose_landmarks?: LandmarkPoint[];
+  face_landmarks?: LandmarkPoint[];
   left_box: BoundingBox | null;
   right_box: BoundingBox | null;
   hands_detected: boolean;
@@ -147,13 +149,15 @@ export interface AppSettings {
   isCustomWsUrl?: boolean;
 }
 
-export type CameraViewMode = 'full' | 'focus' | 'split';
+export type CameraViewMode = 'upper_body' | 'full' | 'focus' | 'split';
 
 export interface ReplayFrame {
   frame_idx: number;
   timestamp_ms: number;
   left_landmarks: LandmarkPoint[];
   right_landmarks: LandmarkPoint[];
+  pose_landmarks?: LandmarkPoint[];
+  face_landmarks?: LandmarkPoint[];
   left_box: BoundingBox | null;
   right_box: BoundingBox | null;
   hands_detected: boolean;

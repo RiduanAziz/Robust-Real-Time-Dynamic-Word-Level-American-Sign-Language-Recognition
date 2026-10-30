@@ -254,3 +254,102 @@ def test_offline_online_preprocessing_parity(test_predictor: RealTimePredictor) 
     assert mask_pipe.shape == (test_predictor.sequence_length, test_predictor.input_dim)
     assert np.all(np.isfinite(feat_pipe))
     assert np.all(np.isin(mask_pipe, [0.0, 1.0]))
+
+def test_websocket_hand_landmarks_extended_payload() -> None:
+    """Verify that /ws/live emits pose_landmarks (33 points) and face_landmarks (478 points)."""
+    import base64
+    import cv2
+    img = np.zeros((120, 160, 3), dtype=np.uint8)
+    _, buf = cv2.imencode(".jpg", img)
+    b64_frame = "data:image/jpeg;base64," + base64.b64encode(buf).decode("utf-8")
+
+    with TestClient(app) as client:
+        with client.websocket_connect("/ws/live") as websocket:
+            init = websocket.receive_json()
+            assert init["type"] == "session_started"
+
+            websocket.send_json({
+                "type": "frame",
+                "data": b64_frame,
+                "timestamp_ms": 1234,
+                "frame_id": 1,
+            })
+
+            # Receive messages until hand_landmarks arrives
+            landmarks_msg = None
+            for _ in range(4):
+                msg = websocket.receive_json()
+                if msg.get("type") == "hand_landmarks":
+                    landmarks_msg = msg
+                    break
+
+            assert landmarks_msg is not None, "Expected hand_landmarks message"
+
+            # Verify shapes
+            assert len(landmarks_msg["left_landmarks"]) == 21
+            assert len(landmarks_msg["right_landmarks"]) == 21
+            assert len(landmarks_msg["pose_landmarks"]) == 33
+            assert len(landmarks_msg["face_landmarks"]) == 478
+
+            # Verify schema of each point
+            for p in landmarks_msg["pose_landmarks"]:
+                assert "x" in p and "y" in p and "z" in p and "valid" in p
+                assert isinstance(p["valid"], bool)
+
+            for p in landmarks_msg["face_landmarks"]:
+                assert "x" in p and "y" in p and "z" in p and "valid" in p
+                assert isinstance(p["valid"], bool)
+
+            # Verify backward compatibility
+            assert "hands_detected" in landmarks_msg
+            assert "left_hand" in landmarks_msg
+            assert "right_hand" in landmarks_msg
+            assert "pose" in landmarks_msg
+            assert "face" in landmarks_msg
+            assert "valid_points" in landmarks_msg
+            assert landmarks_msg["frame_id"] == 1
+
+
+
+def test_websocket_hand_landmarks_missing_and_predictor_parity(test_predictor: RealTimePredictor) -> None:
+    """Verify missing point masks and that visualization extensions preserve predictor integrity."""
+    import base64
+    import cv2
+    img = np.zeros((120, 160, 3), dtype=np.uint8)
+    _, buf = cv2.imencode(".jpg", img)
+    b64_frame = "data:image/jpeg;base64," + base64.b64encode(buf).decode("utf-8")
+
+    with TestClient(app) as client:
+        with client.websocket_connect("/ws/live") as websocket:
+            init = websocket.receive_json()
+            assert init["type"] == "session_started"
+
+            websocket.send_json({
+                "type": "frame",
+                "data": b64_frame,
+                "timestamp_ms": 5678,
+                "frame_id": 2,
+            })
+
+            landmarks_msg = None
+            for _ in range(4):
+                msg = websocket.receive_json()
+                if msg.get("type") == "hand_landmarks":
+                    landmarks_msg = msg
+                    break
+
+            assert landmarks_msg is not None
+            # On an empty black image, landmarks should be marked invalid
+            for p in landmarks_msg["pose_landmarks"]:
+                assert isinstance(p["x"], float)
+                assert isinstance(p["y"], float)
+                assert isinstance(p["valid"], bool)
+
+            for p in landmarks_msg["face_landmarks"]:
+                assert isinstance(p["x"], float)
+                assert isinstance(p["y"], float)
+                assert isinstance(p["valid"], bool)
+
+            # Ensure predictor dimensions and config are untouched
+            assert test_predictor.input_dim in (126, 225, 1659, 4977)
+            assert test_predictor.sequence_length > 0

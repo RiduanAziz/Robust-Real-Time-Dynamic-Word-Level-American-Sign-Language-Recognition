@@ -904,8 +904,10 @@ async def websocket_live_recognition(websocket: WebSocket) -> None:
             valid_points = int(mask.sum())
             num_hands = (1 if left_hand else 0) + (1 if right_hand else 0)
 
-            left_pts = [{"x": float(coords[i, 0]), "y": float(coords[i, 1]), "z": float(coords[i, 2]), "valid": bool(mask[i] > 0)} for i in range(21)]
-            right_pts = [{"x": float(coords[i, 0]), "y": float(coords[i, 1]), "z": float(coords[i, 2]), "valid": bool(mask[i] > 0)} for i in range(21, 42)]
+            left_pts = [{"x": round(float(coords[i, 0]), 4), "y": round(float(coords[i, 1]), 4), "z": round(float(coords[i, 2]), 4), "valid": bool(mask[i] > 0)} for i in range(21)]
+            right_pts = [{"x": round(float(coords[i, 0]), 4), "y": round(float(coords[i, 1]), 4), "z": round(float(coords[i, 2]), 4), "valid": bool(mask[i] > 0)} for i in range(21, 42)]
+            pose_pts = [{"x": round(float(coords[i, 0]), 4), "y": round(float(coords[i, 1]), 4), "z": round(float(coords[i, 2]), 4), "valid": bool(mask[i] > 0)} for i in range(42, 75)]
+            face_pts = [{"x": round(float(coords[i, 0]), 4), "y": round(float(coords[i, 1]), 4), "z": round(float(coords[i, 2]), 4), "valid": bool(mask[i] > 0)} for i in range(75, 553)]
             
             # Compute real geometric bounding boxes for hands
             left_box = compute_hand_bounding_box(coords[:21], mask[:21]) if left_hand else None
@@ -929,6 +931,8 @@ async def websocket_live_recognition(websocket: WebSocket) -> None:
                 "frame_id": frame_id,
                 "left_landmarks": left_pts,
                 "right_landmarks": right_pts,
+                "pose_landmarks": pose_pts,
+                "face_landmarks": face_pts,
                 "left_box": left_box,
                 "right_box": right_box,
                 "hands_detected": hands_present,
@@ -943,6 +947,7 @@ async def websocket_live_recognition(websocket: WebSocket) -> None:
             s.recent_replay_frames.append({
                 "frame_idx": s.frame_counter, "timestamp_ms": ts_ms,
                 "left_landmarks": left_pts, "right_landmarks": right_pts,
+                "pose_landmarks": pose_pts, "face_landmarks": face_pts,
                 "hands_detected": hands_present, "valid_points": valid_points,
                 "state_code": state_code, "candidate": s.current_candidate,
                 "confidence": s.current_confidence, "features": obs_landmarks.tolist(),

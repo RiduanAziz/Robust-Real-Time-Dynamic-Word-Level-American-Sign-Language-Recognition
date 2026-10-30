@@ -1,3 +1,13 @@
+---
+title: SignFlow ASL Recognition
+emoji: 🤟
+colorFrom: indigo
+colorTo: purple
+sdk: docker
+app_port: 8000
+pinned: false
+---
+
 # Robust Real-Time Dynamic Word-Level American Sign Language Recognition
 
 ## Project overview

@@ -1,7 +1,7 @@
 # ==============================================================================
 # Stage 1: Build production React frontend bundle
 # ==============================================================================
-FROM node:24-slim AS frontend-builder
+FROM node:20-slim AS frontend-builder
 WORKDIR /build
 
 COPY app/frontend/package*.json ./
@@ -20,7 +20,8 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
     PYTHONPATH=/app/src \
     PORT=8000 \
-    SIGNFLOW_DEVICE=cpu
+    SIGNFLOW_DEVICE=cpu \
+    HOME=/home/signflow
 
 WORKDIR /app
 
@@ -37,10 +38,11 @@ RUN pip install --no-cache-dir --upgrade pip && \
     pip install --no-cache-dir -r requirements-runtime.txt && \
     pip install --no-cache-dir -e .
 
-# Copy application source, scripts, and experiment configs
+# Copy application source, scripts, experiment configs, and models
 COPY src ./src
 COPY scripts ./scripts
 COPY configs ./configs
+COPY models ./models
 
 # Copy compiled React frontend bundle into static mount path
 COPY --from=frontend-builder /build/dist ./app/frontend/dist
@@ -48,11 +50,11 @@ COPY --from=frontend-builder /build/dist ./app/frontend/dist
 # Create runtime directories for models and logs, and set up non-root user
 RUN mkdir -p /app/models /app/results && \
     useradd -m -u 1000 signflow && \
-    chown -R signflow:signflow /app
+    chown -R signflow:signflow /app /home/signflow
 
 USER signflow
 
-EXPOSE 8000
+EXPOSE 8000 7860
 
 # Health check verifies the live process probe
 HEALTHCHECK --interval=30s --timeout=5s --start-period=30s --retries=3 \

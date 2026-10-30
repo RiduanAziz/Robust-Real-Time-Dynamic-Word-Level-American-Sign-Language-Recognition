@@ -25,7 +25,6 @@ htmlcov
 data/
 data/**
 *.npz
-*.npy
 *.mp4
 *.avi
 *.mov
@@ -43,9 +42,4 @@ outputs/
 *.token
 *.pem
 
-# Model checkpoints (supplied via volume mount or bootstrap bundle)
-models/*.pt
-models/*.pth
-models/*.ckpt
-models/*.task
 
