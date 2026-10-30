@@ -39,6 +39,11 @@ import {
   FlaskConical,
   GraduationCap,
 } from 'lucide-react';
+import {
+  getBaseApiUrl,
+  getDefaultWebSocketUrl,
+  resolveEffectiveSettings,
+} from './utils/url';
 
 const DEFAULT_SETTINGS: AppSettings = {
   confidenceThreshold: 0.28,
@@ -51,10 +56,8 @@ const DEFAULT_SETTINGS: AppSettings = {
   ttsVoice: '',
   mirrorCamera: true,
   showLandmarkGuide: true,
-  wsUrl:
-    typeof window !== 'undefined' && window.location.host && !window.location.origin.includes(':5173')
-      ? `${window.location.protocol === 'https:' ? 'wss:' : 'ws:'}//${window.location.host}/ws/live`
-      : 'ws://127.0.0.1:8000/ws/live',
+  wsUrl: getDefaultWebSocketUrl(),
+  isCustomWsUrl: false,
 };
 
 type AdvancedTab = 'coach_posture' | 'replay' | 'robustness' | 'practice';
@@ -156,11 +159,11 @@ export const App: React.FC = () => {
 
   const [transcriptText, setTranscriptText] = useState<string>('');
 
-  // Settings
+  // Settings with auto-migration of stale endpoints
   const [settings, setSettings] = useState<AppSettings>(() => {
     try {
       const saved = localStorage.getItem('signflow_settings');
-      return saved ? { ...DEFAULT_SETTINGS, ...JSON.parse(saved) } : DEFAULT_SETTINGS;
+      return resolveEffectiveSettings(saved, DEFAULT_SETTINGS);
     } catch {
       return DEFAULT_SETTINGS;
     }
@@ -212,10 +215,7 @@ export const App: React.FC = () => {
   // Fetch backend health and model info (environment aware)
   const fetchStatus = useCallback(async () => {
     try {
-      const baseUrl =
-        typeof window !== 'undefined' && window.location.origin && !window.location.origin.includes(':5173')
-          ? window.location.origin
-          : 'http://127.0.0.1:8000';
+      const baseUrl = getBaseApiUrl();
       const healthRes = await fetch(`${baseUrl}/health`);
       if (healthRes.ok) {
         const hData = await healthRes.json();
@@ -242,10 +242,7 @@ export const App: React.FC = () => {
   // Fetch available models from backend
   const fetchAvailableModels = useCallback(async () => {
     try {
-      const baseUrl =
-        typeof window !== 'undefined' && window.location.origin && !window.location.origin.includes(':5173')
-          ? window.location.origin
-          : 'http://127.0.0.1:8000';
+      const baseUrl = getBaseApiUrl();
       const res = await fetch(`${baseUrl}/models/available`);
       if (res.ok) {
         const data = await res.json();
@@ -265,10 +262,7 @@ export const App: React.FC = () => {
     if (modelId === selectedModelId || isSwitchingModel) return;
     setIsSwitchingModel(true);
     try {
-      const baseUrl =
-        typeof window !== 'undefined' && window.location.origin && !window.location.origin.includes(':5173')
-          ? window.location.origin
-          : 'http://127.0.0.1:8000';
+      const baseUrl = getBaseApiUrl();
       const res = await fetch(`${baseUrl}/model/switch`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },

@@ -1,0 +1,23 @@
+# SignFlow Production Runtime Dependencies
+# Core Deep Learning & Tensor Operations
+torch>=2.2.0
+torchvision>=0.17.0
+numpy>=1.26
+
+# Computer Vision & MediaPipe Landmark Tracking
+opencv-python>=4.10
+mediapipe>=0.10.11
+
+# Web Server & Real-time WebSocket Protocol
+fastapi>=0.111
+uvicorn>=0.29
+websockets>=12.0
+pydantic>=2.7
+pydantic-settings>=2.2
+python-dotenv>=1.0
+
+# Scientific & Pipeline Utilities
+pyyaml>=6.0
+pandas>=2.2
+scikit-learn>=1.5
+

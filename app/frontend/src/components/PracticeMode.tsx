@@ -10,6 +10,7 @@ import {
   Award,
 } from 'lucide-react';
 import { PracticeSessionItem } from '../types';
+import { getBaseApiUrl } from '../utils/url';
 
 interface PracticeModeProps {
   currentPrediction: string | null;
@@ -35,10 +36,7 @@ export const PracticeMode: React.FC<PracticeModeProps> = ({
       setIsLoading(true);
       setVocabError(null);
       try {
-        const url =
-          typeof window !== 'undefined' && window.location.origin && !window.location.origin.includes(':5173')
-            ? `${window.location.origin}/api/vocabulary`
-            : 'http://127.0.0.1:8000/api/vocabulary';
+        const url = `${getBaseApiUrl()}/api/vocabulary`;
         const res = await fetch(url);
         if (res.ok) {
           const data = await res.json();

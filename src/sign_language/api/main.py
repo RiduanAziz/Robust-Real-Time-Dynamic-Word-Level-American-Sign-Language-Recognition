@@ -35,15 +35,35 @@ _extractor: LandmarkExtractor | None = None
 _init_error: str | None = None
 _extractor_error: str | None = None
 
+# Connection tracking and limits for resource protection
+_active_ws_connections: set[str] = set()
+MAX_CONCURRENT_WS = int(os.environ.get("SIGNFLOW_MAX_CONNECTIONS", "50"))
+MAX_FRAME_BYTES = int(os.environ.get("SIGNFLOW_MAX_FRAME_BYTES", str(2 * 1024 * 1024)))  # 2MB
+
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     global _predictor, _extractor, _init_error, _extractor_error
-    model_path = os.environ.get("MODEL_PATH")
-    config_path = os.environ.get("CONFIG_PATH")
-    mediapipe_asset = os.environ.get(
-        "MEDIAPIPE_ASSET_PATH", "models/mediapipe/holistic_landmarker.task"
+    # Canonical SIGNFLOW_* environment variables with backward-compatible aliases
+    model_path = os.environ.get("SIGNFLOW_MODEL_PATH") or os.environ.get("MODEL_PATH")
+    config_path = os.environ.get("SIGNFLOW_CONFIG_PATH") or os.environ.get("CONFIG_PATH")
+    mediapipe_asset = (
+        os.environ.get("SIGNFLOW_MEDIAPIPE_ASSET_PATH")
+        or os.environ.get("MEDIAPIPE_ASSET_PATH")
+        or "models/mediapipe/holistic_landmarker.task"
     )
+    model_set = (os.environ.get("SIGNFLOW_MODEL_SET") or "ensemble_3way").lower().strip()
+    device = os.environ.get("SIGNFLOW_DEVICE", "cpu").lower().strip()
+
+    # Automatic bootstrap check if SIGNFLOW_ASSET_BUNDLE_URL is configured
+    bundle_url = os.environ.get("SIGNFLOW_ASSET_BUNDLE_URL") or os.environ.get("MODEL_BUNDLE_URL")
+    if bundle_url:
+        try:
+            from scripts.bootstrap_inference_assets import bootstrap_assets
+            logger.info("SIGNFLOW_ASSET_BUNDLE_URL configured; validating/bootstrapping inference assets...")
+            bootstrap_assets()
+        except Exception as b_exc:
+            logger.warning("Asset bootstrap encountered non-fatal error during startup: %s", b_exc)
 
     # 1. Check for 3-Way Winning Ensemble (76.65% Top-1, 91.44% Top-5 Benchmark)
     ens_models = [
@@ -139,7 +159,7 @@ app = FastAPI(
 )
 
 # Configurable CORS middleware with secure defaults and local-development support
-_cors_origins_env = os.environ.get("CORS_ORIGINS", "")
+_cors_origins_env = os.environ.get("SIGNFLOW_CORS_ORIGINS") or os.environ.get("CORS_ORIGINS", "")
 if _cors_origins_env:
     _allowed_origins = [o.strip() for o in _cors_origins_env.split(",") if o.strip()]
 else:
@@ -150,14 +170,16 @@ else:
         "http://127.0.0.1:5173",
         "http://localhost:8000",
         "http://127.0.0.1:8000",
-        "*",
     ]
+
+# Sanitize: never allow wildcard '*' with allow_credentials=True
+_allowed_origins = [orig for orig in _allowed_origins if orig != "*"]
 
 app.add_middleware(
     CORSMiddleware,
     allow_origins=_allowed_origins,
     allow_credentials=True,
-    allow_methods=["*"],
+    allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
     allow_headers=["*"],
 )
 
@@ -210,6 +232,55 @@ def get_extractor() -> LandmarkExtractor | None:
 class PredictionRequest(BaseModel):
     sequence: list[list[float]] = Field(..., description="2D sequence of landmark features [T, F]")
     confidence_threshold: float = Field(0.0, ge=0.0, le=1.0, description="Minimum confidence threshold")
+
+
+@app.get("/health/live")
+def health_live() -> dict[str, Any]:
+    """Liveness probe: returns 200 OK while the server process is alive."""
+    return {
+        "status": "ok",
+        "process_alive": True,
+        "timestamp": time.time(),
+    }
+
+
+@app.get("/health/ready")
+def health_ready() -> dict[str, Any]:
+    """Readiness probe: returns 200 OK only when required model(s) and MediaPipe are loaded and ready."""
+    mediapipe_ready = _extractor is not None and (
+        getattr(_extractor, "_landmarker", None) is not None
+        or (_extractor.model_asset_path is not None and _extractor.model_asset_path.is_file())
+    )
+    model_ready = (
+        _predictor is not None
+        and getattr(_predictor, "model", None) is not None
+        and _init_error is None
+    )
+
+    is_ready = bool(model_ready and mediapipe_ready)
+    model_arch = None
+    if _predictor:
+        if isinstance(_predictor, EnsembleRealTimePredictor):
+            model_arch = "3-Way Probability Ensemble (76.65% Top-1, 91.44% Top-5)"
+        elif hasattr(_predictor, "config") and hasattr(_predictor.config, "model"):
+            model_arch = _predictor.config.model.name
+
+    response_data = {
+        "status": "ready" if is_ready else "not_ready",
+        "process_alive": True,
+        "inference_ready": is_ready,
+        "trained_model_loaded": model_ready,
+        "mediapipe_available": mediapipe_ready,
+        "model_architecture": model_arch,
+        "num_classes": getattr(_predictor, "num_classes", 0) if _predictor else 0,
+        "checkpoint_path": getattr(_predictor, "checkpoint_path", None) if _predictor else None,
+        "error": _init_error,
+        "mediapipe_error": _extractor_error,
+    }
+
+    if not is_ready:
+        raise HTTPException(status_code=503, detail=response_data)
+    return response_data
 
 
 @app.get("/health")
@@ -637,9 +708,15 @@ class SessionState:
 @app.websocket("/ws/live")
 async def websocket_live_recognition(websocket: WebSocket) -> None:
     """Persistent bidirectional WebSocket connection for real-time ASL recognition."""
+    if len(_active_ws_connections) >= MAX_CONCURRENT_WS:
+        await websocket.close(code=1008, reason="Server busy: maximum active connections reached.")
+        logger.warning("Rejected incoming WebSocket: connection limit reached (%d)", MAX_CONCURRENT_WS)
+        return
+
     await websocket.accept()
     session_id = str(uuid.uuid4())
-    logger.info("WebSocket client connected. Session ID: %s", session_id)
+    _active_ws_connections.add(session_id)
+    logger.info("WebSocket client connected. Session ID: %s (Active: %d)", session_id, len(_active_ws_connections))
 
     predictor = _predictor
     extractor = _extractor
@@ -731,6 +808,9 @@ async def websocket_live_recognition(websocket: WebSocket) -> None:
                     continue
                 elif msg_type == "frame":
                     frame_data = payload.get("data", "")
+                    if len(frame_data) > MAX_FRAME_BYTES:
+                        await websocket.send_json({"type": "warning", "message": "Frame payload exceeds maximum allowed size (2MB)."})
+                        continue
                     ts_ms = payload.get("timestamp_ms", int(time.time() * 1000))
                     frame_id = payload.get("frame_id")
                     if not frame_data: continue
@@ -1005,6 +1085,12 @@ async def websocket_live_recognition(websocket: WebSocket) -> None:
         logger.info("WebSocket client disconnected cleanly. Session ID: %s", session_id)
     except Exception as exc:
         logger.warning("Unexpected error in WebSocket loop: %s", exc)
+    finally:
+        _active_ws_connections.discard(session_id)
+        s.sequence_buffer.clear()
+        s.mask_buffer.clear()
+        s.recent_replay_frames.clear()
+        logger.debug("Cleaned up session buffers for %s. Active connections: %d", session_id, len(_active_ws_connections))
 
 # Mount static production build of frontend if present
 _dist_dir = Path("app/frontend/dist")

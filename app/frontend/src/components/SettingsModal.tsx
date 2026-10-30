@@ -1,6 +1,7 @@
 import React from 'react';
-import { X, Sliders, Check, ShieldCheck, Sparkles } from 'lucide-react';
+import { X, Sliders, Check, ShieldCheck, Sparkles, RefreshCw } from 'lucide-react';
 import { AppSettings } from '../types';
+import { getDefaultWebSocketUrl } from '../utils/url';
 
 interface SettingsModalProps {
   isOpen: boolean;
@@ -130,11 +131,33 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
 
           {/* WebSocket Server Endpoint */}
           <div className="space-y-1.5">
-            <label className="font-medium text-slate-700">WebSocket URL</label>
+            <div className="flex items-center justify-between">
+              <label className="font-medium text-slate-700">WebSocket URL</label>
+              {settings.isCustomWsUrl ? (
+                <button
+                  type="button"
+                  onClick={() =>
+                    onUpdateSettings({
+                      wsUrl: getDefaultWebSocketUrl(),
+                      isCustomWsUrl: false,
+                    })
+                  }
+                  className="text-[11px] text-teal-600 hover:text-teal-700 flex items-center space-x-1 font-medium"
+                  title="Reset to current site origin"
+                >
+                  <RefreshCw className="w-3 h-3" />
+                  <span>Use Site Default</span>
+                </button>
+              ) : (
+                <span className="text-[10px] text-slate-400 font-mono">Auto (Same-Origin)</span>
+              )}
+            </div>
             <input
               type="text"
               value={settings.wsUrl}
-              onChange={(e) => onUpdateSettings({ wsUrl: e.target.value })}
+              onChange={(e) =>
+                onUpdateSettings({ wsUrl: e.target.value, isCustomWsUrl: true })
+              }
               className="w-full p-2 bg-slate-50 border border-slate-200 rounded-lg text-slate-800 font-mono text-xs focus:ring-1 focus:ring-teal-500 focus:outline-none"
             />
           </div>
@@ -154,9 +177,10 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
             <div className="p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-[11px] text-slate-500 flex items-start space-x-2">
               <ShieldCheck className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />
               <span>
-                <strong>Privacy Guarantee:</strong> Video frames are processed strictly in local
-                memory on your device/local server. No video frames are recorded or transmitted to
-                external third parties.
+                <strong>Camera & Privacy Notice:</strong> Video frames are captured in the browser
+                and transmitted over an encrypted WebSocket (<code>wss://</code>) to the SignFlow
+                inference service to extract landmarks and classify signs. Frames are processed
+                ephemerally in memory and are not recorded, stored, or shared with external third parties.
               </span>
             </div>
           </div>

@@ -29,6 +29,44 @@ def test_api_health() -> None:
         assert "trained_model_loaded" in data
 
 
+def test_api_health_live() -> None:
+    with TestClient(app) as client:
+        response = client.get("/health/live")
+        assert response.status_code == 200
+        data = response.json()
+        assert data["status"] == "ok"
+        assert data["process_alive"] is True
+        assert "timestamp" in data
+
+
+def test_api_health_ready_when_loaded(monkeypatch: pytest.MonkeyPatch, test_predictor: RealTimePredictor) -> None:
+    class DummyExtractor:
+        model_asset_path = Path("models/mediapipe/holistic_landmarker.task")
+        _landmarker = object()
+
+    with TestClient(app) as client:
+        monkeypatch.setattr(api_main, "_predictor", test_predictor)
+        monkeypatch.setattr(api_main, "_extractor", DummyExtractor())
+        monkeypatch.setattr(api_main, "_init_error", None)
+        response = client.get("/health/ready")
+        assert response.status_code == 200
+        data = response.json()
+        assert data["status"] == "ready"
+        assert data["inference_ready"] is True
+
+
+def test_api_health_ready_when_unready(monkeypatch: pytest.MonkeyPatch) -> None:
+    with TestClient(app) as client:
+        monkeypatch.setattr(api_main, "_predictor", None)
+        monkeypatch.setattr(api_main, "_init_error", "No checkpoint")
+        response = client.get("/health/ready")
+        assert response.status_code == 503
+        data = response.json()
+        assert "detail" in data
+        assert data["detail"]["inference_ready"] is False
+
+
+
 def test_api_model_info(monkeypatch: pytest.MonkeyPatch, test_predictor: RealTimePredictor) -> None:
     with TestClient(app) as client:
         monkeypatch.setattr(api_main, "_predictor", test_predictor)

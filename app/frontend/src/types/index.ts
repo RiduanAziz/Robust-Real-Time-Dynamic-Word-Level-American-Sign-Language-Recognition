@@ -144,6 +144,7 @@ export interface AppSettings {
   mirrorCamera: boolean;
   showLandmarkGuide: boolean;
   wsUrl: string;
+  isCustomWsUrl?: boolean;
 }
 
 export type CameraViewMode = 'full' | 'focus' | 'split';

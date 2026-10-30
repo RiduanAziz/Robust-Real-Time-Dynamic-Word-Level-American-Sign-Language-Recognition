@@ -1,0 +1,27 @@
+services:
+  - type: web
+    name: signflow
+    runtime: docker
+    plan: standard # Recommended: standard (2GB RAM) for 3-way ensemble; starter (512MB) for single lightweight model
+    region: oregon
+    dockerfilePath: ./Dockerfile
+    healthCheckPath: /health/ready
+    autoDeploy: true
+    envVars:
+      - key: PORT
+        value: 8000
+      - key: SIGNFLOW_DEVICE
+        value: cpu
+      - key: SIGNFLOW_MODEL_SET
+        value: ensemble_3way # Options: ensemble_3way, robust_fusion, unisign_pgf, max_accuracy
+      - key: SIGNFLOW_MAX_WS_CONNECTIONS
+        value: 50
+      - key: SIGNFLOW_WS_ALLOWED_ORIGINS
+        value: "*"
+      # To enable automated model asset bootstrap on fresh deployment:
+      # Upload dist/signflow-inference-assets.zip to your GitHub Release assets, then uncomment:
+      # - key: SIGNFLOW_ASSETS_URL
+      #   value: https://github.com/RiduanAziz/Robust-Real-Time-Dynamic-Word-Level-American-Sign-Language-Recognition/releases/download/v1.0.0-assets/signflow-inference-assets.zip
+      # - key: SIGNFLOW_ASSETS_TOKEN
+      #   sync: false
+

@@ -74,6 +74,9 @@ Adapted from the ICLR 2025 research _"Uni-Sign: Toward Unified Sign Language Und
 | [`docs/COLAB_DATA_UPLOAD_CHECKLIST.md`](docs/COLAB_DATA_UPLOAD_CHECKLIST.md)                     | Instructions for uploading packaged archives to Google Drive (`SignFlow_Colab/`).        |
 | [`docs/FINAL_EVALUATION_REPORT.md`](docs/FINAL_EVALUATION_REPORT.md)                             | Verified 100-class evaluation results, per-class breakdown, and confusion matrix.        |
 | [`docs/LOCAL_INTEGRATION_GUIDE.md`](docs/LOCAL_INTEGRATION_GUIDE.md)                             | FastAPI and React/TypeScript real-time deployment and streaming serving contracts.       |
+| [`docs/DEPLOYMENT_READINESS_AUDIT.md`](docs/DEPLOYMENT_READINESS_AUDIT.md)                 | Baseline audit, P0/P1 defect remediations, asset hashes, and verification inventory.     |
+| [`docs/LOCAL_DEVELOPMENT.md`](docs/LOCAL_DEVELOPMENT.md)                                         | One-command Windows launcher (`start_signflow.ps1`), port supervisor, and dev workflow. |
+| [`docs/DEPLOYMENT.md`](docs/DEPLOYMENT.md)                                                       | Production Docker containerization, GitHub release asset bootstrap, and Render blueprint. |
 
 ---
 
@@ -109,52 +112,62 @@ The repository is currently validated through the following milestones:
 
 ### Quick Start Guide
 
-#### 1. Start the Backend API & WebSocket Service (PowerShell)
+#### 1. One-Command Local Startup (Windows PowerShell / CMD)
+
+Launch the entire SignFlow application (dependency verification, model asset checks, frontend build, FastAPI backend, and automatic browser launch) with a single command:
 
 ```powershell
-# Activate environment and launch FastAPI backend
-.\.venv\Scripts\uvicorn sign_language.api.main:app --host 127.0.0.1 --port 8000
+# PowerShell (Recommended):
+.\start_signflow.ps1
+
+# Fast start (skip dependency install checks when already configured):
+.\start_signflow.ps1 -SkipInstall
+
+# Development mode (launches Vite dev server with hot-reloading on port 5173):
+.\start_signflow.ps1 -UiOnly
+
+# Clean up any lingering background ports (8000 / 5173):
+.\stop_signflow.ps1
 ```
 
-- API Health: [`http://127.0.0.1:8000/health`](http://127.0.0.1:8000/health)
-- Model Info: [`http://127.0.0.1:8000/model/info`](http://127.0.0.1:8000/model/info)
-- Interactive API Docs: [`http://127.0.0.1:8000/docs`](http://127.0.0.1:8000/docs)
-- Direct Web Application: [`http://127.0.0.1:8000/`](http://127.0.0.1:8000/) _(serves production build)_
+```cmd
+:: Command Prompt (CMD):
+start_signflow.bat
+```
 
-#### 2. Start the Frontend Development Server (Optional / Live Dev)
+#### 2. Containerized Deployment (Docker Compose)
+
+Run the hardened single-service container:
+
+```bash
+docker compose up --build
+```
+
+#### 3. Core Service Endpoints
+
+- Web Application: [`http://127.0.0.1:8000/`](http://127.0.0.1:8000/) *(serves production React bundle)*
+- Liveness Probe: [`http://127.0.0.1:8000/health/live`](http://127.0.0.1:8000/health/live) *(HTTP 200)*
+- Readiness Probe: [`http://127.0.0.1:8000/health/ready`](http://127.0.0.1:8000/health/ready) *(HTTP 200 when ensemble & MediaPipe loaded; HTTP 503 otherwise)*
+- Model Ensemble Info: [`http://127.0.0.1:8000/model/info`](http://127.0.0.1:8000/model/info)
+- WebSocket Frame Stream: `ws://127.0.0.1:8000/ws/live` *(or `wss://` over HTTPS)*
+- OpenAPI Documentation: [`http://127.0.0.1:8000/docs`](http://127.0.0.1:8000/docs)
+
+#### 4. Packaging Inference Assets for Remote Deployment
+
+To build a release bundle of all required model weights and MediaPipe task files:
 
 ```powershell
-cd app/frontend
-npm run dev
+python scripts/package_inference_assets.py
 ```
-
-Navigate to [`http://127.0.0.1:5173/`](http://127.0.0.1:5173/) in your browser.
-
-#### 3. Real-Time Desktop OpenCV Demonstration
-
-For a standalone native OpenCV desktop popup window:
-
-```powershell
-.\.venv\Scripts\python scripts/realtime.py
-```
+This produces `dist/signflow-inference-assets.zip` and its `.sha256` sidecar. Upload this zip to your GitHub Releases and configure `SIGNFLOW_ASSETS_URL` in your cloud host (e.g., Render Blueprint `render.yaml`).
 
 ## Repository structure
 
 - [app/frontend](app/frontend): SignFlow React + TypeScript + Vite + Tailwind CSS web application
-- [configs](configs): experiment configuration files
-- [docs](docs): architecture and project status notes
-- [scripts](scripts): operational training, extraction, and real-time CLI entry points
-- [src](src): canonical `sign_language` package
-- [tests](tests): validation, model, and API test suites
-- [results](results): metrics, reports, and generated figures
-- [models](models): trained checkpoints and MediaPipe task assets
-
-# Open terminal in the project root directory:
-
-```powershell
-.\.venv\Scripts\python -m uvicorn sign_language.api.main:app --host 127.0.0.1 --port 8000
-```
-
-```powershell
-Set-Location F:\Robust-Real-Time-Dynamic-Word-Level-American-Sign-Language-Recognition\app\frontend; npm.cmd run build
-```
+- [configs](configs): Experiment configuration files
+- [docs](docs): Architecture, research reports, and deployment guides
+- [scripts](scripts): Operational scripts, packaging, asset bootstrap, and training pipelines
+- [src](src): Canonical `sign_language` package
+- [tests](tests): Validation, model, and API test suites
+- [results](results): Metrics, reports, and generated figures
+- [models](models): Trained checkpoints, MediaPipe task asset, and class prior logits

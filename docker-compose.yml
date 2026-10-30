@@ -1,15 +1,25 @@
-version: '3.9'
-
 services:
   api:
-    build: .
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: signflow-api
     ports:
       - "127.0.0.1:8000:8000"
     environment:
-      - PYTHONPATH=src
-      - PROJECT_NAME=sign-language-recognition
+      - PORT=8000
+      - PYTHONPATH=/app/src
+      - SIGNFLOW_DEVICE=cpu
+      - SIGNFLOW_MODEL_SET=ensemble_3way
+      - SIGNFLOW_MAX_CONNECTIONS=50
     volumes:
-      - ./configs:/app/configs:ro
       - ./models:/app/models:ro
+      - ./configs:/app/configs:ro
       - ./results:/app/results
-    command: uvicorn sign_language.api.main:app --host 0.0.0.0 --port 8000
+    healthcheck:
+      test: ["CMD-SHELL", "python -c 'import urllib.request; urllib.request.urlopen(\"http://127.0.0.1:8000/health/live\")'"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+      start_period: 25s
+    restart: unless-stopped
