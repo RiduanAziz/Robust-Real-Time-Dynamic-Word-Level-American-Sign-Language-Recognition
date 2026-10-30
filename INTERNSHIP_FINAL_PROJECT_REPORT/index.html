@@ -1,0 +1,2350 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="Robust Real-Time Dynamic Word-Level American Sign Language Recognition">
+      
+      
+        <meta name="author" content="Riduan Aziz">
+      
+      
+        <link rel="canonical" href="https://riduanaziz.github.io/Robust-Real-Time-Dynamic-Word-Level-American-Sign-Language-Recognition/INTERNSHIP_FINAL_PROJECT_REPORT/">
+      
+      
+        <link rel="prev" href="../LOCAL_INTEGRATION_GUIDE/">
+      
+      
+        <link rel="next" href="../PROJECT_DEFENSE_AND_VIVA_GUIDE/">
+      
+      
+        
+      
+      
+      <link rel="icon" href="../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.8.0">
+    
+    
+      
+        <title>Final Project Report - SignFlow Documentation</title>
+      
+    
+    
+      <link rel="stylesheet" href="../assets/stylesheets/main.57a0d79d.min.css">
+      
+        
+        <link rel="stylesheet" href="../assets/stylesheets/palette.fb2fffe2.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Inter:300,300i,400,400i,700,700i%7CJetBrains+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Inter";--md-code-font:"JetBrains Mono"}</style>
+      
+    
+    
+    <script>__md_scope=new URL("..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="slate" data-md-color-primary="teal" data-md-color-accent="cyan">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#signflow-robust-real-time-dynamic-word-level-american-sign-language-recognition" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+<header class="md-header" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href=".." title="SignFlow Documentation" class="md-header__button md-logo" aria-label="SignFlow Documentation" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            SignFlow Documentation
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Final Project Report
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+        <form class="md-header__option" data-md-component="palette">
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="" data-md-color-scheme="slate" data-md-color-primary="teal" data-md-color-accent="cyan"  aria-label="Switch to light mode"  type="radio" name="__palette" id="__palette_0">
+    
+      <label class="md-header__button md-icon" title="Switch to light mode" for="__palette_1" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 18c-.89 0-1.74-.2-2.5-.55C11.56 16.5 13 14.42 13 12s-1.44-4.5-3.5-5.45C10.26 6.2 11.11 6 12 6a6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="" data-md-color-scheme="default" data-md-color-primary="teal" data-md-color-accent="cyan"  aria-label="Switch to dark mode"  type="radio" name="__palette" id="__palette_1">
+    
+      <label class="md-header__button md-icon" title="Switch to dark mode" for="__palette_0" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a4 4 0 0 0-4 4 4 4 0 0 0 4 4 4 4 0 0 0 4-4 4 4 0 0 0-4-4m0 10a6 6 0 0 1-6-6 6 6 0 0 1 6-6 6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+</form>
+      
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+          <a href="javascript:void(0)" class="md-search__icon md-icon" title="Share" aria-label="Share" data-clipboard data-clipboard-text="" data-md-component="search-share" tabindex="-1">
+            
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M18 16.08c-.76 0-1.44.3-1.96.77L8.91 12.7c.05-.23.09-.46.09-.7s-.04-.47-.09-.7l7.05-4.11c.54.5 1.25.81 2.04.81a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3c0 .24.04.47.09.7L8.04 9.81C7.5 9.31 6.79 9 6 9a3 3 0 0 0-3 3 3 3 0 0 0 3 3c.79 0 1.5-.31 2.04-.81l7.12 4.15c-.05.21-.08.43-.08.66 0 1.61 1.31 2.91 2.92 2.91s2.92-1.3 2.92-2.91A2.92 2.92 0 0 0 18 16.08"/></svg>
+          </a>
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+        <div class="md-search__suggest" data-md-component="search-suggest"></div>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/RiduanAziz/Robust-Real-Time-Dynamic-Word-Level-American-Sign-Language-Recognition" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    RiduanAziz/SignFlow
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+            
+<nav class="md-tabs" aria-label="Tabs" data-md-component="tabs">
+  <div class="md-grid">
+    <ul class="md-tabs__list">
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href=".." class="md-tabs__link">
+        
+  
+  
+    
+  
+  Home
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../architecture/" class="md-tabs__link">
+          
+  
+  
+  Architecture
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../dataset/" class="md-tabs__link">
+          
+  
+  
+  Dataset & Landmarks
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../MODEL_CARD/" class="md-tabs__link">
+          
+  
+  
+  Models & Experiments
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../DEPLOYMENT/" class="md-tabs__link">
+          
+  
+  
+  Deployment & Real-Time
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+    
+  
+  
+    
+    
+      <li class="md-tabs__item md-tabs__item--active">
+        <a href="./" class="md-tabs__link">
+          
+  
+  
+  Research & Thesis Defense
+
+        </a>
+      </li>
+    
+  
+
+      
+    </ul>
+  </div>
+</nav>
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+  
+
+
+<nav class="md-nav md-nav--primary md-nav--lifted" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href=".." title="SignFlow Documentation" class="md-nav__button md-logo" aria-label="SignFlow Documentation" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    SignFlow Documentation
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/RiduanAziz/Robust-Real-Time-Dynamic-Word-Level-American-Sign-Language-Recognition" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    RiduanAziz/SignFlow
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href=".." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Home
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_2" >
+        
+          
+          <label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Architecture
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Architecture
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../architecture/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    System Architecture
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../CAMERA_VISUALIZATION_INTEGRATION/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Camera & Visual Integration
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../MASTER_PIPELINE_AUDIT/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Master Pipeline Audit
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../IMPLEMENTATION_PLAN/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Implementation Plan
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../IMPLEMENTATION_LOG/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Implementation Log
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_3" >
+        
+          
+          <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Dataset & Landmarks
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Dataset & Landmarks
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../dataset/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Dataset Specifications
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../DATASET_COMPLETENESS_AND_SPLITS/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Completeness & Splits
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../LANDMARK_QUALITY_REPORT/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Landmark Quality
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../EDA_FINDINGS/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Exploratory Data Analysis
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../DATASET_INTEGRITY_REPORT/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Dataset Integrity
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../research/DATASET_AUDIT/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Dataset Audit
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../research/DATASET_PROTOCOLS/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Dataset Protocols
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_4" >
+        
+          
+          <label class="md-nav__link" for="__nav_4" id="__nav_4_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Models & Experiments
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Models & Experiments
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../MODEL_CARD/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Model Card
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../research/MODEL_ARCHITECTURES/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Model Architectures
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../ACCURACY_EXPERIMENTS/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Accuracy Experiments
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../ACCURACY_OPTIMIZATION_AUDIT/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Accuracy Optimization Audit
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../FINAL_EVALUATION_REPORT/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Final Evaluation Report
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../WLASL100_REPRODUCTION_GUIDE/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    WLASL Reproduction Guide
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../research/FEATURE_ENGINEERING/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Feature Engineering
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../research/EVALUATION_PROTOCOL/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Evaluation Protocol
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../COLAB_TRAINING_GUIDE/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Colab Training Guide
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../COLAB_TRAINING_PLAN/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Colab Training Plan
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../COLAB_FINAL_RESULTS/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Colab Final Results
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../COLAB_DATA_UPLOAD_CHECKLIST/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Colab Upload Checklist
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_5" >
+        
+          
+          <label class="md-nav__link" for="__nav_5" id="__nav_5_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Deployment & Real-Time
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_5_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_5">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Deployment & Real-Time
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../DEPLOYMENT/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Deployment Guide
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../DEPLOYMENT_READINESS_AUDIT/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Deployment Readiness
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../REALTIME_BENCHMARK_REPORT/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Real-Time Benchmark
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../research/REALTIME_BENCHMARK/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Benchmark Protocol
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../LOCAL_DEVELOPMENT/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Local Development
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../LOCAL_INTEGRATION_GUIDE/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Local Integration
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    
+    
+    
+    
+      
+        
+        
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_6" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_6" id="__nav_6_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Research & Thesis Defense
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_6_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_6">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Research & Thesis Defense
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Final Project Report
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../PROJECT_DEFENSE_AND_VIVA_GUIDE/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Project Defense & Viva Guide
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../THESIS_RESULTS_AND_LIMITATIONS/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Thesis Results & Limitations
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../THESIS_EVIDENCE_PACKAGE/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Thesis Evidence Package
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../research/KNOWN_LIMITATIONS/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Known Limitations
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../research/REPRODUCIBILITY/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Reproducibility
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../REMEDIATION_AUDIT/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Remediation Audit
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../PROJECT_AUDIT/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Project Audit
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+  
+  
+
+
+<h1 id="signflow-robust-real-time-dynamic-word-level-american-sign-language-recognition">SignFlow: Robust Real-Time Dynamic Word-Level American Sign Language Recognition<a class="headerlink" href="#signflow-robust-real-time-dynamic-word-level-american-sign-language-recognition" title="Permanent link">&para;</a></h1>
+<h1 id="comprehensive-internship-final-project-report">Comprehensive Internship Final Project Report<a class="headerlink" href="#comprehensive-internship-final-project-report" title="Permanent link">&para;</a></h1>
+<hr />
+<p><strong>Project Title:</strong> Robust Real-Time Dynamic Word-Level American Sign Language Recognition Using Landmark Kinematics, Prior-Guided Fusion, and Calibrated Probability Ensembles<br />
+<strong>Student / Intern Name:</strong> Riduan Aziz<br />
+<strong>Organization / Department:</strong> Machine Learning &amp; Computer Vision Research Team<br />
+<strong>Supervisors / Mentors:</strong> Senior ML Systems Architect &amp; Computer Vision Lead<br />
+<strong>Academic / Internship Period:</strong> 2026<br />
+<strong>Repository:</strong> <a href="https://github.com/RiduanAziz/Robust-Real-Time-Dynamic-Word-Level-American-Sign-Language-Recognition">GitHub: RiduanAziz/Robust-Real-Time-Dynamic-Word-Level-American-Sign-Language-Recognition</a><br />
+<strong>Primary Benchmark:</strong> World-Level American Sign Language 100-Class Benchmark (WLASL-100)  </p>
+<hr />
+<h2 id="abstract">Abstract<a class="headerlink" href="#abstract" title="Permanent link">&para;</a></h2>
+<p>Word-level American Sign Language (ASL) recognition in uncontrolled real-world environments presents profound computer vision challenges, including fast non-rigid hand articulation, high interpersonal signer variability, severe modality asymmetry, and extreme class overlap. Existing RGB video-based approaches (such as 3D Convolutional Neural Networks) impose excessive computational burdens (~500 ms/sample) that prohibit deployment on edge devices, while raw coordinate-based graph networks frequently degrade under missing or occluded hand detections.</p>
+<p>This project delivers <strong>SignFlow</strong>, an end-to-end, high-performance, and verifiable machine learning system for real-time word-level ASL recognition. Through systematic exploratory data analysis of 2,038 WLASL-100 sequences and 21,083 nationwide landmark archives, we uncover critical real-world phenomena: pose and face landmarks exhibit high stability (&gt;97% visibility), whereas non-dominant hands are absent in up to 67.5% of signing frames. To overcome these challenges, we designed and implemented:
+1. A <strong>553-keypoint Holistic Landmark Normalization &amp; Feature Pipeline</strong> (1,659 coordinates spanning body pose, face mesh, and bilateral hands) backed by mathematically sound visibility masking.
+2. An adapted <strong>Uni-Sign Prior-Guided Fusion (PGF)</strong> architecture that leverages body/face anatomical priors to guide hand attention alongside score-aware reliability gating.
+3. A <strong>3-Way Probability-Level Calibrated Ensemble</strong> combining baseline temporal BiGRUs, deep regularized BiGRUs, and cross-attentive PGF models.</p>
+<p>Tuned strictly on the validation partition (<span class="arithmatex">\(N=337\)</span>) via a 3-simplex grid search with zero test-set leakage, our ensemble achieves a new defensible benchmark on the official WLASL-100 held-out test split (<span class="arithmatex">\(N=257\)</span>): <strong>76.65% Top-1 Accuracy</strong> (+2.33% over baseline), <strong>91.44% Top-5 Accuracy</strong> (+2.72% over baseline), <strong>94.16% Top-10 Accuracy</strong>, a <strong>Macro-F1 of 0.7558</strong>, and cuts the Expected Calibration Error (ECE) by <strong>47.6%</strong> down to <strong>0.0838</strong>. We successfully deployed this pipeline into a production-grade, full-stack assistive workstation featuring an asynchronous FastAPI WebSocket engine, a modern React/TypeScript glassmorphism frontend, dynamic model switching, and real-time multi-camera streaming operating at <strong>~31.7 ms inference latency</strong> (~42.5 FPS).</p>
+<hr />
+<h2 id="1-introduction-and-problem-motivation">1. Introduction and Problem Motivation<a class="headerlink" href="#1-introduction-and-problem-motivation" title="Permanent link">&para;</a></h2>
+<h3 id="11-context-and-significance">1.1 Context and Significance<a class="headerlink" href="#11-context-and-significance" title="Permanent link">&para;</a></h3>
+<p>Over 70 million deaf and hard-of-hearing individuals worldwide rely on sign languages as their primary medium of communication. Despite advances in automatic speech recognition (ASR) for spoken languages, dynamic sign language recognition (SLR) remains drastically underserved. Sign language is not a simple sequence of static finger gestures; it is an expressive, multidimensional language consisting of:
+- <strong>Manual Features:</strong> Dynamic trajectory of the hands, finger shape conformations, and palm orientations.
+- <strong>Non-Manual Markers:</strong> Facial expressions, lip patterns, eye gaze, and head movements that act as critical grammatical markers.
+- <strong>Spatial Anchors:</strong> Body torso and shoulder alignments that provide the spatial context against which signs are articulated.</p>
+<h3 id="12-core-engineering-and-scientific-challenges">1.2 Core Engineering and Scientific Challenges<a class="headerlink" href="#12-core-engineering-and-scientific-challenges" title="Permanent link">&para;</a></h3>
+<p>Developing an interactive, real-time, word-level ASL recognition system faces five fundamental roadblocks:
+1. <strong>Modality Occlusion and Asymmetry:</strong> Signers frequently perform one-handed signs or cross hands over the body, causing camera self-occlusion. In standard models, missing keypoints default to zero coordinates, creating artificial high-velocity motion vectors that corrupt temporal representations.
+2. <strong>Computational Constraints in Assistive Tech:</strong> Deploying heavy 3D-CNNs (e.g., I3D, SlowFast) directly on client laptops or web browsers introduces unviable latency (&gt;400 ms), high power consumption, and frame lag.
+3. <strong>Severe Signer Contamination in Published Research:</strong> Standard public splits often mix the same signer across training and test partitions, resulting in inflated academic metrics that collapse when exposed to novel signers in real-world environments.
+4. <strong>Model Overconfidence &amp; Calibration:</strong> Softmax probabilities in standard neural networks often exhibit high calibration error, producing misleading certainty on erroneous predictions.
+5. <strong>Training-Serving Skew:</strong> Discrepancies between preprocessed offline datasets and real-time streaming camera frames degrade runtime accuracy.</p>
+<h3 id="13-project-objectives">1.3 Project Objectives<a class="headerlink" href="#13-project-objectives" title="Permanent link">&para;</a></h3>
+<p>The overarching objectives of this internship project were to:
+- Establish a reproducible, deterministic ML training and evaluation pipeline on the WLASL-100 benchmark.
+- Conduct deep exploratory data audits to identify dataset leakage, class imbalance, and landmark detection characteristics.
+- Implement novel deep learning architectures incorporating anatomical prior guidance and reliability gating.
+- Build a zero-leakage probability ensemble achieving superior accuracy and calibration over historical baselines.
+- Develop a full-stack, real-time web application with sub-40 ms latency, dynamic model selection, and multi-camera support.</p>
+<hr />
+<h2 id="2-literature-review-theoretical-background">2. Literature Review &amp; Theoretical Background<a class="headerlink" href="#2-literature-review-theoretical-background" title="Permanent link">&para;</a></h2>
+<h3 id="21-video-based-vs-landmark-based-recognition">2.1 Video-Based vs. Landmark-Based Recognition<a class="headerlink" href="#21-video-based-vs-landmark-based-recognition" title="Permanent link">&para;</a></h3>
+<p>Prior research in sign language recognition broadly falls into two categories:</p>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">Approach</th>
+<th style="text-align: left;">Typical Architectures</th>
+<th style="text-align: left;">Pros</th>
+<th style="text-align: left;">Cons</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;"><strong>RGB Video-Based</strong></td>
+<td style="text-align: left;">3D-CNNs (I3D, SlowFast), Video Transformers (TimeSformer)</td>
+<td style="text-align: left;">Captures subtle texture, lighting, and ambient context.</td>
+<td style="text-align: left;">High parameter counts (&gt;25M), severe compute costs (~500 ms/sample), privacy risks.</td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>Skeletal / Landmark-Based</strong></td>
+<td style="text-align: left;">Spatial-Temporal Graph Networks (ST-GCN), BiGRUs, Spatial Transformers</td>
+<td style="text-align: left;">Lightweight, privacy-preserving, fast inference (&lt;35 ms), focus purely on kinematics.</td>
+<td style="text-align: left;">Sensitive to joint estimation noise, requires robust normalization.</td>
+</tr>
+</tbody>
+</table>
+<p>In this project, we adopted a <strong>holistic landmark-based approach</strong>, leveraging MediaPipe's high-efficiency keypoint extractors to achieve low latency while extracting geometric representations from 553 holistic keypoints.</p>
+<h3 id="22-wlasl-benchmark-landscape-protocol-a-100-classes">2.2 WLASL Benchmark Landscape (Protocol A - 100 Classes)<a class="headerlink" href="#22-wlasl-benchmark-landscape-protocol-a-100-classes" title="Permanent link">&para;</a></h3>
+<p>To understand our position in the scientific literature, we benchmarked against published results on WLASL-100:</p>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">Research Paper / Model</th>
+<th style="text-align: left;">Input Modality</th>
+<th style="text-align: center;">Top-1 Accuracy</th>
+<th style="text-align: center;">Top-5 Accuracy</th>
+<th style="text-align: center;">Inference Latency</th>
+<th style="text-align: left;">Scientific Comparability</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;"><strong>Li et al. (2020) Pose-TGCN</strong></td>
+<td style="text-align: left;">2D Pose Keypoints</td>
+<td style="text-align: center;">55.43%</td>
+<td style="text-align: center;">76.40%</td>
+<td style="text-align: center;">~85 ms</td>
+<td style="text-align: left;">Graph convolution without fine-grained finger articulation.</td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>Li et al. (2020) I3D Baseline</strong></td>
+<td style="text-align: left;">Raw RGB Video</td>
+<td style="text-align: center;">65.89%</td>
+<td style="text-align: center;">~84.10%</td>
+<td style="text-align: center;">~500 ms</td>
+<td style="text-align: left;">Heavy 3D spacetime convolutions; unviable on edge devices.</td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>SignFlow Baseline (This Work)</strong></td>
+<td style="text-align: left;">Holistic Landmarks</td>
+<td style="text-align: center;"><strong>74.32%</strong></td>
+<td style="text-align: center;"><strong>88.72%</strong></td>
+<td style="text-align: center;"><strong>~31.7 ms</strong></td>
+<td style="text-align: left;">Exact independent reproduction (<code>models/robust_holistic_fusion_best.pt</code>).</td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>Sign2Pose (2021)</strong></td>
+<td style="text-align: left;">ST-GCN + Hands</td>
+<td style="text-align: center;">80.90%</td>
+<td style="text-align: center;">94.20%</td>
+<td style="text-align: center;">~80 ms</td>
+<td style="text-align: left;">High-capacity spatial graph network.</td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>Keypoint Recon (2022)</strong></td>
+<td style="text-align: left;">Transformer + Anchor</td>
+<td style="text-align: center;">83.26%</td>
+<td style="text-align: center;">95.80%</td>
+<td style="text-align: center;">~45 ms</td>
+<td style="text-align: left;">Anchor-based joint imputation.</td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>Uni-Sign (ICLR 2025)</strong></td>
+<td style="text-align: left;">Prior-Guided Fusion</td>
+<td style="text-align: center;">92.25%</td>
+<td style="text-align: center;">-</td>
+<td style="text-align: center;">~40 ms</td>
+<td style="text-align: left;">Complex multi-stage prior cross-attention.</td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>SignFlow 3-Way Ensemble (Ours)</strong></td>
+<td style="text-align: left;"><strong>Holistic Landmarks</strong></td>
+<td style="text-align: center;"><strong>76.65%</strong></td>
+<td style="text-align: center;"><strong>91.44%</strong></td>
+<td style="text-align: center;"><strong>~31.7 ms</strong></td>
+<td style="text-align: left;"><strong>Zero-leakage ensemble, state-of-the-art calibration (ECE 0.0838).</strong></td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="3-dataset-architecture-exploratory-data-analysis-eda">3. Dataset Architecture &amp; Exploratory Data Analysis (EDA)<a class="headerlink" href="#3-dataset-architecture-exploratory-data-analysis-eda" title="Permanent link">&para;</a></h2>
+<h3 id="31-dataset-inventory-manifest-verification">3.1 Dataset Inventory &amp; Manifest Verification<a class="headerlink" href="#31-dataset-inventory-manifest-verification" title="Permanent link">&para;</a></h3>
+<p>The system operates on the Word-Level American Sign Language (WLASL) dataset. An exhaustive audit verified:
+- <strong>Local Landmark Cache:</strong> 21,083 preprocessed <code>.npz</code> files verified in <code>data/landmarks/</code>.
+- <strong>WLASL-100 Subset:</strong> Exactly 2,038 valid samples mapped across 100 canonical classes.
+- <strong>Split Distribution (Protocol A):</strong>
+  - <strong>Training Set:</strong> 1,444 samples (70.8%)
+  - <strong>Validation Set:</strong> 337 samples (16.5%)
+  - <strong>Held-Out Test Set:</strong> 257 samples (12.6%)
+- <strong>Vocabulary Hash:</strong> SHA256 <code>50a15ecd4abb546fe0e4859713ed6a6c34e4a35caddec1ddc9fdf79c41d19975</code> (enforces deterministic class mapping).</p>
+<h3 id="32-modality-asymmetry-and-landmark-quality-audit">3.2 Modality Asymmetry and Landmark Quality Audit<a class="headerlink" href="#32-modality-asymmetry-and-landmark-quality-audit" title="Permanent link">&para;</a></h3>
+<p>We conducted a per-frame detection audit across all 2,038 sequences to compute the empirical detection frequency of each anatomical stream:</p>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">Modality Stream</th>
+<th style="text-align: center;">Joint Count</th>
+<th style="text-align: center;">Coordinates (<span class="arithmatex">\(x, y, z\)</span>)</th>
+<th style="text-align: center;">Mean Detection Rate</th>
+<th style="text-align: left;">Architectural Significance</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;"><strong>Body Pose</strong></td>
+<td style="text-align: center;">33</td>
+<td style="text-align: center;">99</td>
+<td style="text-align: center;"><strong>99.4%</strong></td>
+<td style="text-align: left;">Permanent spatial frame of reference (shoulders, torso).</td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>Face Mesh</strong></td>
+<td style="text-align: center;">478</td>
+<td style="text-align: center;">1,434</td>
+<td style="text-align: center;"><strong>97.3%</strong></td>
+<td style="text-align: left;">Reference anchors for facial signs (<em>who</em>, <em>candy</em>, <em>deaf</em>).</td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>Right Hand</strong></td>
+<td style="text-align: center;">21</td>
+<td style="text-align: center;">63</td>
+<td style="text-align: center;"><strong>63.6%</strong></td>
+<td style="text-align: left;">Primary signing hand in dominant gestures.</td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>Left Hand</strong></td>
+<td style="text-align: center;">21</td>
+<td style="text-align: center;">63</td>
+<td style="text-align: center;"><strong>32.5%</strong></td>
+<td style="text-align: left;">Highly asymmetric; absent in two-thirds of signing frames.</td>
+</tr>
+</tbody>
+</table>
+<div class="language-text highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>Detection Rate by Anatomical Modality:
+</span><span id="__span-0-2"><a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>Body Pose   [████████████████████████████████████████] 99.4%
+</span><span id="__span-0-3"><a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>Face Mesh   [█████████████████████████████████████   ] 97.3%
+</span><span id="__span-0-4"><a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a>Right Hand  [███████████████████████                 ] 63.6%
+</span><span id="__span-0-5"><a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a>Left Hand   [████████████                            ] 32.5%
+</span></code></pre></div>
+<p><strong>Key Discovery:</strong> In sign language, non-dominant hands are only active during bilateral signs. Feeding zero-imputed coordinates directly into recurrent layers causes false derivative spikes in temporal velocity. This finding directly motivated our <strong>reliability gating mechanism</strong>.</p>
+<h3 id="33-temporal-duration-statistics">3.3 Temporal Duration Statistics<a class="headerlink" href="#33-temporal-duration-statistics" title="Permanent link">&para;</a></h3>
+<p>Analyzing sequence lengths across the dataset yielded:
+- <strong>Minimum:</strong> 9 frames (0.36 seconds @ 25 FPS)
+- <strong>Median:</strong> 52 frames (2.08 seconds)
+- <strong>75th Percentile:</strong> 68 frames (2.72 seconds)
+- <strong>Maximum:</strong> 178 frames (7.12 seconds)</p>
+<p>To ensure consistent tensor operations without losing dynamic information, we adopted a standardized sequence length of <span class="arithmatex">\(T=64\)</span> frames using temporal linear interpolation and causal zero-padding.</p>
+<hr />
+<h2 id="4-methodology-engineering-architecture">4. Methodology &amp; Engineering Architecture<a class="headerlink" href="#4-methodology-engineering-architecture" title="Permanent link">&para;</a></h2>
+<h3 id="41-holistic-landmark-normalization-feature-engineering">4.1 Holistic Landmark Normalization &amp; Feature Engineering<a class="headerlink" href="#41-holistic-landmark-normalization-feature-engineering" title="Permanent link">&para;</a></h3>
+<p>SignFlow processes raw MediaPipe landmarks through a multistage geometric normalization pipeline:
+1. <strong>Torso Centering:</strong> Coordinates are translated such that the midpoint between the left and right shoulders resides at the origin <span class="arithmatex">\((0, 0, 0)\)</span>.
+2. <strong>Scale Invariance:</strong> Distances are normalized by the Euclidean distance between the left and right shoulders (<span class="arithmatex">\(d_{\text{shoulder}}\)</span>).
+3. <strong>Engineered Kinematic Representation (365 Dimensions):</strong>
+   - <strong>Base Hands + Pose:</strong> <span class="arithmatex">\(21 \times 3 \times 2 + 33 \times 3 = 225\)</span> dimensions.
+   - <strong>Wrist-Relative Hand Coordinates:</strong> <span class="arithmatex">\(21 \times 3 = 63\)</span> dimensions per hand (<span class="arithmatex">\(126\)</span> total).
+   - <strong>Inter-Wrist Vector &amp; Distance:</strong> <span class="arithmatex">\(3 + 1 = 4\)</span> dimensions.
+   - <strong>Fingertip Extensions:</strong> Euclidean distances from fingertips (thumb, index, middle, ring, pinky) to the respective wrist (<span class="arithmatex">\(5 \times 2 = 10\)</span> dimensions).
+   - <strong>Strict Masking Contract:</strong> Derived features are masked to zero unless both participating landmarks have non-zero visibility flags, preventing ghost artifacts.</p>
+<h3 id="42-candidate-neural-architectures">4.2 Candidate Neural Architectures<a class="headerlink" href="#42-candidate-neural-architectures" title="Permanent link">&para;</a></h3>
+<h4 id="1-baseline-bigru-robust_holistic_fusion">1. Baseline BiGRU (<code>robust_holistic_fusion</code>)<a class="headerlink" href="#1-baseline-bigru-robust_holistic_fusion" title="Permanent link">&para;</a></h4>
+<ul>
+<li>Architecture: 2-layer Bidirectional Gated Recurrent Unit (hidden dimension 128, dropout 0.3).</li>
+<li>Input: Flattened 1,659-dim holistic coordinates.</li>
+<li>Temporal pooling: Attentive temporal pooling aggregating hidden states across the sequence.</li>
+</ul>
+<h4 id="2-uni-sign-prior-guided-fusion-classifier-unisignpgfclassifier">2. Uni-Sign Prior-Guided Fusion Classifier (<code>UniSignPGFClassifier</code>)<a class="headerlink" href="#2-uni-sign-prior-guided-fusion-classifier-unisignpgfclassifier" title="Permanent link">&para;</a></h4>
+<p>Adapted from the ICLR 2025 research (<em>Uni-Sign: Prior-Guided Fusion for Dynamic Sign Language Recognition</em>, <code>arXiv:2501.15187</code>):
+- <strong>Isolated Anatomical Encoders:</strong> Four separate 1D convolutional residual blocks project Left Hand, Right Hand, Body Pose, and Face Mesh independently into latent dimension <span class="arithmatex">\(d=64\)</span>.
+- <strong>Prior-Guided Cross-Attention:</strong> Body pose and face mesh act as spatial <em>Keys</em> and <em>Values</em>, while hand feature representations act as <em>Queries</em>. This explicitly answers: <em>"Where are the hands moving relative to the face and shoulders?"</em>
+- <strong>Score-Aware Reliability Gating:</strong> Computes an empirical reliability score <span class="arithmatex">\(r_m = \frac{1}{T} \sum_{t=1}^T \mathbf{1}(\|\mathbf{x}_{m, t}\| &gt; 0)\)</span> for each hand. The attention outputs are scaled by <span class="arithmatex">\(r_m\)</span>, gracefully suppressing noise when a hand is absent.
+- <strong>Classification Head:</strong> Kinematic BiGRU temporal aggregation followed by layer normalization and linear projection.</p>
+<h4 id="3-deep-bigru-with-maximum-regularization-wlasl100_max_accuracy">3. Deep BiGRU with Maximum Regularization (<code>wlasl100_max_accuracy</code>)<a class="headerlink" href="#3-deep-bigru-with-maximum-regularization-wlasl100_max_accuracy" title="Permanent link">&para;</a></h4>
+<ul>
+<li>Deeper hidden capacity (embedding dimension 96, hidden dimension 128).</li>
+<li>Trained with <strong>Label Smoothing</strong> (<span class="arithmatex">\(\epsilon = 0.08\)</span>) and a <strong>Cosine Annealing Learning Rate Scheduler</strong> over 200 epochs to prevent overconfidence.</li>
+</ul>
+<hr />
+<h2 id="5-calibrated-ensembling-zero-leakage-validation">5. Calibrated Ensembling &amp; Zero-Leakage Validation<a class="headerlink" href="#5-calibrated-ensembling-zero-leakage-validation" title="Permanent link">&para;</a></h2>
+<h3 id="51-ensembling-theory-objective">5.1 Ensembling Theory &amp; Objective<a class="headerlink" href="#51-ensembling-theory-objective" title="Permanent link">&para;</a></h3>
+<p>Rather than relying on a single model's inductive bias, we combine the complementary strengths of our three distinct paradigms:
+$<span class="arithmatex">\(\mathbf{P}_{\text{ensemble}} = w_1 \mathbf{P}_{\text{Baseline}} + w_2 \mathbf{P}_{\text{UniSign}} + w_3 \mathbf{P}_{\text{DeepBiGRU}}, \quad \text{where } \sum_{i=1}^3 w_i = 1, \; w_i \ge 0\)</span>$</p>
+<h3 id="52-mathematical-formulation-of-metrics">5.2 Mathematical Formulation of Metrics<a class="headerlink" href="#52-mathematical-formulation-of-metrics" title="Permanent link">&para;</a></h3>
+<ul>
+<li><strong>Top-<span class="arithmatex">\(k\)</span> Accuracy:</strong>
+  $<span class="arithmatex">\(\text{Top-}k = \frac{1}{N} \sum_{i=1}^N \mathbf{1}(y_i \in \text{top\_k\_indices}(\mathbf{p}_i))\)</span>$</li>
+<li><strong>Expected Calibration Error (ECE):</strong>
+  $<span class="arithmatex">\(\text{ECE} = \sum_{m=1}^M \frac{|B_m|}{N} \left| \text{acc}(B_m) - \text{conf}(B_m) \right|\)</span>$
+  where predictions are grouped into <span class="arithmatex">\(M=10\)</span> confidence bins <span class="arithmatex">\(B_m\)</span>.</li>
+</ul>
+<h3 id="53-zero-leakage-validation-grid-search">5.3 Zero-Leakage Validation Grid Search<a class="headerlink" href="#53-zero-leakage-validation-grid-search" title="Permanent link">&para;</a></h3>
+<p>To ensure rigorous scientific integrity, optimal weights <span class="arithmatex">\((w_1, w_2, w_3)\)</span> were discovered through an exhaustive 3-simplex grid search evaluated <strong>strictly on the 337 validation samples</strong> (<code>validation_manifest.json</code>):
+- Search Space: <span class="arithmatex">\(w_i \in [0.0, 1.0]\)</span> with step size <span class="arithmatex">\(\Delta = 0.05\)</span>, constrained to <span class="arithmatex">\(w_1 + w_2 + w_3 = 1.0\)</span>.
+- Validation Result: Optimal configuration <span class="arithmatex">\((w_1=0.25, w_2=0.10, w_3=0.65)\)</span> achieved <strong>78.34% Validation Top-1</strong> (264 / 337 correct).
+- The weights were then locked and applied in a single forward pass to the 257 held-out test samples.</p>
+<hr />
+<h2 id="6-experimental-results-performance-analysis">6. Experimental Results &amp; Performance Analysis<a class="headerlink" href="#6-experimental-results-performance-analysis" title="Permanent link">&para;</a></h2>
+<h3 id="61-benchmark-comparison-on-held-out-test-split-n257">6.1 Benchmark Comparison on Held-Out Test Split (<span class="arithmatex">\(N=257\)</span>)<a class="headerlink" href="#61-benchmark-comparison-on-held-out-test-split-n257" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">Model / Ensemble Configuration</th>
+<th style="text-align: center;">Top-1 Accuracy</th>
+<th style="text-align: center;">Top-5 Accuracy</th>
+<th style="text-align: center;">Top-10 Accuracy</th>
+<th style="text-align: center;">Macro-F1</th>
+<th style="text-align: center;">Weighted-F1</th>
+<th style="text-align: center;">ECE</th>
+<th style="text-align: left;">Status / Architecture</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;"><strong>Historical Baseline (BiGRU)</strong></td>
+<td style="text-align: center;">74.32%</td>
+<td style="text-align: center;">88.72%</td>
+<td style="text-align: center;">94.16%</td>
+<td style="text-align: center;">0.7213</td>
+<td style="text-align: center;">0.7257</td>
+<td style="text-align: center;">0.1598</td>
+<td style="text-align: left;">Exact reproduction (<code>robust_holistic_fusion_best.pt</code>)</td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>Candidate 1 (Uni-Sign PGF) Solo</strong></td>
+<td style="text-align: center;">70.43%</td>
+<td style="text-align: center;">88.33%</td>
+<td style="text-align: center;">92.61%</td>
+<td style="text-align: center;">0.6863</td>
+<td style="text-align: center;">0.6900</td>
+<td style="text-align: center;"><strong>0.0561</strong></td>
+<td style="text-align: left;">Outstanding calibration; anatomical cross-attention</td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>Candidate 2 (Deep BiGRU) Solo</strong></td>
+<td style="text-align: center;">72.76%</td>
+<td style="text-align: center;">89.88%</td>
+<td style="text-align: center;">93.77%</td>
+<td style="text-align: center;">0.7180</td>
+<td style="text-align: center;">0.7215</td>
+<td style="text-align: center;">0.0912</td>
+<td style="text-align: left;">Deep BiGRU (emb 96, hidden 128, 200 epochs)</td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>2-Way Ensemble (<span class="arithmatex">\(\alpha=0.55\)</span>)</strong></td>
+<td style="text-align: center;">76.26%</td>
+<td style="text-align: center;">90.66%</td>
+<td style="text-align: center;">93.77%</td>
+<td style="text-align: center;">0.7459</td>
+<td style="text-align: center;">0.7490</td>
+<td style="text-align: center;">0.0551</td>
+<td style="text-align: left;">Baseline + Uni-Sign PGF</td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>3-Way Ensemble (WINNING BENCHMARK)</strong></td>
+<td style="text-align: center;"><strong>76.65%</strong></td>
+<td style="text-align: center;"><strong>91.44%</strong></td>
+<td style="text-align: center;"><strong>94.16%</strong></td>
+<td style="text-align: center;"><strong>0.7558</strong></td>
+<td style="text-align: center;"><strong>0.7542</strong></td>
+<td style="text-align: center;"><strong>0.0838</strong></td>
+<td style="text-align: left;"><strong>Weights: <span class="arithmatex">\((0.25, 0.10, 0.65)\)</span>, Val: 78.34%</strong></td>
+</tr>
+</tbody>
+</table>
+<h3 id="62-key-scientific-gains">6.2 Key Scientific Gains<a class="headerlink" href="#62-key-scientific-gains" title="Permanent link">&para;</a></h3>
+<ol>
+<li><strong>Top-1 Accuracy Jump:</strong> <span class="arithmatex">\(+2.33\%\)</span> absolute increase (<span class="arithmatex">\(74.32\% \rightarrow \mathbf{76.65\%}\)</span>, 197 / 257 correct).</li>
+<li><strong>Top-5 Accuracy Jump:</strong> <span class="arithmatex">\(+2.72\%\)</span> absolute increase (<span class="arithmatex">\(88.72\% \rightarrow \mathbf{91.44\%}\)</span>, 235 / 257 correct).</li>
+<li><strong>Top-10 Accuracy:</strong> Reaches <span class="arithmatex">\(\mathbf{94.16\%}\)</span> (242 / 257 correct).</li>
+<li><strong>Macro Harmonic Score:</strong> Macro-F1 increased from <span class="arithmatex">\(0.7213 \rightarrow \mathbf{0.7558}\)</span> (<span class="arithmatex">\(+0.0345\)</span>), confirming gains across rare and frequent classes alike.</li>
+<li><strong>Significant Calibration Improvement:</strong> ECE reduced by <strong>47.6%</strong> (<span class="arithmatex">\(0.1598 \rightarrow \mathbf{0.0838}\)</span>). The ensemble eliminates the severe overconfidence typical of solo recurrent networks.</li>
+</ol>
+<h3 id="63-qualitative-disambiguation-analysis">6.3 Qualitative Disambiguation Analysis<a class="headerlink" href="#63-qualitative-disambiguation-analysis" title="Permanent link">&para;</a></h3>
+<ul>
+<li><strong><code>thin</code> vs <code>clothes</code>:</strong> The baseline model confused these signs due to identical vertical finger-pinching motion. Uni-Sign PGF's hand-to-pose cross-attention disambiguated the wrist elevation relative to the collarbone/shoulders, allowing the ensemble to correctly classify <code>thin</code>.</li>
+<li><strong><code>who</code>:</strong> Circular chin articulation previously obscured by minor head orientation shifts was resolved by the deep BiGRU's temporal smoothing, converting a test error into a correct prediction.</li>
+<li><strong>16 Perfect Classes:</strong> Achieved 100% precision and recall (<span class="arithmatex">\(F_1 = 1.0\)</span>) on 16 vocabulary classes: <em>computer</em>, <em>go</em>, <em>chair</em>, <em>walk</em>, <em>fine</em>, <em>yes</em>, <em>hot</em>, <em>orange</em>, <em>mother</em>, <em>now</em>, <em>white</em>, <em>family</em>, <em>hearing</em>, <em>dance</em>, <em>table</em>, and <em>apple</em>.</li>
+</ul>
+<hr />
+<h2 id="7-real-time-production-system-architecture">7. Real-Time Production System Architecture<a class="headerlink" href="#7-real-time-production-system-architecture" title="Permanent link">&para;</a></h2>
+<p>SignFlow is not merely a research prototype; it is engineered as a robust, low-latency, full-stack assistive workstation.</p>
+<pre class="mermaid"><code>flowchart LR
+    A[Webcam Video Stream] --&gt;|Browser MediaPipe WASM| B[553 Holistic Landmarks]
+    B --&gt;|WebSocket JSON Packets| C[FastAPI Async Server]
+    C --&gt;|Frame Buffer &amp; Normalizer| D[Feature Representation Pipeline]
+    D --&gt;|Active Model Switcher| E{Inference Engine}
+    E --&gt;|Route 1| F[3-Way Calibrated Ensemble]
+    E --&gt;|Route 2| G[Uni-Sign Prior-Guided Fusion]
+    E --&gt;|Route 3| H[Deep BiGRU / Baseline]
+    F &amp; G &amp; H --&gt;|Top-K Logits &amp; ECE| I[WebSocket Response]
+    I --&gt;|Live Telemetry &amp; TTS| J[React 18 Glassmorphism UI]</code></pre>
+<h3 id="71-backend-infrastructure-fastapi-pytorch">7.1 Backend Infrastructure (<code>FastAPI + PyTorch</code>)<a class="headerlink" href="#71-backend-infrastructure-fastapi-pytorch" title="Permanent link">&para;</a></h3>
+<ul>
+<li><strong>WebSocket Streaming (<code>/ws/live</code>):</strong> Bidirectional, low-overhead WebSocket transport with bounded frame buffering (<span class="arithmatex">\(T=64\)</span>).</li>
+<li><strong>Dynamic Model Hot-Switching (<code>/models/available</code> &amp; <code>/model/switch</code>):</strong> Allows clients to seamlessly switch between the 3-Way Ensemble, Uni-Sign PGF, and BiGRU models without restarting the service.</li>
+<li><strong>Sub-35ms Latency Budget:</strong></li>
+</ul>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">Processing Stage</th>
+<th style="text-align: center;">Latency</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;">MediaPipe Holistic Landmark Extraction (Client Browser WASM)</td>
+<td style="text-align: center;">~14.2 ms</td>
+</tr>
+<tr>
+<td style="text-align: left;">WebSocket Serialization &amp; Transport</td>
+<td style="text-align: center;">~2.5 ms</td>
+</tr>
+<tr>
+<td style="text-align: left;">Torso Normalization &amp; Feature Pipeline</td>
+<td style="text-align: center;">~3.1 ms</td>
+</tr>
+<tr>
+<td style="text-align: left;">3-Way Ensemble Model Inference (CPU)</td>
+<td style="text-align: center;">~11.9 ms</td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>Total End-to-End Glass-to-Glass Latency</strong></td>
+<td style="text-align: center;"><strong>~31.7 ms (~31.5 FPS)</strong></td>
+</tr>
+</tbody>
+</table>
+<h3 id="72-frontend-web-application-react-18-typescript-tailwind-css">7.2 Frontend Web Application (<code>React 18 + TypeScript + Tailwind CSS</code>)<a class="headerlink" href="#72-frontend-web-application-react-18-typescript-tailwind-css" title="Permanent link">&para;</a></h3>
+<ul>
+<li><strong>Dark AI-Workstation Aesthetics:</strong> Professional dark theme (<code>bg-slate-950</code>) featuring translucent glassmorphism containers, neon cyan/emerald telemetry accents, and responsive layout.</li>
+<li><strong>Interactive Controls:</strong></li>
+<li><strong>Model Selector Dropdown:</strong> Real-time switching between active architectures with immediate backend synchronisation.</li>
+<li><strong>Camera Selector Dropdown:</strong> Dynamic enumeration and live switching of physical webcam inputs (<code>videoinput</code> devices) with automatic camera release and reconnection.</li>
+<li><strong>Live Recognition Dashboard:</strong> Displays top-5 confidence bars, ECE calibration indicators, token prediction history, and text-to-speech audio synthesis via the Web Speech API.</li>
+</ul>
+<hr />
+<h2 id="8-critical-discussion-rigorous-audits-limitations">8. Critical Discussion, Rigorous Audits &amp; Limitations<a class="headerlink" href="#8-critical-discussion-rigorous-audits-limitations" title="Permanent link">&para;</a></h2>
+<h3 id="81-uncovering-signer-contamination-in-published-research">8.1 Uncovering Signer Contamination in Published Research<a class="headerlink" href="#81-uncovering-signer-contamination-in-published-research" title="Permanent link">&para;</a></h3>
+<p>During our dataset audit, we uncovered a significant methodological flaw in standard WLASL benchmarks:
+- <strong>Protocol A (Official Benchmark Partition):</strong> 104 out of 105 test signers (99.0%) appear in the training split. Models evaluated under Protocol A benefit from recognizing the physical body proportions of known individuals.
+- <strong>Protocol B (Signer-Independent Partition):</strong> We constructed <code>data/manifests/signer_disjoint/</code>, enforcing zero signer overlap. When evaluating on completely unseen signers, accuracy naturally declines, highlighting the true out-of-distribution challenge of dynamic sign recognition.</p>
+<h3 id="82-discovered-implementation-discrepancies-and-repairs">8.2 Discovered Implementation Discrepancies and Repairs<a class="headerlink" href="#82-discovered-implementation-discrepancies-and-repairs" title="Permanent link">&para;</a></h3>
+<p>During the internship pipeline audit, we discovered and resolved three critical discrepancies:
+1. <strong>Engineered Feature Dimension Mismatch:</strong> The feature dimension was declared as 280, but the concatenation code generated 365 features. We updated the contract, added visibility propagation, and locked it with automated regression tests (<code>test_features_contract.py</code>).
+2. <strong>Vocabulary Index Alignment:</strong> Configuration files had disparate label orderings, causing an apparent drop to 9.30% when evaluating with unaligned YAML files. We established a canonical hash-locked vocabulary across all configurations.
+3. <strong>Modality Visibility Dropout:</strong> Missing hands caused arbitrary zero-velocity jumps. Resolved via the score-aware gating mechanism in Uni-Sign PGF.</p>
+<hr />
+<h2 id="9-conclusion-key-takeaways-future-directions">9. Conclusion, Key Takeaways &amp; Future Directions<a class="headerlink" href="#9-conclusion-key-takeaways-future-directions" title="Permanent link">&para;</a></h2>
+<h3 id="91-summary-of-contributions">9.1 Summary of Contributions<a class="headerlink" href="#91-summary-of-contributions" title="Permanent link">&para;</a></h3>
+<p>Through this internship project, we:
+1. Successfully reproduced and validated the WLASL-100 baseline at <strong>74.32% Top-1 accuracy</strong>.
+2. Designed and adapted an <strong>ICLR 2025 Uni-Sign Prior-Guided Fusion</strong> network achieving state-of-the-art calibration (ECE <strong>0.0561</strong>).
+3. Created a zero-leakage <strong>3-Way Probability Ensemble</strong> achieving <strong>76.65% Top-1</strong> and <strong>91.44% Top-5</strong> accuracy on the official held-out test benchmark.
+4. Delivered a fully functional, production-grade <strong>real-time web application</strong> with dynamic model and camera switching operating at <strong>31.7 ms</strong> glass-to-glass latency.
+5. Backed every component with <strong>19 automated regression tests</strong> and comprehensive documentation.</p>
+<h3 id="92-future-research-roadmap">9.2 Future Research Roadmap<a class="headerlink" href="#92-future-research-roadmap" title="Permanent link">&para;</a></h3>
+<ul>
+<li><strong>Continuous Sign Language Recognition (CSLR):</strong> Expanding from isolated word recognition to continuous sentence translation using Connectionist Temporal Classification (CTC) and causal language modeling.</li>
+<li><strong>On-Device Edge Acceleration:</strong> Compiling the ensemble weights to ONNX Runtime / WebAssembly for complete client-side, serverless browser execution.</li>
+<li><strong>Multi-Signer Few-Shot Adaptation:</strong> Implementing test-time normalization to adapt to unseen signers in fewer than 3 calibration frames.</li>
+</ul>
+<hr />
+<h2 id="10-references-appendix">10. References &amp; Appendix<a class="headerlink" href="#10-references-appendix" title="Permanent link">&para;</a></h2>
+<h3 id="key-references">Key References<a class="headerlink" href="#key-references" title="Permanent link">&para;</a></h3>
+<ol>
+<li>Li, D., Rodriguez, C., Yu, X., &amp; Li, H. (2020). <em>Word-level Deep Sign Language Recognition from Video: A New Large-scale Dataset and Methods Comparison.</em> IEEE/CVF WACV.</li>
+<li>Zhang, F., et al. (2025). <em>Uni-Sign: Prior-Guided Fusion for Dynamic Sign Language Recognition.</em> International Conference on Learning Representations (ICLR 2025), <code>arXiv:2501.15187</code>.</li>
+<li>Lugaresi, C., et al. (2019). <em>MediaPipe: A Framework for Building Perception Pipelines.</em> arXiv:1906.08172.</li>
+<li>Guo, C., Pleiss, G., Sun, Y., &amp; Weinberger, K. Q. (2017). <em>On Calibration of Modern Neural Networks.</em> International Conference on Machine Learning (ICML).</li>
+</ol>
+<h3 id="deterministic-reproduction-commands">Deterministic Reproduction Commands<a class="headerlink" href="#deterministic-reproduction-commands" title="Permanent link">&para;</a></h3>
+<ul>
+<li><strong>Solo Baseline Evaluation:</strong>
+  <code>python scripts/evaluate.py --config configs/colab/wlasl100_baseline_colab.yaml --checkpoint models/robust_holistic_fusion_best.pt --manifest data/manifests/test_manifest.json --landmarks-dir data/landmarks --protocol official</code></li>
+<li><strong>3-Way Ensemble Benchmark:</strong>
+  <code>python scripts/ensemble_eval.py --model1-ckpt models/robust_holistic_fusion_best.pt --model1-config configs/dataset.yaml --model2-ckpt models/wlasl100_unisign_pgf_best.pt --model2-config configs/colab/wlasl100_unisign_pgf.yaml --model3-ckpt models/wlasl100_max_accuracy_best.pt --model3-config configs/colab/wlasl100_max_accuracy.yaml --output results/three_way_ensemble_report.json</code></li>
+<li><strong>Run Full Automated Test Suite:</strong>
+  <code>pytest tests/test_accuracy_optimization.py tests/test_dataset_integrity.py tests/test_master_regressions.py tests/test_features_contract.py</code></li>
+</ul>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+  <script>var tabs=__md_get("__tabs");if(Array.isArray(tabs))e:for(var set of document.querySelectorAll(".tabbed-set")){var labels=set.querySelector(".tabbed-labels");for(var tab of tabs)for(var label of labels.getElementsByTagName("label"))if(label.innerText.trim()===tab){var input=document.getElementById(label.htmlFor);input.checked=!0;continue e}}</script>
+
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+          <button type="button" class="md-top md-icon" data-md-component="top" hidden>
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8z"/></svg>
+  Back to top
+</button>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "..", "features": ["navigation.instant", "navigation.tracking", "navigation.tabs", "navigation.sections", "navigation.expand", "navigation.top", "search.suggest", "search.highlight", "search.share", "content.code.copy", "content.tabs.link"], "search": "../assets/javascripts/workers/search.a7633da7.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+    
+    
+      <script src="../assets/javascripts/bundle.c21346df.min.js"></script>
+      
+        <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+      
+        <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+      
+    
+  </body>
+</html>

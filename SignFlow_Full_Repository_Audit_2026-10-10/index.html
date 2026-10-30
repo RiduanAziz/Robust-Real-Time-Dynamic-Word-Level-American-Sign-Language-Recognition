@@ -1,0 +1,2490 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="Robust Real-Time Dynamic Word-Level American Sign Language Recognition">
+      
+      
+        <meta name="author" content="Riduan Aziz">
+      
+      
+        <link rel="canonical" href="https://riduanaziz.github.io/Robust-Real-Time-Dynamic-Word-Level-American-Sign-Language-Recognition/SignFlow_Full_Repository_Audit_2026-10-10/">
+      
+      
+      
+      
+        
+      
+      
+      <link rel="icon" href="../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.8.0">
+    
+    
+      
+        <title>Full Repository Audit — SignFlow ASL Recognition - SignFlow Documentation</title>
+      
+    
+    
+      <link rel="stylesheet" href="../assets/stylesheets/main.57a0d79d.min.css">
+      
+        
+        <link rel="stylesheet" href="../assets/stylesheets/palette.fb2fffe2.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Inter:300,300i,400,400i,700,700i%7CJetBrains+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Inter";--md-code-font:"JetBrains Mono"}</style>
+      
+    
+    
+    <script>__md_scope=new URL("..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="slate" data-md-color-primary="teal" data-md-color-accent="cyan">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#full-repository-audit-signflow-asl-recognition" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+<header class="md-header" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href=".." title="SignFlow Documentation" class="md-header__button md-logo" aria-label="SignFlow Documentation" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            SignFlow Documentation
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Full Repository Audit — SignFlow ASL Recognition
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+        <form class="md-header__option" data-md-component="palette">
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="" data-md-color-scheme="slate" data-md-color-primary="teal" data-md-color-accent="cyan"  aria-label="Switch to light mode"  type="radio" name="__palette" id="__palette_0">
+    
+      <label class="md-header__button md-icon" title="Switch to light mode" for="__palette_1" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 18c-.89 0-1.74-.2-2.5-.55C11.56 16.5 13 14.42 13 12s-1.44-4.5-3.5-5.45C10.26 6.2 11.11 6 12 6a6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="" data-md-color-scheme="default" data-md-color-primary="teal" data-md-color-accent="cyan"  aria-label="Switch to dark mode"  type="radio" name="__palette" id="__palette_1">
+    
+      <label class="md-header__button md-icon" title="Switch to dark mode" for="__palette_0" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a4 4 0 0 0-4 4 4 4 0 0 0 4 4 4 4 0 0 0 4-4 4 4 0 0 0-4-4m0 10a6 6 0 0 1-6-6 6 6 0 0 1 6-6 6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+</form>
+      
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+          <a href="javascript:void(0)" class="md-search__icon md-icon" title="Share" aria-label="Share" data-clipboard data-clipboard-text="" data-md-component="search-share" tabindex="-1">
+            
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M18 16.08c-.76 0-1.44.3-1.96.77L8.91 12.7c.05-.23.09-.46.09-.7s-.04-.47-.09-.7l7.05-4.11c.54.5 1.25.81 2.04.81a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3c0 .24.04.47.09.7L8.04 9.81C7.5 9.31 6.79 9 6 9a3 3 0 0 0-3 3 3 3 0 0 0 3 3c.79 0 1.5-.31 2.04-.81l7.12 4.15c-.05.21-.08.43-.08.66 0 1.61 1.31 2.91 2.92 2.91s2.92-1.3 2.92-2.91A2.92 2.92 0 0 0 18 16.08"/></svg>
+          </a>
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+        <div class="md-search__suggest" data-md-component="search-suggest"></div>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/RiduanAziz/Robust-Real-Time-Dynamic-Word-Level-American-Sign-Language-Recognition" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    RiduanAziz/SignFlow
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+            
+<nav class="md-tabs" aria-label="Tabs" data-md-component="tabs">
+  <div class="md-grid">
+    <ul class="md-tabs__list">
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href=".." class="md-tabs__link">
+        
+  
+  
+    
+  
+  Home
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../architecture/" class="md-tabs__link">
+          
+  
+  
+  Architecture
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../dataset/" class="md-tabs__link">
+          
+  
+  
+  Dataset & Landmarks
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../MODEL_CARD/" class="md-tabs__link">
+          
+  
+  
+  Models & Experiments
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../DEPLOYMENT/" class="md-tabs__link">
+          
+  
+  
+  Deployment & Real-Time
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../INTERNSHIP_FINAL_PROJECT_REPORT/" class="md-tabs__link">
+          
+  
+  
+  Research & Thesis Defense
+
+        </a>
+      </li>
+    
+  
+
+      
+    </ul>
+  </div>
+</nav>
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+  
+
+
+<nav class="md-nav md-nav--primary md-nav--lifted" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href=".." title="SignFlow Documentation" class="md-nav__button md-logo" aria-label="SignFlow Documentation" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    SignFlow Documentation
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/RiduanAziz/Robust-Real-Time-Dynamic-Word-Level-American-Sign-Language-Recognition" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    RiduanAziz/SignFlow
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href=".." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Home
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_2" >
+        
+          
+          <label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Architecture
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Architecture
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../architecture/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    System Architecture
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../CAMERA_VISUALIZATION_INTEGRATION/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Camera & Visual Integration
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../MASTER_PIPELINE_AUDIT/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Master Pipeline Audit
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../IMPLEMENTATION_PLAN/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Implementation Plan
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../IMPLEMENTATION_LOG/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Implementation Log
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_3" >
+        
+          
+          <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Dataset & Landmarks
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Dataset & Landmarks
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../dataset/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Dataset Specifications
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../DATASET_COMPLETENESS_AND_SPLITS/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Completeness & Splits
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../LANDMARK_QUALITY_REPORT/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Landmark Quality
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../EDA_FINDINGS/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Exploratory Data Analysis
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../DATASET_INTEGRITY_REPORT/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Dataset Integrity
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../research/DATASET_AUDIT/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Dataset Audit
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../research/DATASET_PROTOCOLS/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Dataset Protocols
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_4" >
+        
+          
+          <label class="md-nav__link" for="__nav_4" id="__nav_4_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Models & Experiments
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Models & Experiments
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../MODEL_CARD/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Model Card
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../research/MODEL_ARCHITECTURES/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Model Architectures
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../ACCURACY_EXPERIMENTS/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Accuracy Experiments
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../ACCURACY_OPTIMIZATION_AUDIT/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Accuracy Optimization Audit
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../FINAL_EVALUATION_REPORT/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Final Evaluation Report
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../WLASL100_REPRODUCTION_GUIDE/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    WLASL Reproduction Guide
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../research/FEATURE_ENGINEERING/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Feature Engineering
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../research/EVALUATION_PROTOCOL/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Evaluation Protocol
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../COLAB_TRAINING_GUIDE/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Colab Training Guide
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../COLAB_TRAINING_PLAN/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Colab Training Plan
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../COLAB_FINAL_RESULTS/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Colab Final Results
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../COLAB_DATA_UPLOAD_CHECKLIST/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Colab Upload Checklist
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_5" >
+        
+          
+          <label class="md-nav__link" for="__nav_5" id="__nav_5_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Deployment & Real-Time
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_5_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_5">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Deployment & Real-Time
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../DEPLOYMENT/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Deployment Guide
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../DEPLOYMENT_READINESS_AUDIT/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Deployment Readiness
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../REALTIME_BENCHMARK_REPORT/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Real-Time Benchmark
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../research/REALTIME_BENCHMARK/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Benchmark Protocol
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../LOCAL_DEVELOPMENT/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Local Development
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../LOCAL_INTEGRATION_GUIDE/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Local Integration
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_6" >
+        
+          
+          <label class="md-nav__link" for="__nav_6" id="__nav_6_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Research & Thesis Defense
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_6_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_6">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Research & Thesis Defense
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../INTERNSHIP_FINAL_PROJECT_REPORT/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Final Project Report
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../PROJECT_DEFENSE_AND_VIVA_GUIDE/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Project Defense & Viva Guide
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../THESIS_RESULTS_AND_LIMITATIONS/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Thesis Results & Limitations
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../THESIS_EVIDENCE_PACKAGE/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Thesis Evidence Package
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../research/KNOWN_LIMITATIONS/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Known Limitations
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../research/REPRODUCIBILITY/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Reproducibility
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../REMEDIATION_AUDIT/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Remediation Audit
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../PROJECT_AUDIT/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Project Audit
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#1-executive-assessment" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        1. Executive assessment
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="1. Executive assessment">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#readiness-by-area" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Readiness by area
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#2-p0-fix-before-further-thesis-experiments" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2. P0 — Fix before further thesis experiments
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="2. P0 — Fix before further thesis experiments">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#p01-ci-stops-before-tests-run-because-the-node-version-is-too-old" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        P0.1 — CI stops before tests run because the Node version is too old
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#p02-websocket-mask-buffer-is-not-cleared-when-a-word-is-committed" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        P0.2 — WebSocket mask buffer is not cleared when a word is committed
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#p03-current-results-are-not-yet-defensible-as-final-wlasl-20-thesis-results" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        P0.3 — Current results are not yet defensible as final WLASL-20 thesis results
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#3-p1-research-pipeline-correctness" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3. P1 — Research pipeline correctness
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="3. P1 — Research pipeline correctness">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#p11-dedicated-robustness-evaluation-is-not-using-the-same-modelpreprocessing-path" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        P1.1 — Dedicated robustness evaluation is not using the same model/preprocessing path
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#p12-robustness-operators-are-not-consistently-paired-with-masks-or-physical-perturbations" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        P1.2 — Robustness operators are not consistently paired with masks or physical perturbations
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#p13-missing-masks-can-be-converted-into-all-valid-masks-in-preprocessing" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        P1.3 — Missing masks can be converted into all-valid masks in preprocessing
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#p14-evaluation-must-report-actual-loaded-data-not-just-manifest-counts" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        P1.4 — Evaluation must report actual loaded data, not just manifest counts
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#p15-conflicting-data-inventory-reports-need-scope-labels-and-regeneration" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        P1.5 — Conflicting data inventory reports need scope labels and regeneration
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#4-p1-live-api-and-frontend-integration" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4. P1 — Live API and frontend integration
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="4. P1 — Live API and frontend integration">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#p11-robustness-lab-may-use-an-empty-or-stale-feature-buffer" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        P1.1 — Robustness Lab may use an empty or stale feature buffer
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#p12-robustness-endpoint-tests-prediction-consistency-not-labelled-robustness" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        P1.2 — Robustness endpoint tests prediction consistency, not labelled robustness
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#p13-websocket-urls-are-local-first-rather-than-deployment-host-aware" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        P1.3 — WebSocket URLs are local-first rather than deployment-host aware
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#p14-predict-performs-two-inference-calls-for-one-request" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        P1.4 — /predict performs two inference calls for one request
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#p15-rejected-candidates-leave-buffer-state-ambiguous" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        P1.5 — Rejected candidates leave buffer state ambiguous
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#5-p1-model-and-metric-interpretation-risks" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5. P1 — Model and metric interpretation risks
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="5. P1 — Model and metric interpretation risks">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#p11-proposed-model-mask-pooling-is-only-partly-modality-aware" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        P1.1 — Proposed model mask pooling is only partly modality-aware
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#p12-checkpoint-choice-is-implicit-and-potentially-surprising" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        P1.2 — Checkpoint choice is implicit and potentially surprising
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#6-p2-data-splitting-packaging-security-and-maintainability" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        6. P2 — Data splitting, packaging, security and maintainability
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="6. P2 — Data splitting, packaging, security and maintainability">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#p21-one-signer-split-helper-does-not-validate-supplied-overlap" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        P2.1 — One signer split helper does not validate supplied overlap
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#p22-dependency-definitions-disagree" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        P2.2 — Dependency definitions disagree
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#p23-dockerfile-builds-the-backend-but-not-the-frontend-bundle" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        P2.3 — Dockerfile builds the backend but not the frontend bundle
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#p24-manual-training-workflow-assumes-local-only-data-that-a-clean-runner-does-not-have" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        P2.4 — Manual training workflow assumes local-only data that a clean runner does not have
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#p25-local-datacheckpoint-policy-is-mostly-respected-document-setup-validation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        P2.5 — Local-data/checkpoint policy is mostly respected; document setup validation
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#p26-api-deployment-hardening-is-insufficient-for-public-exposure" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        P2.6 — API deployment hardening is insufficient for public exposure
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#p27-transcript-edits-and-token-deletion-need-a-defined-contract" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        P2.7 — Transcript edits and token deletion need a defined contract
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#7-result-artefacts-and-documentation-reconciliation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        7. Result artefacts and documentation reconciliation
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#8-recommended-repair-order" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        8. Recommended repair order
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#9-acceptance-checklist-for-a-thesis-ready-repository" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        9. Acceptance checklist for a thesis-ready repository
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#10-scope-and-limitations-of-this-audit" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        10. Scope and limitations of this audit
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+  
+  
+
+
+<h1 id="full-repository-audit-signflow-asl-recognition">Full Repository Audit — SignFlow ASL Recognition<a class="headerlink" href="#full-repository-audit-signflow-asl-recognition" title="Permanent link">&para;</a></h1>
+<p><strong>Audit date:</strong> 10 October 2026<br />
+<strong>Repository:</strong> <a href="https://github.com/RiduanAziz/Robust-Real-Time-Dynamic-Word-Level-American-Sign-Language-Recognition">RiduanAziz/Robust-Real-Time-Dynamic-Word-Level-American-Sign-Language-Recognition</a><br />
+<strong>Branch audited:</strong> <code>main</code><br />
+<strong>Audited HEAD:</strong> <code>9b2f4991dff8317b6cac681eaa976b63fd7f1035</code><br />
+<strong>Latest CI run reviewed:</strong> <a href="https://github.com/RiduanAziz/Robust-Real-Time-Dynamic-Word-Level-American-Sign-Language-Recognition/actions/runs/38043721844">Run #15</a></p>
+<h2 id="1-executive-assessment">1. Executive assessment<a class="headerlink" href="#1-executive-assessment" title="Permanent link">&para;</a></h2>
+<p>The repository contains most of the planned research and demo components: WLASL metadata/manifests, MediaPipe Tasks landmark extraction, normalization and temporal-dynamics pipeline, multiple model families, a robust holistic-fusion classifier, training/evaluation/robustness scripts, FastAPI and WebSocket services, and the SignFlow React/Vite interface.</p>
+<p>The principal problem is <strong>integration and evidence quality</strong>, not a lack of source files. At the audited HEAD, CI does not finish: frontend test startup fails before the Python test step. The WLASL-20 metrics are preliminary and not yet suitable as final thesis evidence because the test vocabulary coverage is incomplete, report artifacts disagree, and the robustness evaluator does not use the same mask-aware path as training/standard evaluation.</p>
+<h3 id="readiness-by-area">Readiness by area<a class="headerlink" href="#readiness-by-area" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>Area</th>
+<th>Assessment</th>
+<th>Why</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Repository layout</td>
+<td>Good foundation</td>
+<td>Clear <code>src/sign_language</code>, <code>scripts</code>, <code>configs</code>, <code>tests</code>, <code>app/frontend</code>, and <code>results</code> separation.</td>
+</tr>
+<tr>
+<td>Dataset bookkeeping</td>
+<td>Partial</td>
+<td>A processed manifest report exists, but a separate inventory describes an older/different scope and original split overlap. Runtime availability of local landmark files cannot be verified from GitHub.</td>
+</tr>
+<tr>
+<td>Model implementation</td>
+<td>Implemented, needs stronger validation</td>
+<td>Baseline and proposed architecture are present; saved weights are not in the public tree, and the end-to-end path needs exact config/preprocessing parity.</td>
+</tr>
+<tr>
+<td>Standard evaluation</td>
+<td>Partial</td>
+<td>Metrics are reported, but the WLASL-20 test manifest lacks one configured class and summaries conflict.</td>
+</tr>
+<tr>
+<td>Robustness evaluation</td>
+<td>Not yet reliable</td>
+<td>Mask propagation, perturbation semantics, config reconstruction and source report artifacts need correction.</td>
+</tr>
+<tr>
+<td>Live inference/API</td>
+<td>Partial</td>
+<td>Several lifecycle and payload-handling issues remain; consecutive gestures can leave stale mask frames after a commit.</td>
+</tr>
+<tr>
+<td>Frontend</td>
+<td>Built as source; verification blocked</td>
+<td>Latest CI uses Node 20 with a frontend dependency stack requiring newer Node. Robustness Lab feature acquisition is not reliably triggered when opening its tab.</td>
+</tr>
+<tr>
+<td>Reproducibility/docs</td>
+<td>Needs revision</td>
+<td>Status and TODO documentation claim successful verification despite latest CI failure and conflicting result artifacts.</td>
+</tr>
+</tbody>
+</table>
+<h2 id="2-p0-fix-before-further-thesis-experiments">2. P0 — Fix before further thesis experiments<a class="headerlink" href="#2-p0-fix-before-further-thesis-experiments" title="Permanent link">&para;</a></h2>
+<h3 id="p01-ci-stops-before-tests-run-because-the-node-version-is-too-old">P0.1 — CI stops before tests run because the Node version is too old<a class="headerlink" href="#p01-ci-stops-before-tests-run-because-the-node-version-is-too-old" title="Permanent link">&para;</a></h3>
+<p><strong>Evidence:</strong> <a href="https://github.com/RiduanAziz/Robust-Real-Time-Dynamic-Word-Level-American-Sign-Language-Recognition/blob/main/.github/workflows/ci.yml">.github/workflows/ci.yml</a> sets Node <code>20</code>. The lockfile resolves Vitest <code>5.0.3</code>, jsdom <code>30.1.2</code>, and undici <code>8.11.2</code>, which declare newer Node requirements. The log for <a href="https://github.com/RiduanAziz/Robust-Real-Time-Dynamic-Word-Level-American-Sign-Language-Recognition/actions/runs/38043721844">CI run #15</a> records <code>TypeError: webidl.util.markAsUncloneable is not a function</code> while Vitest starts its worker. The frontend step fails and the Python pytest step is skipped.</p>
+<p><strong>Fix:</strong> Upgrade <code>actions/setup-node</code> to Node 24 (or select compatible dependency versions and regenerate the lockfile for Node 20). Keep CI fail-fast, but do not report tests as passing unless the latest workflow actually completes.</p>
+<p><strong>Acceptance:</strong> <code>npm ci</code>, <code>npm test -- --run</code>, <code>npm run build</code>, and <code>pytest -q</code> all complete successfully on a clean runner. The final CI report must show all four steps, not just a configuration dry-run.</p>
+<h3 id="p02-websocket-mask-buffer-is-not-cleared-when-a-word-is-committed">P0.2 — WebSocket mask buffer is not cleared when a word is committed<a class="headerlink" href="#p02-websocket-mask-buffer-is-not-cleared-when-a-word-is-committed" title="Permanent link">&para;</a></h3>
+<p><strong>Evidence:</strong> <a href="https://github.com/RiduanAziz/Robust-Real-Time-Dynamic-Word-Level-American-Sign-Language-Recognition/blob/main/src/sign_language/api/main.py#L450-L500">API WebSocket handler</a> clears <code>sequence_buffer</code> after manual confirmation but does not clear <code>mask_buffer</code>. The automatic commit path around <a href="https://github.com/RiduanAziz/Robust-Real-Time-Dynamic-Word-Level-American-Sign-Language-Recognition/blob/main/src/sign_language/api/main.py#L950-L1005">the guided recognition state machine</a> also clears the sequence buffer without clearing the mask buffer. The neutral-pause and reset branches clear both, but a new gesture can begin before a neutral pause occurs.</p>
+<p>The sequence and mask deques can then have different lengths. Prediction preprocessing may fail on mask/sequence alignment, with the exception logged and skipped; the new gesture can go unrecognized until buffers become aligned again.</p>
+<p><strong>Fix:</strong> Whenever a gesture's sequence buffer is cleared, clear <code>mask_buffer</code> too. Review <code>candidate_history</code>, <code>wrist_history</code>, and <code>speed_history</code> for each transition so old movement cannot contaminate the next gesture.</p>
+<p><strong>Acceptance:</strong> Add WebSocket tests for auto-commit followed immediately by another gesture, manual confirm followed by another gesture, reject, pause, reset, and repeated-sign recognition. Assert sequence and mask lengths match before every inference call.</p>
+<h3 id="p03-current-results-are-not-yet-defensible-as-final-wlasl-20-thesis-results">P0.3 — Current results are not yet defensible as final WLASL-20 thesis results<a class="headerlink" href="#p03-current-results-are-not-yet-defensible-as-final-wlasl-20-thesis-results" title="Permanent link">&para;</a></h3>
+<p><strong>Evidence:</strong>
+- <a href="https://github.com/RiduanAziz/Robust-Real-Time-Dynamic-Word-Level-American-Sign-Language-Recognition/blob/main/results/wlasl20_baseline_evaluation.json"><code>wlasl20_baseline_evaluation.json</code></a> reports 78 test samples, 20 configured classes, Top-1 accuracy 10.26%, macro-F1 0.0768.
+- <a href="https://github.com/RiduanAziz/Robust-Real-Time-Dynamic-Word-Level-American-Sign-Language-Recognition/blob/main/results/wlasl20_proposed_evaluation.json"><code>wlasl20_proposed_evaluation.json</code></a> reports 78 samples, Top-1 accuracy 19.23%, macro-F1 0.2015.
+- Filtering the committed test manifest to the 20 configured glosses gives 78 items, but only <strong>19 observed classes</strong>; <code>go</code> has no test sample. Thus it is not evidence of complete held-out coverage for all 20 classes.
+- <a href="https://github.com/RiduanAziz/Robust-Real-Time-Dynamic-Word-Level-American-Sign-Language-Recognition/blob/main/results/research_summary.md"><code>research_summary.md</code></a> reports a different experiment with 20 samples, 20% accuracy and macro-F1 0.0556. The older <code>evaluation_report.json</code> and <code>proposed_evaluation_report.json</code> also report that separate 20-sample/100-class run. <code>research_summary.txt</code> describes yet another run with 194 samples and a different loss/metric set.
+- The comparative markdown claims 74 validation items, while the committed training metrics record <code>num_samples: 69</code> in validation. This difference must be explained by an explicit count of records actually loaded, especially missing local <code>.npz</code> files.</p>
+<p><strong>Fix:</strong> Do not manually edit output summaries. Re-run both model evaluations from the same configured WLASL-20 manifest and the exact same available sample IDs. Add a hard evaluation preflight that prints manifest rows, valid landmark files, records excluded by vocabulary, unknown labels, observed test classes, zero-support classes, signer overlap, and final evaluated sample IDs. Fail or clearly warn if a configured class has no test support. Calculate macro metrics over an explicit <code>labels=range(num_classes)</code> list and report both configured and observed class counts.</p>
+<p><strong>Acceptance:</strong> A single run manifest identifies the experiment/config, vocabulary order, seed, checkpoint file hash, preprocessing/schema version, signer lists, per-split manifest counts, actually loaded counts, missing files, test IDs, metrics and timestamp. Regenerated tables and summaries must be created only from these machine-readable outputs.</p>
+<h2 id="3-p1-research-pipeline-correctness">3. P1 — Research pipeline correctness<a class="headerlink" href="#3-p1-research-pipeline-correctness" title="Permanent link">&para;</a></h2>
+<h3 id="p11-dedicated-robustness-evaluation-is-not-using-the-same-modelpreprocessing-path">P1.1 — Dedicated robustness evaluation is not using the same model/preprocessing path<a class="headerlink" href="#p11-dedicated-robustness-evaluation-is-not-using-the-same-modelpreprocessing-path" title="Permanent link">&para;</a></h3>
+<p><strong>Evidence:</strong> <a href="https://github.com/RiduanAziz/Robust-Real-Time-Dynamic-Word-Level-American-Sign-Language-Recognition/blob/main/scripts/evaluate_robustness.py"><code>scripts/evaluate_robustness.py</code></a> loads model weights and some checkpoint fields but does not restore the complete saved checkpoint configuration as the standard evaluator does. All clean/noisy evaluation loops call <code>pipeline.normalize_sequence(...)</code> and then <code>model(t_in)</code> without passing the normalized visibility mask. In contrast, <a href="https://github.com/RiduanAziz/Robust-Real-Time-Dynamic-Word-Level-American-Sign-Language-Recognition/blob/main/scripts/evaluate.py"><code>scripts/evaluate.py</code></a> restores saved model/dataset settings and passes masks into the model.</p>
+<p>For the proposed fusion model, this means the dedicated robustness results are not necessarily evaluating the same mask-aware model path as training and standard evaluation. The default <code>configs/base.yaml</code> is the temporal transformer, so using it with a proposed checkpoint may also build the wrong architecture unless the user remembers to override the config.</p>
+<p><strong>Fix:</strong> Factor checkpoint loading, saved-config reconstruction, preprocessing, mask generation, and prediction into one shared utility used by standard evaluation, robustness evaluation, desktop realtime, and API inference. Use <code>normalize_sequence_with_mask()</code> and pass <code>mask=</code> consistently. Assert model name, input dimension, sequence length, class order and feature schema match the checkpoint metadata.</p>
+<h3 id="p12-robustness-operators-are-not-consistently-paired-with-masks-or-physical-perturbations">P1.2 — Robustness operators are not consistently paired with masks or physical perturbations<a class="headerlink" href="#p12-robustness-operators-are-not-consistently-paired-with-masks-or-physical-perturbations" title="Permanent link">&para;</a></h3>
+<p><strong>Evidence:</strong> <a href="https://github.com/RiduanAziz/Robust-Real-Time-Dynamic-Word-Level-American-Sign-Language-Recognition/blob/main/src/sign_language/robustness.py"><code>src/sign_language/robustness.py</code></a>:</p>
+<ul>
+<li><code>translation_noise()</code> samples a separate offset for each flattened feature dimension (<code>size=(1, array.shape[-1])</code>). This is not a physical global translation of a 3D landmark skeleton. Use a shared <code>(x, y, z)</code> displacement across landmarks/frames (or precisely document another perturbation definition).</li>
+<li><code>landmark_dropout()</code> can mutate a passed mask but returns only the modified coordinate array. The offline evaluator currently invokes spatial noise without passing a mask, then retains the original mask. Dropped landmarks can therefore still be treated as observed.</li>
+<li>The evaluator uses a fixed seed (<code>42</code>) for every sample and noise case, applying repeated random patterns across samples. Prefer a deterministic sample-derived seed and log it, or repeat independent seeds and report variability.</li>
+<li><code>scale_noise()</code> multiplies raw coordinates uniformly; subsequent center/scale normalization can largely remove that change. The experiment may therefore measure normalization invariance rather than robustness to residual scale error. Define the perturbation stage and interpretation before reporting the result.</li>
+</ul>
+<p><strong>Fix:</strong> Have perturbation functions return <code>(sequence, mask)</code> when mask changes; align both through frame-drop, duplication, truncation and dropout. Add unit tests for severity zero, severity bounds, deterministic behavior, shape preservation, mask alignment and expected geometric effect. Decide whether perturbations are applied in raw-coordinate space or after normalization and record the choice.</p>
+<h3 id="p13-missing-masks-can-be-converted-into-all-valid-masks-in-preprocessing">P1.3 — Missing masks can be converted into all-valid masks in preprocessing<a class="headerlink" href="#p13-missing-masks-can-be-converted-into-all-valid-masks-in-preprocessing" title="Permanent link">&para;</a></h3>
+<p><strong>Evidence:</strong> <a href="https://github.com/RiduanAziz/Robust-Real-Time-Dynamic-Word-Level-American-Sign-Language-Recognition/blob/main/src/sign_language/landmarks/pipeline.py"><code>src/sign_language/landmarks/pipeline.py</code></a> calls <code>normalize_landmarks(arr, mask=mask)</code> and subsequently <code>resample_sequence(..., mask=mask)</code>. When <code>mask=None</code>, normalization can infer visible points from coordinates, but the resampler receives <code>None</code> and creates an all-ones mask. Missing landmarks inferred as zeros can thus be labelled valid downstream. This matters for the <code>/predict</code> endpoint and live robustness endpoint because their request schemas do not carry an explicit mask.</p>
+<p><strong>Fix:</strong> Resolve a mask once at the preprocessing boundary and preserve it through normalization, interpolation, derivatives and inference. For a missing mask, use a clearly defined fallback derived from non-finite/zero coordinates only if that convention is valid for the selected representation; otherwise require an explicit mask. Do not infer visibility from coordinate magnitude alone if a true coordinate can legitimately be zero.</p>
+<h3 id="p14-evaluation-must-report-actual-loaded-data-not-just-manifest-counts">P1.4 — Evaluation must report actual loaded data, not just manifest counts<a class="headerlink" href="#p14-evaluation-must-report-actual-loaded-data-not-just-manifest-counts" title="Permanent link">&para;</a></h3>
+<p><strong>Evidence:</strong> <a href="https://github.com/RiduanAziz/Robust-Real-Time-Dynamic-Word-Level-American-Sign-Language-Recognition/blob/main/src/sign_language/data/dataset.py"><code>build_dataset_from_manifest</code></a> silently skips entries whose corresponding landmark <code>.npz</code> file is absent. Therefore, manifest counts can differ from the dataset actually evaluated. Current training metrics reporting 69 validation records versus comparative documentation claiming 74 illustrates why these counts should be explicit.</p>
+<p><strong>Fix:</strong> Add an audit/preflight report listing missing <code>.npz</code> items and class/signers; support a strict flag for experiments that should stop on any expected missing input. Do not overwrite a previous result if the run failed or evaluated zero/partial data. Record sample IDs actually used.</p>
+<h3 id="p15-conflicting-data-inventory-reports-need-scope-labels-and-regeneration">P1.5 — Conflicting data inventory reports need scope labels and regeneration<a class="headerlink" href="#p15-conflicting-data-inventory-reports-need-scope-labels-and-regeneration" title="Permanent link">&para;</a></h3>
+<p><strong>Evidence:</strong> <a href="https://github.com/RiduanAziz/Robust-Real-Time-Dynamic-Word-Level-American-Sign-Language-Recognition/blob/main/data/manifests/dataset_report.json"><code>data/manifests/dataset_report.json</code></a> describes a processed subset of 11,980 samples, 2,000 classes and 78 signers, with signer-disjoint processed manifests (5,723 train / 2,247 validation / 4,010 test). <a href="https://github.com/RiduanAziz/Robust-Real-Time-Dynamic-Word-Level-American-Sign-Language-Recognition/blob/main/results/dataset_inventory.json"><code>results/dataset_inventory.json</code></a> describes a broader original metadata inventory of 21,083 instances/119 signers and original split overlaps, with status text saying the signer-independent construction is incomplete.</p>
+<p>These can describe different stages/scopes, but the repository does not make that distinction sufficiently prominent. Treating these numbers as one dataset split would be misleading.</p>
+<p><strong>Fix:</strong> Define canonical stages (source metadata inventory, local-video availability, extracted-feature inventory, final split, per-experiment vocabulary subset). Regenerate reports from data and make stage/scope, generation command, timestamp and schema version explicit. Keep the source inventory for context, but mark it as pre-filter/source metadata and do not use its original split labels for the final thesis evaluation.</p>
+<h2 id="4-p1-live-api-and-frontend-integration">4. P1 — Live API and frontend integration<a class="headerlink" href="#4-p1-live-api-and-frontend-integration" title="Permanent link">&para;</a></h2>
+<h3 id="p11-robustness-lab-may-use-an-empty-or-stale-feature-buffer">P1.1 — Robustness Lab may use an empty or stale feature buffer<a class="headerlink" href="#p11-robustness-lab-may-use-an-empty-or-stale-feature-buffer" title="Permanent link">&para;</a></h3>
+<p><strong>Evidence:</strong> <a href="https://github.com/RiduanAziz/Robust-Real-Time-Dynamic-Word-Level-American-Sign-Language-Recognition/blob/main/app/frontend/src/App.tsx#L550-L585"><code>App.tsx</code></a> passes <code>replayFrames</code> into <code>RobustnessLab</code> as <code>recentFeatures</code>. The replay buffer is explicitly requested by the Gesture Replay tab handler, but switching to the Robustness Lab tab only changes the active tab. This means the lab can show an empty/stale sequence unless the replay buffer has first been requested elsewhere.</p>
+<p><strong>Fix:</strong> Maintain a dedicated rolling client-side feature buffer as frames arrive, or request replay data whenever entering Robustness Lab and show a loading/age indicator until fresh features arrive. Add an integration test proving the lab receives current features without navigating through Gesture Replay first.</p>
+<h3 id="p12-robustness-endpoint-tests-prediction-consistency-not-labelled-robustness">P1.2 — Robustness endpoint tests prediction consistency, not labelled robustness<a class="headerlink" href="#p12-robustness-endpoint-tests-prediction-consistency-not-labelled-robustness" title="Permanent link">&para;</a></h3>
+<p><strong>Evidence:</strong> <a href="https://github.com/RiduanAziz/Robust-Real-Time-Dynamic-Word-Level-American-Sign-Language-Recognition/blob/main/src/sign_language/api/main.py#L260-L345"><code>run_robustness_experiment()</code></a> compares clean and perturbed prediction labels for one live sequence. Its note correctly says ground-truth accuracy belongs to offline labelled benchmarks.</p>
+<p><strong>Fix:</strong> Keep this feature named and presented as a <strong>single-sequence consistency diagnostic</strong>, not as measured research robustness. Use <code>scripts/evaluate_robustness.py</code> (after fixing it) for benchmark claims based on labelled test samples and matched sample IDs. The UI should clearly separate the two.</p>
+<h3 id="p13-websocket-urls-are-local-first-rather-than-deployment-host-aware">P1.3 — WebSocket URLs are local-first rather than deployment-host aware<a class="headerlink" href="#p13-websocket-urls-are-local-first-rather-than-deployment-host-aware" title="Permanent link">&para;</a></h3>
+<p><strong>Evidence:</strong> <a href="https://github.com/RiduanAziz/Robust-Real-Time-Dynamic-Word-Level-American-Sign-Language-Recognition/blob/main/app/frontend/src/App.tsx#L1-L45"><code>DEFAULT_SETTINGS</code> and WebSocket initialization in <code>App.tsx</code></a> use localhost by default for HTTP deployments; the secure branch uses <code>wss://${window.location.hostname}:8000/ws/live</code>. This will be wrong for many deployments where the frontend and API share one host/port behind a reverse proxy, or where the API has a different hostname/port.</p>
+<p><strong>Fix:</strong> Build the WebSocket URL from an explicit environment setting or from the current origin plus a documented proxy path; choose <code>ws</code>/<code>wss</code> based on page protocol. Preserve an explicit localhost default only for local development. Add tests for local dev and same-origin production.</p>
+<h3 id="p14-predict-performs-two-inference-calls-for-one-request">P1.4 — <code>/predict</code> performs two inference calls for one request<a class="headerlink" href="#p14-predict-performs-two-inference-calls-for-one-request" title="Permanent link">&para;</a></h3>
+<p><strong>Evidence:</strong> <a href="https://github.com/RiduanAziz/Robust-Real-Time-Dynamic-Word-Level-American-Sign-Language-Recognition/blob/main/src/sign_language/api/main.py#L199-L235"><code>predict()</code> in <code>main.py</code></a> calls <code>predict_label(...)</code> and then <code>predict_logits(...)</code> separately. <code>predict_label()</code> itself calls <code>predict_logits()</code>, so the same input is processed twice.</p>
+<p><strong>Fix:</strong> Add a single predictor method that returns logits and prediction details from one forward pass, or reuse logits to derive both outputs. Test that the model's forward path is called once per HTTP request.</p>
+<h3 id="p15-rejected-candidates-leave-buffer-state-ambiguous">P1.5 — Rejected candidates leave buffer state ambiguous<a class="headerlink" href="#p15-rejected-candidates-leave-buffer-state-ambiguous" title="Permanent link">&para;</a></h3>
+<p><strong>Evidence:</strong> The <code>reject_candidate</code> path clears the candidate/history and sets <code>WAITING</code>, but does not clear <code>sequence_buffer</code>/<code>mask_buffer</code> (see <a href="https://github.com/RiduanAziz/Robust-Real-Time-Dynamic-Word-Level-American-Sign-Language-Recognition/blob/main/src/sign_language/api/main.py#L470-L488">WebSocket handler</a>). It can keep revisiting the same rejected gesture depending on motion/state conditions.</p>
+<p><strong>Fix:</strong> Specify rejection semantics. Either discard both sequence/mask buffers and motion histories on reject, or require a new neutral boundary before capture restarts. Exercise the transition in a protocol/state-machine test.</p>
+<h2 id="5-p1-model-and-metric-interpretation-risks">5. P1 — Model and metric interpretation risks<a class="headerlink" href="#5-p1-model-and-metric-interpretation-risks" title="Permanent link">&para;</a></h2>
+<h3 id="p11-proposed-model-mask-pooling-is-only-partly-modality-aware">P1.1 — Proposed model mask pooling is only partly modality-aware<a class="headerlink" href="#p11-proposed-model-mask-pooling-is-only-partly-modality-aware" title="Permanent link">&para;</a></h3>
+<p><strong>Evidence:</strong> <a href="https://github.com/RiduanAziz/Robust-Real-Time-Dynamic-Word-Level-American-Sign-Language-Recognition/blob/main/src/sign_language/models/fusion.py#L160-L237"><code>RobustHolisticFusionClassifier</code></a> reduces a feature-level mask to one temporal validity mask by checking whether <em>any</em> feature is present at each frame, then uses that same temporal mask for all four modality pools. A frame with pose/face present but a hand absent can count as valid for the hand temporal stream too.</p>
+<p><strong>Fix:</strong> Consider computing per-modality frame-validity masks and using the relevant mask for each modality's temporal pooling/gating. If partial-modality frames are intended to contribute as zeros, document that design and ablate it against per-modality masking. Add tests where one modality is absent in some or all frames.</p>
+<h3 id="p12-checkpoint-choice-is-implicit-and-potentially-surprising">P1.2 — Checkpoint choice is implicit and potentially surprising<a class="headerlink" href="#p12-checkpoint-choice-is-implicit-and-potentially-surprising" title="Permanent link">&para;</a></h3>
+<p><strong>Evidence:</strong> The API startup candidate list in <a href="https://github.com/RiduanAziz/Robust-Real-Time-Dynamic-Word-Level-American-Sign-Language-Recognition/blob/main/src/sign_language/api/main.py#L35-L75"><code>main.py</code></a> prioritizes <code>models/temporal_transformer_trained.pt</code>, then <code>temporal_transformer_best.pt</code>, and only then <code>robust_holistic_fusion_best.pt</code>. If more than one local checkpoint exists, startup may silently use the older/default model rather than the proposed thesis model.</p>
+<p><strong>Fix:</strong> In thesis/demo runs, set <code>MODEL_PATH</code> and <code>CONFIG_PATH</code> explicitly. Log the checkpoint path, checkpoint hash, model name, class count, vocabulary and preprocessing schema in startup logs and <code>/model/info</code>. Consider requiring a configured checkpoint instead of silently choosing from a priority list.</p>
+<h2 id="6-p2-data-splitting-packaging-security-and-maintainability">6. P2 — Data splitting, packaging, security and maintainability<a class="headerlink" href="#6-p2-data-splitting-packaging-security-and-maintainability" title="Permanent link">&para;</a></h2>
+<h3 id="p21-one-signer-split-helper-does-not-validate-supplied-overlap">P2.1 — One signer split helper does not validate supplied overlap<a class="headerlink" href="#p21-one-signer-split-helper-does-not-validate-supplied-overlap" title="Permanent link">&para;</a></h3>
+<p><strong>Evidence:</strong> <a href="https://github.com/RiduanAziz/Robust-Real-Time-Dynamic-Word-Level-American-Sign-Language-Recognition/blob/main/src/sign_language/data/splitting.py#L101-L128"><code>signer_aware_split()</code></a> checks that all signers are assigned somewhere but does not reject overlaps between provided train/validation/test signer sets or unknown signers. The sibling <code>split_manifest_by_signer()</code> has stronger checks.</p>
+<p><strong>Fix:</strong> Reuse one shared signer-assignment validator for every split utility; test overlap, unknown signer, missing signer and empty splits.</p>
+<h3 id="p22-dependency-definitions-disagree">P2.2 — Dependency definitions disagree<a class="headerlink" href="#p22-dependency-definitions-disagree" title="Permanent link">&para;</a></h3>
+<p><strong>Evidence:</strong> <a href="https://github.com/RiduanAziz/Robust-Real-Time-Dynamic-Word-Level-American-Sign-Language-Recognition/blob/main/requirements.txt"><code>requirements.txt</code></a> contains exact pins, while <a href="https://github.com/RiduanAziz/Robust-Real-Time-Dynamic-Word-Level-American-Sign-Language-Recognition/blob/main/pyproject.toml"><code>pyproject.toml</code></a> uses broad version ranges and <a href="https://github.com/RiduanAziz/Robust-Real-Time-Dynamic-Word-Level-American-Sign-Language-Recognition/blob/main/environment.yml"><code>environment.yml</code></a> floats most dependencies. CI installs from <code>pyproject.toml</code>, so it does not verify the exact <code>requirements.txt</code>/Conda environment users may follow.</p>
+<p><strong>Fix:</strong> Declare one tested installation path as canonical. If maintaining both pip and Conda, derive them from a documented supported set, record the tested OS/Python/framework versions, and run install smoke tests for each supported path. Avoid claiming platform compatibility that has not been tested.</p>
+<h3 id="p23-dockerfile-builds-the-backend-but-not-the-frontend-bundle">P2.3 — Dockerfile builds the backend but not the frontend bundle<a class="headerlink" href="#p23-dockerfile-builds-the-backend-but-not-the-frontend-bundle" title="Permanent link">&para;</a></h3>
+<p><strong>Evidence:</strong> <a href="https://github.com/RiduanAziz/Robust-Real-Time-Dynamic-Word-Level-American-Sign-Language-Recognition/blob/main/Dockerfile"><code>Dockerfile</code></a> copies Python sources but does not build or copy <code>app/frontend/dist</code>. <a href="https://github.com/RiduanAziz/Robust-Real-Time-Dynamic-Word-Level-American-Sign-Language-Recognition/blob/main/docker-compose.yml"><code>docker-compose.yml</code></a> bind-mounts the host <code>dist</code> directory. A clean standalone image therefore does not automatically include the production UI.</p>
+<p><strong>Fix:</strong> Either document the host-built <code>dist</code> requirement explicitly or use a multi-stage Docker build that builds the frontend and copies its output into the runtime image. Add a container smoke test for <code>/</code> and <code>/health</code>.</p>
+<h3 id="p24-manual-training-workflow-assumes-local-only-data-that-a-clean-runner-does-not-have">P2.4 — Manual training workflow assumes local-only data that a clean runner does not have<a class="headerlink" href="#p24-manual-training-workflow-assumes-local-only-data-that-a-clean-runner-does-not-have" title="Permanent link">&para;</a></h3>
+<p><strong>Evidence:</strong> <a href="https://github.com/RiduanAziz/Robust-Real-Time-Dynamic-Word-Level-American-Sign-Language-Recognition/blob/main/.github/workflows/training-validation.yml"><code>training-validation.yml</code></a> runs full training on GitHub-hosted infrastructure, while raw videos, extracted <code>data/landmarks/*.npz</code>, checkpoints and MediaPipe <code>.task</code> assets are absent from the public tree/ignored locally.</p>
+<p><strong>Fix:</strong> Make this workflow a synthetic-data smoke-training job or a clearly documented manual workflow that requires a secure, explicit data/artifact input. Do not commit the large dataset or checkpoint just to make CI pass.</p>
+<h3 id="p25-local-datacheckpoint-policy-is-mostly-respected-document-setup-validation">P2.5 — Local-data/checkpoint policy is mostly respected; document setup validation<a class="headerlink" href="#p25-local-datacheckpoint-policy-is-mostly-respected-document-setup-validation" title="Permanent link">&para;</a></h3>
+<p><strong>Evidence:</strong> <a href="https://github.com/RiduanAziz/Robust-Real-Time-Dynamic-Word-Level-American-Sign-Language-Recognition/blob/main/.gitignore"><code>.gitignore</code></a> ignores raw/processed video folders, <code>data/landmarks</code>, features/frames, <code>*.pt</code>, <code>*.pth</code>, <code>*.ckpt</code>, <code>*.task</code> and training outputs. The public tree does not contain the landmark <code>.npz</code> corpus, raw clips, model checkpoints or the MediaPipe task asset.</p>
+<p><strong>Recommendation:</strong> Keep this policy. Add a setup/check command that validates local expected paths, counts usable landmark files, validates a sample <code>.npz</code> schema, checks the MediaPipe asset and checkpoint/config consistency, and reports missing items without printing secrets or requiring large files in GitHub.</p>
+<h3 id="p26-api-deployment-hardening-is-insufficient-for-public-exposure">P2.6 — API deployment hardening is insufficient for public exposure<a class="headerlink" href="#p26-api-deployment-hardening-is-insufficient-for-public-exposure" title="Permanent link">&para;</a></h3>
+<p><strong>Evidence:</strong> <a href="https://github.com/RiduanAziz/Robust-Real-Time-Dynamic-Word-Level-American-Sign-Language-Recognition/blob/main/src/sign_language/api/main.py#L108-L123"><code>main.py</code></a> configures permissive CORS (<code>allow_origins=["*"]</code>, credentials enabled). Prediction payloads also lack explicit maximum frame/feature-count limits in the visible request model. This may be tolerable for a local research tool, but it should not be exposed directly to the public internet unchanged.</p>
+<p><strong>Fix before public deployment:</strong> Restrict CORS origins, validate maximum sequence length and feature dimension, cap WebSocket frame payload sizes, add rate limits/authentication where appropriate, and put the service behind a reverse proxy/TLS configuration. Keep loopback-only use for local development.</p>
+<h3 id="p27-transcript-edits-and-token-deletion-need-a-defined-contract">P2.7 — Transcript edits and token deletion need a defined contract<a class="headerlink" href="#p27-transcript-edits-and-token-deletion-need-a-defined-contract" title="Permanent link">&para;</a></h3>
+<p><strong>Evidence:</strong> <a href="https://github.com/RiduanAziz/Robust-Real-Time-Dynamic-Word-Level-American-Sign-Language-Recognition/blob/main/app/frontend/src/components/TranscriptWorkspace.tsx#L35-L57"><code>TranscriptWorkspace.tsx</code></a> appends newly committed tokens to editable text, but the synchronization logic mainly reacts to token-count increases and a transition to zero tokens. Removing/replacing tokens without increasing token count may intentionally leave free-text edits untouched, but this behavior should be explicit and tested.</p>
+<p><strong>Fix:</strong> Decide whether the transcript textarea is a manual document independent of token chips or a projection of the token list. Then test word removal, undo, new session, manual correction, punctuation and new token append under that contract.</p>
+<h2 id="7-result-artefacts-and-documentation-reconciliation">7. Result artefacts and documentation reconciliation<a class="headerlink" href="#7-result-artefacts-and-documentation-reconciliation" title="Permanent link">&para;</a></h2>
+<p>The following committed files do not currently form one coherent, reproducible experiment:</p>
+<ul>
+<li><code>results/wlasl20_baseline_evaluation.json</code> and <code>results/wlasl20_proposed_evaluation.json</code>: WLASL-20 outputs, <code>n=78</code> each.</li>
+<li><code>results/evaluation_report.json</code> and <code>results/proposed_evaluation_report.json</code>: older, separate experiment, <code>n=20</code>, <code>num_classes=100</code>.</li>
+<li><code>results/research_summary.md</code>: summary for the 20-sample experiment with unchanged .20 accuracy in every robustness row.</li>
+<li><code>results/research_summary.txt</code>: another distinct run with 194 evaluation samples.</li>
+<li><code>results/wlasl20_comparative_study.md</code>: claims detailed 20-class comparison and robustness outcomes, but expects <code>results/robustness/wlasl20_baseline_report.json</code> and <code>...proposed_report.json</code>; those files are not present in the public Git tree.</li>
+<li><code>scripts/generate_comparative_study.py</code> hardcodes the 122/74/78 protocol counts and assumes all robustness records exist; a clean clone cannot regenerate that comparison without those local JSON files.</li>
+<li><code>docs/PROJECT_STATUS.md</code> claims all recent repairs and test suites are validated, despite CI run #15 failing before Python tests. <code>docs/MASTER_TODO.md</code> still refers to an earlier 34-test baseline and reports that are not in the public tree.</li>
+</ul>
+<p><strong>Action:</strong> Keep a lightweight, machine-readable experiment manifest for every run. Give each experiment a unique directory or run ID, and never overwrite a report for a different vocabulary or dataset stage. Generate markdown/figures only from raw JSON produced by that same run. Update <code>PROJECT_STATUS.md</code>, <code>PROJECT_AUDIT.md</code>, <code>MASTER_TODO.md</code>, and README only after verification, marking each item as <strong>implemented</strong>, <strong>unit tested</strong>, <strong>validated on local real data</strong>, or <strong>reproduced end-to-end</strong>—these are different levels of evidence.</p>
+<h2 id="8-recommended-repair-order">8. Recommended repair order<a class="headerlink" href="#8-recommended-repair-order" title="Permanent link">&para;</a></h2>
+<ol>
+<li><strong>Fix CI first:</strong> Node version/dependency compatibility; rerun frontend tests/build and pytest on current HEAD.</li>
+<li><strong>Fix real-time state correctness:</strong> clear sequence and mask buffers in all commit/reject/reset/boundary transitions; add sequential gesture integration tests.</li>
+<li><strong>Unify model loading and preprocessing:</strong> saved-config reconstruction, label order, feature dimension, sequence length, schema and masks must be the same across training, standard evaluation, robustness evaluation and live inference.</li>
+<li><strong>Correct robustness transforms:</strong> physically meaningful translation, dropout mask return/alignment, deterministic per-sample seeds, input validation and explicit perturbation stage.</li>
+<li><strong>Audit the WLASL-20 split locally:</strong> with local files only, report manifest rows versus valid <code>.npz</code> files, signer disjointness, vocabulary support per split, missing class coverage and exact IDs evaluated.</li>
+<li><strong>Retrain or re-evaluate both models on identical samples:</strong> preserve split/checkpoint metadata and record the best checkpoint selection rule.</li>
+<li><strong>Regenerate every metric/report from the new raw results:</strong> remove or clearly archive conflicting older summaries; do not carry over current robustness tables as thesis conclusions.</li>
+<li><strong>Complete app integration validation:</strong> Robustness Lab data freshness, mode switching, WebSocket reconnect/config behavior, consecutive gestures, browser camera permission/error paths and frontend production build/API paths.</li>
+<li><strong>Update setup, Docker and documentation:</strong> verify clean install and local-only data checks. Do not upload large raw data, extracted landmark arrays, checkpoints or <code>.task</code> files to GitHub.</li>
+<li><strong>Only then prepare final thesis slides:</strong> use exact sample counts, observed class coverage, final metrics, labelled robustness accuracy/F1 degradation and latency/FPS measured under stated hardware/software conditions.</li>
+</ol>
+<h2 id="9-acceptance-checklist-for-a-thesis-ready-repository">9. Acceptance checklist for a thesis-ready repository<a class="headerlink" href="#9-acceptance-checklist-for-a-thesis-ready-repository" title="Permanent link">&para;</a></h2>
+<ul>
+<li>[ ] Latest CI run passes Python tests, frontend tests and frontend production build.</li>
+<li>[ ] Clean setup can identify the required local dataset, landmark files, checkpoint and MediaPipe asset, and reports what is missing.</li>
+<li>[ ] All three final manifests are deterministic, validated, signer-disjoint and have documented vocabulary/class support.</li>
+<li>[ ] Actual evaluated sample IDs and missing-input counts are exported for every model/run.</li>
+<li>[ ] Baseline and proposed use the same test IDs, label mapping, preprocessing, seed policy and evaluation metric definitions.</li>
+<li>[ ] The configured WLASL-20 class set is fully represented in the test data or missing classes are explicitly excluded with a justified revised protocol.</li>
+<li>[ ] Offline evaluation and robustness evaluation share the same checkpoint reconstruction and mask-aware preprocessing code.</li>
+<li>[ ] Perturbation operators preserve mask alignment and their mathematical definitions match their names/descriptions.</li>
+<li>[ ] Raw robustness JSON exists for every reported baseline/proposed experiment and can regenerate the published table.</li>
+<li>[ ] Live app passes tests for commit/reject/reset/pause/repeated gestures and does not reuse stale sequence or masks.</li>
+<li>[ ] Local browser, production bundle and deployment WebSocket URLs are tested.</li>
+<li>[ ] The report and README accurately distinguish implemented, tested, locally validated and end-to-end reproduced features.</li>
+<li>[ ] Public repo contains no large local dataset, <code>.npz</code> corpus, checkpoints or <code>.task</code> model asset.</li>
+</ul>
+<h2 id="10-scope-and-limitations-of-this-audit">10. Scope and limitations of this audit<a class="headerlink" href="#10-scope-and-limitations-of-this-audit" title="Permanent link">&para;</a></h2>
+<p>This audit inspected the repository tree, source files, configs, tracked result artefacts, documentation, and latest CI logs available on GitHub at the recorded HEAD. It did <strong>not</strong> execute training or inference on the user's local <code>data/landmarks</code> files or local model checkpoints, because those assets are intentionally not present in the public repository. Therefore, claims about the local corpus/checkpoints, current GPU training, webcam accuracy, or end-to-end runtime remain to be checked in the user's local environment. The reported findings distinguish source-level/CI-confirmed issues from local-data validation work that still needs execution.</p>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+  <script>var tabs=__md_get("__tabs");if(Array.isArray(tabs))e:for(var set of document.querySelectorAll(".tabbed-set")){var labels=set.querySelector(".tabbed-labels");for(var tab of tabs)for(var label of labels.getElementsByTagName("label"))if(label.innerText.trim()===tab){var input=document.getElementById(label.htmlFor);input.checked=!0;continue e}}</script>
+
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+          <button type="button" class="md-top md-icon" data-md-component="top" hidden>
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8z"/></svg>
+  Back to top
+</button>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "..", "features": ["navigation.instant", "navigation.tracking", "navigation.tabs", "navigation.sections", "navigation.expand", "navigation.top", "search.suggest", "search.highlight", "search.share", "content.code.copy", "content.tabs.link"], "search": "../assets/javascripts/workers/search.a7633da7.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+    
+    
+      <script src="../assets/javascripts/bundle.c21346df.min.js"></script>
+      
+        <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+      
+        <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+      
+    
+  </body>
+</html>
