@@ -52,8 +52,8 @@ const DEFAULT_SETTINGS: AppSettings = {
   mirrorCamera: true,
   showLandmarkGuide: true,
   wsUrl:
-    typeof window !== 'undefined' && window.location.protocol === 'https:'
-      ? `wss://${window.location.hostname}:8000/ws/live`
+    typeof window !== 'undefined' && window.location.host && !window.location.origin.includes(':5173')
+      ? `${window.location.protocol === 'https:' ? 'wss:' : 'ws:'}//${window.location.host}/ws/live`
       : 'ws://127.0.0.1:8000/ws/live',
 };
 
@@ -385,6 +385,7 @@ export const App: React.FC = () => {
               setRightBox(msg.right_box || null);
               if (msg.quality) setQuality(msg.quality);
               if (msg.state_code) setStateCode(msg.state_code);
+              setLandmarksStatus(msg);
               break;
 
             case 'live_prediction':
@@ -618,6 +619,7 @@ export const App: React.FC = () => {
               selectedDeviceId={selectedDeviceId}
               onSelectDevice={setSelectedDeviceId}
               onDevicesEnumerated={setVideoDevices}
+              onStateCodeChange={(code) => setStateCode(code)}
             />
           </div>
 

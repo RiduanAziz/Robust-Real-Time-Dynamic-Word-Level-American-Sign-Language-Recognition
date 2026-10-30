@@ -2,6 +2,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import {
   Camera,
   CameraOff,
+  SwitchCamera,
   FlipHorizontal,
   Eye,
   EyeOff,
@@ -47,6 +48,7 @@ interface CameraPanelProps {
   selectedDeviceId?: string;
   onSelectDevice?: (deviceId: string) => void;
   onDevicesEnumerated?: (devices: MediaDeviceInfo[]) => void;
+  onStateCodeChange?: (code: RecognitionStateCode) => void;
 }
 
 const HAND_CONNECTIONS = [
@@ -101,6 +103,7 @@ export const CameraPanel: React.FC<CameraPanelProps> = ({
   selectedDeviceId: controlledDeviceId,
   onSelectDevice,
   onDevicesEnumerated,
+  onStateCodeChange,
 }) => {
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const captureCanvasRef = useRef<HTMLCanvasElement | null>(null);
@@ -142,7 +145,12 @@ export const CameraPanel: React.FC<CameraPanelProps> = ({
           onDevicesEnumerated(videoDevs);
         }
         if (videoDevs.length > 0 && !currentDeviceId) {
-          handleDeviceChange(videoDevs[0].deviceId);
+          const frontCam = videoDevs.find((d) =>
+            /front|user|selfie/i.test(d.label)
+          );
+          if (frontCam) {
+            handleDeviceChange(frontCam.deviceId);
+          }
         }
       } catch (err) {
         console.warn('Could not enumerate video devices:', err);
@@ -150,6 +158,17 @@ export const CameraPanel: React.FC<CameraPanelProps> = ({
     };
     getDevices();
   }, [currentDeviceId]);
+
+  // Flip / Cycle Camera
+  const handleFlipCamera = () => {
+    if (devices.length < 2) return;
+    const currentIdx = devices.findIndex((d) => d.deviceId === currentDeviceId);
+    const nextIdx = (currentIdx + 1) % devices.length;
+    const nextDevice = devices[nextIdx];
+    if (nextDevice) {
+      handleDeviceChange(nextDevice.deviceId);
+    }
+  };
 
   // Start Camera Stream
   const startCamera = async (targetDeviceId?: string) => {
@@ -163,7 +182,7 @@ export const CameraPanel: React.FC<CameraPanelProps> = ({
       const constraints: MediaStreamConstraints = {
         video: devId
           ? { deviceId: { exact: devId }, width: { ideal: 640 }, height: { ideal: 480 } }
-          : { width: { ideal: 640 }, height: { ideal: 480 } },
+          : { facingMode: 'user', width: { ideal: 640 }, height: { ideal: 480 } },
         audio: false,
       };
 
@@ -177,6 +196,7 @@ export const CameraPanel: React.FC<CameraPanelProps> = ({
 
       setCameraActive(true);
       setIsStreaming(true);
+      onStateCodeChange?.('STATE_B_NO_HAND');
 
       // Re-enumerate devices after permission granted so device labels appear
       try {
@@ -266,9 +286,17 @@ export const CameraPanel: React.FC<CameraPanelProps> = ({
           const width = video.videoWidth || 640;
           const height = video.videoHeight || 480;
 
-          // Standardized 320x240 frame
-          const targetW = 320;
-          const targetH = Math.round((height / width) * 320);
+          // Optimal resolution for Holistic Landmark Tracking (640px max dimension)
+          const maxDim = 640;
+          let targetW = width;
+          let targetH = height;
+          if (width >= height) {
+            targetW = Math.min(width, maxDim);
+            targetH = Math.round((height / width) * targetW);
+          } else {
+            targetH = Math.min(height, maxDim);
+            targetW = Math.round((width / height) * targetH);
+          }
 
           if (canvas.width !== targetW || canvas.height !== targetH) {
             canvas.width = targetW;
@@ -284,7 +312,7 @@ export const CameraPanel: React.FC<CameraPanelProps> = ({
             inFlightRef.current = true;
             lastSendTime = now;
 
-            const dataUrl = canvas.toDataURL('image/jpeg', 0.52);
+            const dataUrl = canvas.toDataURL('image/jpeg', 0.60);
             onFrameCaptured(dataUrl, Date.now(), currentFrameId);
 
             // Watchdog (600ms): Only unblocks if server stalls or WebSocket connection drops
@@ -322,6 +350,13 @@ export const CameraPanel: React.FC<CameraPanelProps> = ({
     const canvas = overlayCanvasRef.current;
     const video = videoRef.current;
     if (!canvas || !video || !cameraActive || !showOverlay) return;
+
+    if (video.videoWidth && video.videoHeight) {
+      if (canvas.width !== video.videoWidth || canvas.height !== video.videoHeight) {
+        canvas.width = video.videoWidth;
+        canvas.height = video.videoHeight;
+      }
+    }
 
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
@@ -668,7 +703,7 @@ export const CameraPanel: React.FC<CameraPanelProps> = ({
               ref={overlayCanvasRef}
               width={640}
               height={480}
-              className="absolute inset-0 w-full h-full pointer-events-none"
+              className="absolute inset-0 w-full h-full pointer-events-none object-cover"
             />
 
             {/* Camera Inactive State */}
@@ -706,14 +741,26 @@ export const CameraPanel: React.FC<CameraPanelProps> = ({
                 </div>
 
                 {/* Posture Framing Area Box */}
-                <div className="self-center w-3/4 h-3/4 border-2 border-dashed border-teal-500/30 rounded-2xl flex items-center justify-center pointer-events-none">
-                  <span className="text-[10px] text-teal-400/40 font-mono uppercase tracking-widest">
+                <div className="self-center w-3/4 h-3/4 border-2 border-dashed border-teal-500/30 rounded-2xl flex flex-col items-center justify-center pointer-events-none p-2 text-center">
+                  <span className="text-[10px] text-teal-400/50 font-mono uppercase tracking-widest font-semibold">
                     Sign Framing Guide
+                  </span>
+                  <span className="text-[9px] text-slate-400/70 mt-1 max-w-[200px]">
+                    Position head, shoulders & hands in view
                   </span>
                 </div>
 
                 {/* Bottom Modality Status Chips */}
                 <div className="flex items-center space-x-2">
+                  <span
+                    className={`text-[10px] px-2 py-0.5 rounded-md font-mono border ${
+                      landmarksStatus?.pose
+                        ? 'bg-emerald-500/20 border-emerald-500/50 text-emerald-300'
+                        : 'bg-slate-900/80 border-slate-800 text-slate-500'
+                    }`}
+                  >
+                    Pose: {landmarksStatus?.pose ? 'Tracking' : 'Searching'}
+                  </span>
                   <span
                     className={`text-[10px] px-2 py-0.5 rounded-md font-mono border ${
                       landmarksStatus?.left_hand
@@ -811,6 +858,17 @@ export const CameraPanel: React.FC<CameraPanelProps> = ({
             <FlipHorizontal className="w-4 h-4" />
             <span className="hidden sm:inline">Mirror</span>
           </button>
+
+          {devices.length > 1 && (
+            <button
+              onClick={handleFlipCamera}
+              className="p-2 rounded-xl border text-xs font-semibold bg-slate-800 border-slate-700 text-slate-300 hover:text-white flex items-center space-x-1.5 transition-all"
+              title="Flip / Switch Front and Back Camera"
+            >
+              <SwitchCamera className="w-4 h-4 text-teal-400" />
+              <span className="hidden sm:inline">Flip</span>
+            </button>
+          )}
 
           {/* Camera Selection Dropdown */}
           <div className="relative flex items-center">
