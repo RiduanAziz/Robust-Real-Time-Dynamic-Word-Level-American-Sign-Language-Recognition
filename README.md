@@ -131,8 +131,14 @@ Launch the entire SignFlow application (dependency verification, model asset che
 ```
 
 ```cmd
-:: Command Prompt (CMD):
+# Instant 100% Free Public HTTPS URL (No credit card, camera enabled for phone & examiners):
+.\start_signflow.ps1 -Public
+
+:: Command Prompt (CMD) Local Launcher:
 start_signflow.bat
+
+:: Command Prompt (CMD) Instant Free Public HTTPS Launcher:
+share_signflow.bat
 ```
 
 #### 2. Containerized Deployment (Docker Compose)

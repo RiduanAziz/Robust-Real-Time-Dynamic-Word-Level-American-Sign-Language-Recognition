@@ -11,6 +11,11 @@
     Do not automatically open the browser once services are healthy.
 .PARAMETER UiOnly
     Run in UI development mode: starts Vite live dev server (with hot reload) on FrontendPort.
+.PARAMETER Public
+    Create an instant 100% free public HTTPS domain via Cloudflare Quick Tunnel (no credit card or account needed).
+    Allows opening and testing from smartphones (camera permissions enabled) and sharing with supervisors and examiners.
+.PARAMETER Share
+    Alias for -Public.
 .PARAMETER Port
     Backend API and unified web application port (default: 8000).
 .PARAMETER FrontendPort
@@ -21,6 +26,8 @@ param(
     [switch]$SkipInstall,
     [switch]$NoBrowser,
     [switch]$UiOnly,
+    [switch]$Public,
+    [switch]$Share,
     [int]$Port = 8000,
     [int]$FrontendPort = 5173
 )
@@ -202,9 +209,50 @@ if (-not $Healthy) {
     exit 1
 }
 
+# 8. Cloudflare Quick Tunnel (Free Public HTTPS & WSS for Mobile & Examiners)
+$PublicUrl = $null
+$CloudflaredProc = $null
+$CloudflaredLog = $null
+
+if ($Public -or $Share) {
+    Write-Host "`n[Public Tunnel] Establishing Cloudflare Quick Tunnel (100% Free HTTPS)..." -ForegroundColor Yellow
+    $CloudflaredCmd = Get-Command cloudflared -ErrorAction SilentlyContinue
+    if (-not $CloudflaredCmd) {
+        Write-Warning "cloudflared is not installed or not in PATH. Falling back to local URL."
+    } else {
+        $CloudflaredLog = [System.IO.Path]::GetTempFileName()
+        $TargetTunnelPort = if ($UiOnly) { $FrontendPort } else { $Port }
+        $CloudflaredProc = Start-Process -FilePath $CloudflaredCmd.Source -ArgumentList "tunnel", "--url", "http://127.0.0.1:$TargetTunnelPort", "--no-autoupdate" -RedirectStandardError $CloudflaredLog -PassThru -WindowStyle Hidden
+
+        Write-Host "  Connecting to Cloudflare edge..." -ForegroundColor DarkGray
+        for ($w = 1; $w -le 25; $w++) {
+            Start-Sleep -Seconds 1
+            if (Test-Path $CloudflaredLog) {
+                $LogTxt = Get-Content $CloudflaredLog -Raw -ErrorAction SilentlyContinue
+                if ($LogTxt -match '\|\s*(https://[a-zA-Z0-9-]+\.trycloudflare\.com)\s*\|') {
+                    $PublicUrl = $matches[1]
+                    break
+                }
+            }
+        }
+    }
+}
+
 Write-Host "`n============================================================" -ForegroundColor Green
 Write-Host "  SignFlow is LIVE and healthy!" -ForegroundColor Green
-if ($UiOnly) {
+if ($PublicUrl) {
+    Write-Host "  ==========================================================" -ForegroundColor Magenta
+    Write-Host "  PUBLIC LIVE HTTPS DOMAIN (FOR SUPERVISOR & EXAMINERS):" -ForegroundColor Magenta
+    Write-Host "  $PublicUrl" -ForegroundColor Yellow
+    Write-Host "  ==========================================================" -ForegroundColor Magenta
+    Write-Host "  + 100% Free - No credit card, no account required!" -ForegroundColor Green
+    Write-Host "  + Mobile Camera: Fully works (HTTPS grants camera permission)" -ForegroundColor DarkGray
+    Write-Host "  + Secure WebSocket (wss://): Auto-connected by SignFlow" -ForegroundColor DarkGray
+    try {
+        Set-Clipboard -Value $PublicUrl
+        Write-Host "  + Link copied to clipboard automatically!" -ForegroundColor Green
+    } catch {}
+} elseif ($UiOnly) {
     Write-Host "  - Frontend UI (Vite Dev): http://127.0.0.1:$FrontendPort" -ForegroundColor Cyan
     Write-Host "  - Backend API:            http://127.0.0.1:$Port" -ForegroundColor Cyan
 } else {
@@ -218,7 +266,7 @@ Write-Host "============================================================`n" -For
 
 # Open browser
 if (-not $NoBrowser) {
-    $TargetUrl = if ($UiOnly) { "http://127.0.0.1:$FrontendPort" } else { "http://127.0.0.1:$Port" }
+    $TargetUrl = if ($PublicUrl) { $PublicUrl } elseif ($UiOnly) { "http://127.0.0.1:$FrontendPort" } else { "http://127.0.0.1:$Port" }
     Start-Process $TargetUrl
 }
 
@@ -237,6 +285,12 @@ try {
     }
 } finally {
     Write-Host "`nShutting down SignFlow services..." -ForegroundColor Cyan
+    if ($CloudflaredProc -and -not $CloudflaredProc.HasExited) {
+        Stop-Process -Id $CloudflaredProc.Id -Force -ErrorAction SilentlyContinue
+    }
+    if ($CloudflaredLog -and (Test-Path $CloudflaredLog)) {
+        Remove-Item $CloudflaredLog -Force -ErrorAction SilentlyContinue
+    }
     if ($BackendProc -and -not $BackendProc.HasExited) {
         Stop-Process -Id $BackendProc.Id -Force -ErrorAction SilentlyContinue
     }

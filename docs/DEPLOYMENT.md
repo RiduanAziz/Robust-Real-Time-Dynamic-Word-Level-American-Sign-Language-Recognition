@@ -24,8 +24,8 @@ SignFlow uses a **single-service container architecture**:
 |   v                                                                    |
 | +------------------------------------------------------------------+   |
 | |                    WebSocket Server (/ws/live)                   |   |
-| |  - Decodes base64/binary frames from browser camera               |   |
-| |  - Runs MediaPipe Holistic Landmarker (553 coordinates)           |   |
+| |  - Decodes base64/binary frames from browser camera              |   |
+| |  - Runs MediaPipe Holistic Landmarker (553 coordinates)          |   |
 | |  - Evaluates 3-Way Ensemble (Fusion + Uni-Sign PGF + BiGRU)      |   |
 | |  - Streams recognized signs & confidence back to client          |   |
 | +------------------------------------------------------------------+   |
@@ -133,7 +133,7 @@ cd signflow
 ### Step 2: Bootstrap Assets
 Place your `models/` directory in the repository root, or run:
 ```bash
-python3 scripts/bootstrap_inference_assets.py --url "<your_release_zip_url>"
+python3 scripts/bootstrap_inference_assets.py --url "<https://github.com/RiduanAziz/Robust-Real-Time-Dynamic-Word-Level-American-Sign-Language-Recognition/releases/tag/v1.0.0-assets>"
 ```
 
 ### Step 3: Launch with Docker Compose
@@ -175,3 +175,61 @@ To test the application from a smartphone:
 - **Connection Limits:** The API enforces a concurrency cap (`SIGNFLOW_MAX_WS_CONNECTIONS`, default: 50) and drops incoming frame payloads larger than 2 MB (`MAX_FRAME_BYTES`).
 - **Non-Root Execution:** The production Docker image runs as an unprivileged user (`signflow`, UID 1000).
 
+
+
+---
+
+## 8. 100% Free Zero-Cost Deployments (No Credit Card Required)
+
+Cloud platforms like Render, Fly.io, and Railway increasingly require credit card verification even for "free" tiers to prevent abuse. Furthermore, free tiers typically provide only **512 MB RAM**, which causes PyTorch and MediaPipe to crash due to Out-Of-Memory (`OOMKilled`) errors.
+
+For academic defenses, supervisor demos, and examiner reviews, use either of the two **100% free, zero-card** methods below:
+
+### Method 1: Instant Cloudflare Quick Tunnel (Recommended for Demos & Defenses)
+
+Cloudflare provides free, unlimited secure tunnels with **no account, no credit card, and no setup**.
+
+- **How it works:** SignFlow runs locally on your computer with full CPU/GPU and RAM, and Cloudflare exposes an instant public `https://*.trycloudflare.com` domain with valid SSL encryption.
+- **Mobile Camera:** Fully functional (mobile browsers require HTTPS to enable camera permissions).
+- **WebSocket:** Natively supported (`wss://` automatic routing).
+
+#### How to Launch:
+Double-click `share_signflow.bat` or run:
+```powershell
+.\start_signflow.ps1 -Public
+```
+
+The script will:
+1. Verify inference models and build the frontend bundle.
+2. Start the FastAPI backend and verify health.
+3. Establish a Cloudflare edge tunnel.
+4. Output your **Public HTTPS Domain** and automatically copy it to your clipboard.
+5. You can now send this URL to your supervisor or open it on your phone!
+
+To stop the tunnel and clean up all ports, press `Ctrl+C` or run:
+```powershell
+.\stop_signflow.ps1
+```
+
+---
+
+### Method 2: Hugging Face Spaces (Free 24/7 Cloud Host, 16 GB RAM, No Card)
+
+Hugging Face Spaces is the premier free cloud hosting platform for ML/AI research:
+- **Cost:** 100% Free forever.
+- **Credit Card Required:** **NO** (Only a free email account).
+- **Hardware:** 2 vCPU + **16 GB RAM** (plenty of room for the 3-Way Ensemble and MediaPipe).
+- **Public Domain:** Free permanent `https://<user>-signflow.hf.space` HTTPS domain.
+
+#### Step-by-Step Hugging Face Spaces Deployment:
+1. Create a free account at [huggingface.co](https://huggingface.co).
+2. Click **New Space** $\to$ name it `signflow`.
+3. Space SDK: Choose **Docker** $\to$ **Blank**.
+4. Set Space hardware to **CPU basic (free, 16GB RAM)**.
+5. Clone the space repository locally or push your SignFlow repository to the space Git remote:
+   ```bash
+   git remote add space https://huggingface.co/spaces/<your-username>/signflow
+   git push space main
+   ```
+6. In Space Settings $\to$ **Variables and Secrets**, set `SIGNFLOW_ASSETS_URL` to your GitHub Release asset zip URL.
+7. Hugging Face will build the Dockerfile and deploy your app with a permanent, public HTTPS link that you can share with anyone!
